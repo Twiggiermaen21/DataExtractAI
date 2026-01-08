@@ -1,0 +1,39 @@
+<div class="divide-y divide-slate-700/50 overflow-y-auto max-h-[600px]" id="files-container">
+    {% for file in files %}
+    <details class="group">
+        <summary class="flex justify-between items-center p-4 cursor-pointer hover:bg-slate-700/30 transition list-none">
+            <div class="flex items-center gap-3">
+                <input type="checkbox" 
+                       value="{{ file }}" 
+                       class="file-checkbox custom-checkbox w-5 h-5"
+                       onclick="event.stopPropagation()">
+                
+                <div class="p-1 bg-slate-700 rounded text-slate-400 group-open:rotate-90 transition-transform duration-200">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+                
+                <span class="font-mono text-sm text-slate-300 truncate max-w-[180px]">{{ file }}</span>
+            </div>
+            
+            <a href="/process/{{ file }}" class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-1 rounded hover:bg-indigo-600 hover:text-white transition text-[10px] font-medium uppercase tracking-wider">
+                OCR
+            </a>
+        </summary>
+        
+        <div class="p-4 bg-slate-900/30 border-t border-slate-700/50 inner-shadow">
+            <div class="rounded-lg overflow-hidden border border-slate-700 bg-slate-900">
+                {% if file.lower().endswith('.pdf') %}
+                    <iframe src="/input/{{ file }}" class="w-full h-[300px]"></iframe>
+                {% else %}
+                    <img src="/input/{{ file }}" alt="Podgląd" class="w-full h-auto object-contain max-h-[300px] mx-auto">
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    {% else %}
+    <div class="flex flex-col items-center justify-center p-12 text-slate-500 gap-2">
+        <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+        <span class="text-sm italic">Brak plików</span>
+    </div>
+    {% endfor %}
+</div>
