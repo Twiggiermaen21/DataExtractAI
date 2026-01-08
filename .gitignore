@@ -1,0 +1,8 @@
+# Ignoruj wszystko w folderze input...
+input/*
+# ...ale nie ignoruj pliku .gitkeep (który musisz tam utworzyć)
+!input/.gitkeep
+
+# To samo dla output
+output/*
+!output/.gitkeep
