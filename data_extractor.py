@@ -151,25 +151,3 @@ def _parse_amount(amount_str):
         return val
     except ValueError:
         return None
-
-# --- TESTOWANIE ---
-if __name__ == "__main__":
-    # Test na "trudnym" tekście symulującym problem z OCR
-    test_text = """
-    Sprzedawca: Firma X
-    Data: 2024-01-01
-    Netto: 1000.00
-    VAT: 230.00
-    
-    Razem ................................. 
-    ....................... 1 230,00 PLN
-    
-    Do zapłaty:
-    1 230,00
-    """
-    
-    print("Symulacja OCR:")
-    # Aby przetestować, podmieniamy funkcję extract na taką, która zwraca nasz test_text
-    # Normalnie używasz analyze_invoice_json(plik)
-    wynik = _run_regex_search(test_text)
-    print(wynik)
