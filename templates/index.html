@@ -5,55 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Invoice Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='css/style.css') }}"
-    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    
+    <style>
+        .variable-token {
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #4338ca; /* indigo-700 */
+            border: 1px solid #818cf8;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: default;
+            user-select: all;
+        }
+        /* Ukrywanie zakładek */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { color: #fff; border-bottom: 2px solid #3b82f6; }
+    </style>
   </head>
-  <body class="p-6 md:p-10 min-h-screen">
+  <body class="p-6 md:p-10 min-h-screen bg-slate-900 text-slate-200">
+    
     <div class="max-w-6xl mx-auto">
-      <header
-        class="flex justify-between items-center mb-10 border-b border-slate-700 pb-5"
-      >
+      <header class="flex justify-between items-center mb-10 border-b border-slate-700 pb-5">
         <div class="flex items-center gap-3">
-          <div
-            class="w-10 h-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-          >
-            AI
-          </div>
-          <h1
-            class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent"
-          >
-            InvoiceAI Pro
-          </h1>
-        </div>
-        <div
-          class="text-sm text-slate-400 bg-slate-800 px-4 py-2 rounded-full border border-slate-700"
-        >
-          Status AI:
-          <span class="text-emerald-400 font-mono font-bold animate-pulse"
-            >● Online</span
-          >
-        </div>
+             <h1 class="text-2xl font-bold text-white">InvoiceAI Pro</h1>
+         </div>
       </header>
 
       <nav class="flex gap-8 mb-8 border-b border-slate-800">
-        <button
-          onclick="openTab(event, 'ocr')"
-          class="tab-btn active pb-3 px-2 font-medium transition-all hover:text-slate-200"
-        >
+        <button onclick="openTab(event, 'ocr')" class="tab-btn active pb-3 px-2 font-medium text-slate-400 hover:text-white transition-all">
           1. Import & OCR
         </button>
-        <button
-          onclick="openTab(event, 'template')"
-          class="tab-btn pb-3 px-2 font-medium text-slate-400 transition-all hover:text-slate-200"
-        >
+        <button onclick="openTab(event, 'template')" class="tab-btn pb-3 px-2 font-medium text-slate-400 hover:text-white transition-all">
           2. Import Szablonu
         </button>
-        <button
-          onclick="openTab(event, 'generate')"
-          class="tab-btn pb-3 px-2 font-medium text-slate-400 transition-all hover:text-slate-200"
-        >
+        <button onclick="openTab(event, 'generate')" class="tab-btn pb-3 px-2 font-medium text-slate-400 hover:text-white transition-all">
           3. Generuj Dokument
         </button>
       </nav>
@@ -72,5 +64,11 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initTinyMCE();
+        });
+    </script>
   </body>
 </html>
