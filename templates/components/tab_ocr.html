@@ -54,7 +54,7 @@
        
         
         <div id="files-list-container">
-            {% include 'file_list.html' %}
+            {% include 'components/file_list.html' %}
         </div>
     </div>
 
@@ -65,7 +65,7 @@
                 Gotowe Dane
             </h3>
         </div>
-        <div class="p-4 space-y-3 overflow-y-auto max-h-[600px]">
+        <div class="p-4 space-y-3 overflow-y-auto custom-scroll max-h-[600px]">
             {% for p_file in processed %}
             <div class="flex items-center gap-3 p-3 bg-slate-800 rounded-lg border border-slate-700 group hover:border-emerald-500/50 transition cursor-default">
                 <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
