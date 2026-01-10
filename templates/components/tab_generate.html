@@ -1,44 +1,114 @@
-<div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-200px)]">
-
-    <div class="lg:col-span-4 flex flex-col gap-6 h-full overflow-hidden">
-        
-        <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex-shrink-0">
-            <h3 class="text-white font-bold mb-3 flex items-center gap-2">
-                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
-                Wybierz Szablon
-            </h3>
-            <select id="template-select" onchange="loadSelectedTemplate(this.value)" class="w-full bg-slate-900 border border-slate-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
-                <option value="" disabled selected>-- Wybierz z listy --</option>
-                </select>
-        </div>
-
-        <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex-grow flex flex-col min-h-0">
-            <h3 class="text-white font-bold mb-3 flex items-center gap-2">
-                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                Uzupełnij Dane
-            </h3>
-            
-            <div id="dynamic-form-container" class="overflow-y-auto pr-2 space-y-4 flex-grow">
-                <p class="text-slate-500 text-sm italic text-center mt-10">Wybierz szablon, aby zobaczyć formularz.</p>
-            </div>
-
-            <div class="pt-4 border-t border-slate-700 mt-4">
-                <button onclick="generateFinalDocument()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:scale-[1.02] transition-transform text-white">
-                    Generuj Dokument PDF
-                </button>
-            </div>
-        </div>
+<div
+  class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-200px)]"
+>
+  <div class="lg:col-span-4 flex flex-col gap-6 h-full overflow-hidden">
+    <div
+      class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex-shrink-0"
+    >
+      <h3 class="text-white font-bold mb-3 flex items-center gap-2">
+        <svg
+          class="w-5 h-5 text-indigo-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 6h16M4 12h16M4 18h7"
+          ></path>
+        </svg>
+        Wybierz Szablon
+      </h3>
+      <select
+        id="template-select"
+        onchange="loadSelectedTemplate(this.value)"
+        class="w-full bg-slate-900 border border-slate-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+      >
+        <option value="" disabled selected>-- Wybierz z listy --</option>
+      </select>
     </div>
-
-    <div class="lg:col-span-8 bg-slate-700/30 rounded-2xl border border-slate-700/50 p-4 overflow-auto flex justify-center h-full items-start">
-        <div id="readonly-preview" 
-             class="bg-white text-black shadow-2xl p-[2.5cm] min-h-[29.7cm] w-[21cm] origin-top transform scale-75 lg:scale-90 transition-transform pointer-events-none select-none"
-             contenteditable="false">
-             
-             <div class="h-full flex flex-col items-center justify-center text-slate-300 mt-20">
-                 <p>Podgląd szablonu</p>
-             </div>
-        </div>
+    <div
+      class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex-shrink-0 mt-6"
+    >
+      <h3 class="text-white font-bold mb-3 flex items-center gap-2">
+        <svg
+          class="w-5 h-5 text-amber-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+          ></path>
+        </svg>
+        Importuj Dane (z output)
+      </h3>
+      <select
+        id="data-import-select"
+        onchange="fillFormData(this.value)"
+        class="w-full bg-slate-900 border border-slate-600 text-white text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block p-2.5"
+      >
+        <option value="" disabled selected>-- Wybierz rekord --</option>
+      </select>
     </div>
+    <div
+      class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg flex-grow flex flex-col min-h-0"
+    >
+      <h3 class="text-white font-bold mb-3 flex items-center gap-2">
+        <svg
+          class="w-5 h-5 text-emerald-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          ></path>
+        </svg>
+        Uzupełnij Dane
+      </h3>
 
+      <div
+        id="dynamic-form-container"
+        class="overflow-y-auto pr-2 space-y-4 flex-grow"
+      >
+        <p class="text-slate-500 text-sm italic text-center mt-10">
+          Wybierz szablon, aby zobaczyć formularz.
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-slate-700 mt-4">
+        <button
+          onclick="generateFinalDocument()"
+          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:scale-[1.02] transition-transform text-white"
+        >
+          Generuj Dokument PDF
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="lg:col-span-8 bg-slate-700/30 rounded-2xl border border-slate-700/50 p-4 overflow-auto flex justify-center h-full items-start"
+  >
+    <div
+      id="readonly-preview"
+      class="bg-white text-black shadow-2xl p-[2.5cm] min-h-[29.7cm] w-[21cm] origin-top transform scale-75 lg:scale-90 transition-transform pointer-events-none select-none"
+      contenteditable="false"
+    >
+      <div
+        class="h-full flex flex-col items-center justify-center text-slate-300 mt-20"
+      >
+        <p>Podgląd szablonu</p>
+      </div>
+    </div>
+  </div>
 </div>

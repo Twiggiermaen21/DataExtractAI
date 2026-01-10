@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify,make_response
+from flask import Flask, json, render_template, request, redirect, url_for, send_from_directory, jsonify,make_response
 from paddleocr import PaddleOCRVL
 
 app = Flask(__name__)
@@ -220,5 +220,35 @@ def generate_document():
     response = make_response(final_html)
     response.headers['Content-Type'] = 'text/html; charset=utf-8'
     return response
+
+
+
+
+
+
+
+@app.route('/api/get_output_data')
+def get_output_data():
+    # UWAGA: Tutaj wpisz dokładną nazwę swojego pliku JSON!
+    # Czy Twój plik nazywa się 'dane.json', 'output.json' czy 'wyniki.json'?
+    filename = 'dane.json' 
+    
+    file_path = os.path.join('output', filename)
+    
+    if not os.path.exists(file_path):
+        print(f"BŁĄD: Nie znaleziono pliku {file_path}")
+        return jsonify([]) # Zwracamy pustą listę
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # Jeśli JSON to pojedynczy obiekt (np. {...}), zamieniamy go w listę [{...}]
+            if isinstance(data, dict):
+                data = [data]
+            return jsonify(data)
+    except Exception as e:
+        print(f"BŁĄD JSON: {e}")
+        return jsonify([])
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,12 +1,31 @@
 /* static/js/main.js */
-
+let globalClientsData = []; // Tutaj przechowamy pobrane dane
 document.addEventListener('DOMContentLoaded', () => {
-    initDragAndDrop();           // OCR (Stare)
-    initTemplateLogic();         // Szablony (Nowe)
-    loadTemplatesList();         // Lista z bazy
+    // 1. Inicjalizacja starych funkcji (OCR, Drag&Drop)
+    initDragAndDrop();
+    
+    // 2. Inicjalizacja nowej logiki szablonów
+    initTemplateLogic();
+    
+    // 3. Ładowanie listy szablonów do selecta
+    loadTemplatesForSelect();
+// NOWE: Ładowanie danych do selecta importu
+    loadClientsForImport();
+    // 4. GLOBALNY NASŁUCHIWACZ LIVE PREVIEW (To naprawia automatyczne odświeżanie)
+    const formContainer = document.getElementById('dynamic-form-container');
+    if (formContainer) {
+        formContainer.addEventListener('input', function(e) {
+            // Sprawdzamy, czy zdarzenie pochodzi z inputa
+            if (e.target && e.target.matches('input')) {
+                updatePreview(e.target.name, e.target.value);
+            }
+        });
+    }
 });
 
-// --- STARA LOGIKA OCR I ZAKŁADEK (SKRÓCONA DLA CZYTELNOŚCI) ---
+// ==========================================
+// STARA LOGIKA OCR I ZAKŁADEK
+// ==========================================
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) tabcontent[i].classList.remove("active");
@@ -29,17 +48,16 @@ function handleSelected(action) { /* ... Twój stary kod ... */ }
 
 
 // ==========================================
-// NOWA LOGIKA SZABLONÓW (BEZ TINYMCE)
+// NOWA LOGIKA TWORZENIA SZABLONÓW (KREATOR)
 // ==========================================
 
-// Zmienna globalna przechowująca ostatnią pozycję kursora w dokumencie
 let lastRange = null;
 
 function initTemplateLogic() {
     const dropZone = document.getElementById('drop-zone-template');
     const previewArea = document.getElementById('document-preview');
 
-    // 1. Obsługa Drag & Drop pliku DOCX
+    // Obsługa Drag & Drop pliku DOCX
     if (dropZone) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
@@ -47,23 +65,18 @@ function initTemplateLogic() {
         dropZone.addEventListener('drop', (e) => processTemplateFile(e.dataTransfer.files[0]), false);
     }
 
-    // 2. Śledzenie pozycji kursora
-    // Musimy zapamiętać, gdzie użytkownik kliknął, bo kliknięcie w przycisk zmiennej
-    // zabierze "focus" z dokumentu.
+    // Śledzenie pozycji kursora
     if (previewArea) {
         previewArea.addEventListener('keyup', saveCursorPosition);
         previewArea.addEventListener('mouseup', saveCursorPosition);
-        // Upewniamy się, że paste wkleja czysty tekst, a nie formatowanie z Worda/Internetu
         previewArea.addEventListener('paste', handleCleanPaste);
     }
 }
 
-// Funkcja zapamiętująca gdzie jest kursor
 function saveCursorPosition() {
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        // Sprawdzamy, czy kursor jest wewnątrz naszego dokumentu
         const previewArea = document.getElementById('document-preview');
         if (previewArea && previewArea.contains(range.commonAncestorContainer)) {
             lastRange = range;
@@ -71,18 +84,15 @@ function saveCursorPosition() {
     }
 }
 
-// Funkcja czyszcząca wklejanie (opcjonalna, ale przydatna)
 function handleCleanPaste(e) {
     e.preventDefault();
     const text = (e.originalEvent || e).clipboardData.getData('text/plain');
     document.execCommand('insertText', false, text);
 }
 
-// Przetwarzanie DOCX -> HTML (Mammoth)
 function processTemplateFile(file) {
     if (!file) return;
 
-    // 1. Ustaw nazwę pliku
     const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
     const nameInput = document.getElementById('template-name');
     if (nameInput) nameInput.value = nameWithoutExt;
@@ -93,13 +103,8 @@ function processTemplateFile(file) {
         mammoth.convertToHtml({arrayBuffer: arrayBuffer})
             .then(result => {
                 const previewDiv = document.getElementById('document-preview');
-                // Wstawiamy HTML z Mammotha
                 previewDiv.innerHTML = result.value;
-                
-                // 2. ODBLOKOWANIE PANELU ZMIENNYCH (To jest nowość)
                 enableVariablePanel();
-
-                console.log("Ostrzeżenia:", result.messages);
             })
             .catch(err => {
                 console.error(err);
@@ -109,11 +114,9 @@ function processTemplateFile(file) {
     reader.readAsArrayBuffer(file);
 }
 
-// Funkcja pomocnicza do odblokowania UI
 function enableVariablePanel() {
     const input = document.getElementById('var-name');
     const btn = document.getElementById('add-var-btn');
-    
     if(input) {
         input.disabled = false;
         input.placeholder = "np. nazwa_klienta";
@@ -122,83 +125,60 @@ function enableVariablePanel() {
     if(btn) btn.disabled = false;
 }
 
-// ==========================================
-// WSTAWIANIE ZMIENNYCH (NATIVE JS)
-// ==========================================
-
 function insertVariableAtCursor(variableName) {
     const previewArea = document.getElementById('document-preview');
-    
-    // Jeśli nie mamy zapamiętanej pozycji, spróbujmy wstawić na koniec
     if (!lastRange) {
         previewArea.focus();
-        // Ustaw kursor na koniec
         const selection = window.getSelection();
         selection.selectAllChildren(previewArea);
         selection.collapseToEnd();
         lastRange = selection.getRangeAt(0);
     }
 
-    // Odtwórz zaznaczenie
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(lastRange);
 
-    // Stwórz element HTML dla zmiennej
-    // contenteditable="false" jest kluczowe - traktuje zmienną jak jeden blok, którego nie da się edytować w środku
     const badge = document.createElement('span');
     badge.className = 'variable-badge'; 
     badge.contentEditable = "false"; 
     badge.innerText = `{{ ${variableName} }}`;
 
-    // Wstaw element w miejsce kursora
-    lastRange.deleteContents(); // Usuń jeśli coś było zaznaczone
+    lastRange.deleteContents();
     lastRange.insertNode(badge);
     
-    // Dodaj spację po zmiennej, żeby łatwiej się pisało dalej
     const space = document.createTextNode('\u00A0');
     lastRange.setStartAfter(badge);
     lastRange.insertNode(space);
     
-    // Przesuń kursor ZA spację
     lastRange.setStartAfter(space);
     lastRange.collapse(true);
     selection.removeAllRanges();
     selection.addRange(lastRange);
 
-    // Zaktualizuj lastRange
     saveCursorPosition();
 }
 
 function addNewVariable() {
     const input = document.getElementById('var-name');
-    // Zabezpieczenie: nie dodawaj, jeśli input jest zablokowany (dokument nie wgrany)
     if (input.disabled) return; 
 
     const name = input.value.trim().replace(/\s+/g, '_').toLowerCase(); 
     if (!name) return;
 
     const list = document.getElementById('variables-list');
-    
-    // Kontener dla przycisku wstawiania i usuwania
     const container = document.createElement('div');
     container.className = "flex items-center gap-2 group animate-fade-in-up";
 
-    // 1. Przycisk wstawiania (Lewa część)
     const insertBtn = document.createElement('button');
     insertBtn.className = "flex-1 text-left text-sm p-3 bg-slate-700 border border-slate-600 hover:border-indigo-500 rounded-lg text-indigo-300 font-mono font-bold transition-all flex justify-between items-center";
     insertBtn.innerHTML = `<span>{{ ${name} }}</span> <span class="text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">Wstaw &rarr;</span>`;
     insertBtn.onclick = function() { insertVariableAtCursor(name); };
 
-    // 2. Przycisk usuwania (Prawa część - Kosz)
     const deleteBtn = document.createElement('button');
     deleteBtn.className = "p-3 bg-slate-800 border border-slate-700 hover:bg-red-900/50 hover:border-red-500 hover:text-red-400 rounded-lg text-slate-500 transition-all";
     deleteBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
-    
-    // Logika usuwania
-    deleteBtn.onclick = function() {
-        container.remove();
-    };
+    deleteBtn.onclick = function() { container.remove(); };
 
     container.appendChild(insertBtn);
     container.appendChild(deleteBtn);
@@ -206,10 +186,6 @@ function addNewVariable() {
 
     input.value = '';
 }
-
-// ==========================================
-// ZAPIS (WYSŁANIE SAMEGO HTML)
-// ==========================================
 
 function saveTemplate() {
     const previewDiv = document.getElementById('document-preview');
@@ -228,7 +204,7 @@ function saveTemplate() {
     .then(data => {
         if (data.success) {
             alert("Szablon zapisany!");
-            loadTemplatesList();
+            loadTemplatesList(); // Jeśli masz tę funkcję do odświeżania listy
         } else {
             alert("Błąd: " + data.error);
         }
@@ -237,15 +213,12 @@ function saveTemplate() {
 }
 
 function loadTemplatesList() {
-    const container = document.getElementById('templates-list-container');
-    if(container) {
-        fetch('/templates_list_html').then(r => r.text()).then(html => container.innerHTML = html);
-    }
+    // Tutaj możesz dodać logikę odświeżania listy szablonów w kreatorze, jeśli jest potrzebna
 }
 
 
 // ==========================================
-// CZĘŚĆ 4: GENEROWANIE DOKUMENTÓW (TAB 3)
+// CZĘŚĆ 4: GENEROWANIE DOKUMENTÓW I LIVE PREVIEW
 // ==========================================
 
 // 1. Załaduj listę szablonów do selecta
@@ -253,15 +226,7 @@ function loadTemplatesForSelect() {
     const select = document.getElementById('template-select');
     if (!select) return;
 
-    fetch('/templates_list_html') // Używamy tego samego endpointu co wcześniej, ale parsujemy go ręcznie lub tworzymy nowy endpoint JSON
-    // UWAGA: Twój obecny endpoint zwraca HTML. Dla czystości lepiej byłoby, gdyby zwracał JSON. 
-    // Ale poradzimy sobie parsując nazwy plików z folderu /templates_db (backend).
-    // Załóżmy dla uproszczenia, że zrobisz endpoint zwracający JSON z nazwami plików.
-    
-    // TYMCZASOWE ROZWIĄZANIE (fetch listy plików HTML):
-    // Zróbmy prosty endpoint w Flask, który zwróci JSON, dodaj to do app.py (kod poniżej).
-    
-    .then(() => fetch('/api/get_templates_json')) 
+    fetch('/api/get_templates_json') // Upewnij się, że masz ten endpoint w Pythonie
     .then(r => r.json())
     .then(files => {
         select.innerHTML = '<option value="" disabled selected>-- Wybierz z listy --</option>';
@@ -274,39 +239,43 @@ function loadTemplatesForSelect() {
     });
 }
 
-// 2. Wczytaj wybrany szablon i zbuduj formularz
+// 2. Wczytaj wybrany szablon, zbuduj formularz i włącz Live Preview
 function loadSelectedTemplate(filename) {
     if (!filename) return;
 
-    // Pobieramy treść HTML szablonu (musisz mieć endpoint do serwowania plików z folderu templates_db)
     fetch(`/get_template_content/${filename}`)
         .then(r => r.text())
-        .then(html => {
-            // 1. Wstaw podgląd
-            const preview = document.getElementById('readonly-preview');
-            preview.innerHTML = html;
+        .then(rawHtml => {
+            // KROK A: Budujemy formularz na podstawie "czystego" HTML (żeby regex łatwo znalazł zmienne)
+            buildDynamicForm(rawHtml);
 
-            // 2. Zbuduj formularz
-            buildDynamicForm(html);
+            // KROK B: Przygotowanie HTML do Live Preview
+            // Zamieniamy {{ zmienna }} na <span data-bind="zmienna">...</span>
+            // Dzięki temu JavaScript wie, co aktualizować
+            const liveHtml = rawHtml.replace(
+                /\{\{\s*([a-zA-Z0-9_ąęćłńóśźżĄĘĆŁŃÓŚŹŻ]+)\s*\}\}/g, 
+                (match, varName) => {
+                    return `<span data-bind="${varName}" class="live-var bg-yellow-200/50 px-1 rounded transition-colors">${match}</span>`;
+                }
+            );
+
+            // KROK C: Wstawiamy "uzbrojony" HTML do podglądu
+            const preview = document.getElementById('readonly-preview');
+            preview.innerHTML = liveHtml;
         })
         .catch(err => console.error("Błąd ładowania szablonu:", err));
 }
 
-// 3. Budowanie formularza na podstawie zmiennych {{ ... }}
+// 3. Budowanie formularza (Inputy)
 function buildDynamicForm(htmlContent) {
     const container = document.getElementById('dynamic-form-container');
     container.innerHTML = '';
 
-    // Regex szukający wzorca {{ nazwa_zmiennej }}
-    // Flaga 'g' szuka wszystkich wystąpień
     const regex = /\{\{\s*([a-zA-Z0-9_ąęćłńóśźżĄĘĆŁŃÓŚŹŻ]+)\s*\}\}/g;
-    
-    // Używamy Set, aby unikać duplikatów (np. jak data występuje 3 razy, chcemy 1 input)
     const foundVariables = new Set();
     let match;
 
     while ((match = regex.exec(htmlContent)) !== null) {
-        // match[1] to nazwa zmiennej bez nawiasów klamrowych
         foundVariables.add(match[1]);
     }
 
@@ -315,13 +284,11 @@ function buildDynamicForm(htmlContent) {
         return;
     }
 
-    // Generujemy inputy
     foundVariables.forEach(varName => {
-        // Ładna etykieta (zamiana _ na spację, duża litera)
         const labelText = varName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
         const wrapper = document.createElement('div');
-        wrapper.className = "group";
+        wrapper.className = "group mb-4";
 
         const label = document.createElement('label');
         label.className = "block text-xs font-bold text-slate-400 mb-1 group-focus-within:text-indigo-400 transition-colors";
@@ -329,12 +296,10 @@ function buildDynamicForm(htmlContent) {
 
         const input = document.createElement('input');
         input.type = "text";
-        input.name = varName; // Ważne dla zbierania danych
+        input.name = varName; // Musi pasować do data-bind
         input.className = "w-full bg-slate-900 border border-slate-600 text-white text-sm rounded-lg p-2.5 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all placeholder-slate-600";
         input.placeholder = `Wpisz ${labelText}...`;
-        
-        // Live update podglądu (opcjonalne, ale fajne!)
-        input.addEventListener('input', (e) => updatePreview(varName, e.target.value));
+        input.autocomplete = "off";
 
         wrapper.appendChild(label);
         wrapper.appendChild(input);
@@ -342,25 +307,27 @@ function buildDynamicForm(htmlContent) {
     });
 }
 
-// 4. Aktualizacja podglądu na żywo (opcjonalne)
+// 4. Funkcja aktualizująca podgląd (wywoływana przez globalny nasłuchiwacz)
 function updatePreview(varName, value) {
-    // To jest trickowe, bo w HTML mamy {{ varName }}. 
-    // Najprościej byłoby podmieniać w locie, ale to zniszczy oryginalne "znaczniki" dla przyszłych edycji w tej sesji.
-    // Lepsze podejście dla "Read Only": Znajdź wszystkie spany, które zawierają ten tekst.
-    
-    // W naszym edytorze zmienne są w <span class="variable-badge">...</span> lub w tekście.
-    // Dla prostoty w tym przykładzie: nie robimy live update na "tekście", 
-    // bo musielibyśmy parsować HTML w kółko. 
-    // Zostawmy podgląd statyczny z widocznymi {{ ... }} jako "szablon",
-    // a użytkownik widzi co wpisuje w formularzu.
-    
-    // Jeśli jednak bardzo chcesz live preview, musisz trzymać oryginalny HTML w pamięci
-    // i przy każdej zmianie robić .replace() i wrzucać do diva.
+    const targets = document.querySelectorAll(`[data-bind="${varName}"]`);
+
+    targets.forEach(el => {
+        if (value && value.trim() !== "") {
+            // Użytkownik wpisał tekst -> wstawiamy go i usuwamy tło
+            el.textContent = value;
+            el.classList.remove('bg-yellow-200/50'); 
+            el.classList.add('bg-transparent', 'text-indigo-700', 'font-medium'); // Opcjonalnie: kolor tekstu
+        } else {
+            // Pole puste -> przywracamy {{ zmienna }} i tło
+            el.textContent = `{{ ${varName} }}`; 
+            el.classList.add('bg-yellow-200/50');
+            el.classList.remove('bg-transparent', 'text-indigo-700', 'font-medium');
+        }
+    });
 }
 
-// 5. Finalne Generowanie
+// 5. Finalne Generowanie Dokumentu (Pobieranie PDF/DOCX)
 function generateFinalDocument() {
-    // Zbierz dane z formularza
     const inputs = document.querySelectorAll('#dynamic-form-container input');
     const formData = {};
     
@@ -374,10 +341,7 @@ function generateFinalDocument() {
         return;
     }
 
-    console.log("Wysyłanie danych:", formData);
-
-    // Wyślij do Flask
-    fetch('/generate_document', { // Nowy endpoint w Pythonie
+    fetch('/generate_document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -385,13 +349,12 @@ function generateFinalDocument() {
             data: formData
         })
     })
-    .then(r => r.blob()) // Oczekujemy pliku (PDF/DOCX)
+    .then(r => r.blob())
     .then(blob => {
-        // Pobierz plik
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = "gotowy_dokument.pdf"; // lub .docx
+        a.download = `Dokument_${templateName.replace('.html','')}.pdf`; // Domyślnie PDF
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -402,54 +365,125 @@ function generateFinalDocument() {
     });
 }
 
-// Wywołaj przy starcie (lub przy przełączeniu na zakładkę 'generate')
-document.addEventListener('DOMContentLoaded', () => {
-    // ... inne inicjalizacje
-    loadTemplatesForSelect();
-});
+// ==========================================
+// IMPORT DANYCH Z BAZY (JSON)
+// ==========================================
 
-function generateFinalDocument() {
-    // 1. Zbierz dane z formularza
-    const inputs = document.querySelectorAll('#dynamic-form-container input');
-    const formData = {};
-    
-    inputs.forEach(input => {
-        formData[input.name] = input.value;
-    });
+// 1. Pobierz dane z backendu (lub pliku JSON)
+function loadClientsForImport() {
+    const select = document.getElementById('data-import-select');
+    if (!select) return;
 
-    const templateName = document.getElementById('template-select').value;
-    if(!templateName) {
-        alert("Wybierz szablon!");
-        return;
-    }
-
-    // 2. Wyślij do Flask
-    fetch('/generate_document', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            template: templateName,
-            data: formData
+    // Załóżmy, że masz endpoint /api/get_clients_json
+    // Jeśli testujesz lokalnie, możesz tu wpisać dane "na sztywno" zamiast fetch
+    fetch('/api/get_clients_json') 
+        .then(r => r.json())
+        .then(data => {
+            globalClientsData = data; // Zapisz w zmiennej globalnej
+            
+            select.innerHTML = '<option value="" disabled selected>-- Wybierz klienta --</option>';
+            
+            data.forEach((item, index) => {
+                const option = document.createElement('option');
+                // Używamy indexu tablicy jako value, żeby łatwo znaleźć obiekt
+                option.value = index; 
+                // Wyświetlamy nazwę (dostosuj pole np. item.nazwa_firmy)
+                option.text = item.nazwa || item.imie_nazwisko || `Klient #${index + 1}`;
+                select.appendChild(option);
+            });
         })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Błąd generowania");
-        return response.text(); // Odbieramy jako tekst HTML
-    })
-    .then(htmlText => {
-        // 3. Otwórz w nowym oknie i wydrukuj
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(htmlText);
-        printWindow.document.close(); // Ważne dla niektórych przeglądarek
-        
-        // Stylizacja okna drukowania (opcjonalnie, żeby Tailwind działał w nowym oknie)
-        // Musimy upewnić się, że Tailwind jest załadowany w nowym oknie
-        const tailwindLink = printWindow.document.createElement('script');
-        tailwindLink.src = "https://cdn.tailwindcss.com";
-        printWindow.document.head.appendChild(tailwindLink);
-    })
-    .catch(err => {
-        console.error(err);
-        alert("Błąd generowania dokumentu.");
+        .catch(err => console.error("Błąd pobierania klientów:", err));
+}
+
+// 2. Wypełnij formularz po wybraniu z listy
+function fillFormData(selectedIndex) {
+    if (selectedIndex === "") return;
+
+    // Pobierz obiekt danych dla wybranego klienta
+    const selectedData = globalClientsData[selectedIndex];
+    if (!selectedData) return;
+
+    // Znajdź wszystkie aktywne inputy w formularzu
+    const inputs = document.querySelectorAll('#dynamic-form-container input');
+
+    inputs.forEach(input => {
+        const fieldName = input.name; // np. "miasto", "nip"
+
+        // Sprawdź, czy w JSONie klienta istnieje taki klucz
+        if (selectedData.hasOwnProperty(fieldName)) {
+            // 1. Wstaw wartość
+            input.value = selectedData[fieldName];
+
+            // 2. KLUCZOWE: Wymuś zdarzenie 'input', aby zadziałał Live Preview!
+            // Bez tego input się wypełni, ale podgląd dokumentu się nie odświeży.
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // Efekt wizualny (mignięcie na zielono) że dane weszły
+            input.classList.add('ring-2', 'ring-emerald-500');
+            setTimeout(() => input.classList.remove('ring-2', 'ring-emerald-500'), 500);
+        }
+    });
+}
+
+function loadOutputData() {
+    const select = document.getElementById('data-import-select');
+    if (!select) return;
+
+    fetch('/api/get_output_data') // Endpoint z Kroku 1
+        .then(r => r.json())
+        .then(data => {
+            globalOutputData = data; // Zapisujemy dane w pamięci przeglądarki
+            
+            select.innerHTML = '<option value="" disabled selected>-- Wybierz dane do wstawienia --</option>';
+            
+            if (data.length === 0) {
+                const option = document.createElement('option');
+                option.text = "(Brak danych w folderze output)";
+                select.appendChild(option);
+                return;
+            }
+
+            data.forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index; // Jako value używamy indeksu tablicy (0, 1, 2...)
+                
+                // Próbujemy zgadnąć, co wyświetlić jako nazwę w liście (np. nazwa firmy, imię, albo ID)
+                // Dostosuj te pola do swojego JSONa!
+                const label = item.nazwa || item.nazwa_firmy || item.imie_nazwisko || item.klient || `Rekord #${index + 1}`;
+                
+                option.text = label;
+                select.appendChild(option);
+            });
+        })
+        .catch(err => console.error("Błąd ładowania danych z output:", err));
+}
+
+function fillFormData(selectedIndex) {
+    if (selectedIndex === "") return;
+
+    // Pobieramy odpowiedni obiekt z pamięci
+    const dataRow = globalOutputData[selectedIndex];
+    if (!dataRow) return;
+
+    // Znajdujemy wszystkie inputy w formularzu
+    const inputs = document.querySelectorAll('#dynamic-form-container input');
+
+    inputs.forEach(input => {
+        const fieldName = input.name; // np. "miasto", "nip"
+
+        // Jeśli w JSONie istnieje klucz o takiej samej nazwie jak input...
+        if (dataRow.hasOwnProperty(fieldName)) {
+            // 1. Wstaw wartość
+            input.value = dataRow[fieldName];
+
+            // 2. KLUCZOWE: Symulujemy wpisywanie tekstu, żeby zadziałał Live Preview
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // 3. Efekt wizualny (mignięcie na zielono)
+            input.classList.add('ring-2', 'ring-emerald-500', 'transition-all', 'duration-500');
+            setTimeout(() => {
+                input.classList.remove('ring-2', 'ring-emerald-500');
+            }, 1000);
+        }
     });
 }
