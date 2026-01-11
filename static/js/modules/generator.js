@@ -196,9 +196,6 @@ function updatePreview(varName, value) {
   });
 }
 
-/**
- * NOWA IMPLEMENTACJA: Szuka w blokach OCR na podstawie data-keywords
- */
 function fillFormData(selectedIndex) {
   if (selectedIndex === "") return;
 
@@ -320,28 +317,27 @@ function generateFinalDocument() {
     alert("Wybierz szablon!");
     return;
   }
-  const templateName = templateSelect.value;
 
   fetch("/generate_document", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      template: templateName,
+      template: templateSelect.value,
       data: formData,
     }),
   })
-    .then((r) => r.blob())
-    .then((blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Dokument_${templateName.replace(".html", "")}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+    .then((response) => response.json()) // ZMIANA: Odbieramy JSON, nie text
+    .then((result) => {
+      if (result.success) {
+        // Tu możesz wyświetlić ładny komunikat, np. Toast albo alert
+        alert("Sukces! Plik zapisano jako: " + result.filename);
+        console.log("Pełna ścieżka na serwerze:", result.filepath);
+      } else {
+        alert("Błąd: " + (result.error || "Nieznany błąd"));
+      }
     })
     .catch((err) => {
       console.error(err);
-      alert("Błąd generowania dokumentu.");
+      alert("Błąd komunikacji z serwerem.");
     });
 }
