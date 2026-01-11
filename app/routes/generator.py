@@ -1,12 +1,17 @@
+
 from datetime import datetime
 import os
 import json
-from flask import Blueprint, request, jsonify, current_app, make_response, render_template_string
-from werkzeug.utils import secure_filename
-from xhtml2pdf import pisa  # To jest biblioteka, która nie wymaga GTK
+from flask import Blueprint, request, jsonify, current_app,  render_template_string
+
+from fpdf import FPDF 
+
+# Tworzymy klasę PDF z obsługą HTML (w fpdf2 jest to wbudowane, ale czasem warto wymusić klasę)
+class PDF(FPDF):
+    pass
+
 
 generator_bp = Blueprint('generator', __name__)
-
 @generator_bp.route('/api/get_output_data', methods=['GET'])
 def get_output_data():
     """
@@ -60,6 +65,9 @@ def get_output_data():
 
     return jsonify(data_list)
 
+
+
+
 @generator_bp.route('/generate_document', methods=['POST'])
 def generate_document():
     try:
@@ -73,90 +81,76 @@ def generate_document():
         templates_dir = current_app.config['PROCESSED_TEMPLATES_FOLDER']
         output_dir = os.path.join(base_dir, 'gotowe_dokumenty')
         
-        # --- POPRAWKA DLA CZCIONKI ---
-        font_path = os.path.join(base_dir, 'GoogleSans.ttf')
-        
-        # Sprawdzenie czy plik istnieje fizycznie
-        if not os.path.exists(font_path):
-            print(f"BŁĄD KRYTYCZNY: Nie znaleziono pliku czcionki w: {font_path}")
-            # Fallback (opcjonalnie): możesz tu ustawić inną ścieżkę lub zwrócić błąd
-            return jsonify({"success": False, "error": "Brak pliku czcionki na serwerze"}), 500
+        # --- KONFIGURACJA CZCIONKI DLA FPDF ---
+        # FPDF potrzebuje ścieżki do pliku .ttf (nie Base64!)
+        # Najlepiej użyj Arial lub DejaVuSans
+        font_name = 'Arial.ttf' 
+        font_path = os.path.join(base_dir, font_name)
 
-        # KONWERSJA ŚCIEŻKI DLA CSS (xhtml2pdf na Windows tego wymaga)
-        # 1. Zamień \ na /
-        # 2. Dodaj file:/// na początku
-        font_path_for_css = font_path.replace('\\', '/')
-        font_path_for_css = f"file:///{font_path_for_css}"
+        # Fallback na Arial jeśli brak DejaVu
+        if not os.path.exists(font_path):
+            font_name = 'arial.ttf'
+            font_path = os.path.join(base_dir, font_name)
+
+        if not os.path.exists(font_path):
+            return jsonify({"success": False, "error": f"Brak pliku czcionki {font_path} (wymagany dla FPDF)"}), 500
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
+        # Wczytanie szablonu
         template_path = os.path.join(templates_dir, template_name)
         if not os.path.exists(template_path):
             return jsonify({"error": "Brak szablonu"}), 404
 
         with open(template_path, 'r', encoding='utf-8') as f:
             raw_html_content = f.read()
-            # Czyszczenie śmieci z edytorów WYSIWYG
-            raw_html_content = raw_html_content.replace("<strong>", "").replace("</strong>", "")
-            raw_html_content = raw_html_content.replace("<b>", "").replace("</b>", "")
 
+        # Renderowanie zmiennych Jinja2
         rendered_body = render_template_string(raw_html_content, **form_data)
 
-        # 3. HTML z naprawą odstępów i czcionki
-        # Używamy zmiennej font_path_for_css zamiast surowego font_path
-        full_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                @font-face {{
-                    font-family: 'MojaCzcionka';
-                    src: url('{font_path_for_css}');
-                }}
+        # 3. Generowanie PDF za pomocą FPDF
+        # Inicjalizacja PDF (A4, orientacja pionowa, jednostka mm)
+        pdf = PDF(orientation='P', unit='mm', format='A4')
+        
+        # Dodanie obsługi polskich znaków (UTF-8)
+        # Musimy zarejestrować czcionkę. 'uni=True' jest domyślne w fpdf2 dla add_font
+        pdf.add_font('PolskiFont', style='', fname=font_path)
+        pdf.add_font('PolskiFont', style='B', fname=font_path) # Rejestrujemy też jako pogrubioną (użyje tego samego pliku)
+        pdf.add_font('PolskiFont', style='I', fname=font_path) # I jako kursywę
+        
+        pdf.add_page()
+        
+        # Ustawiamy czcionkę startową
+        pdf.set_font("PolskiFont", size=11)
+        
+        # Opcjonalnie: Ustawienie marginesów
+        pdf.set_margins(20, 20, 20)
 
-                body {{
-                    font-family: 'MojaCzcionka', sans-serif;
-                    font-size: 11pt;
-                    padding: 40px;
-                    line-height: 1.3;
-                }}
+        # --- ZAPISYWANIE TREŚCI ---
+        # write_html parsuje proste tagi: <b>, <i>, <u>, <br>, <p>, <center>, <table> (proste)
+        # UWAGA: FPDF ignoruje CSS w <style>! Style muszą być proste lub inline.
+        try:
+            # write_html automatycznie obsługuje zawijanie wierszy i proste formatowanie
+            pdf.write_html(rendered_body)
+        except Exception as html_err:
+            print(f"Błąd parsowania HTML przez FPDF: {html_err}")
+            # Fallback: jeśli HTML jest zbyt skomplikowany, zapisz jako czysty tekst
+            pdf.multi_cell(0, 5, text="Ostrzeżenie: HTML był zbyt skomplikowany dla FPDF. Zrzut tekstu:")
+            pdf.ln()
+            # Usuń tagi HTML do czystego tekstu (proste czyszczenie)
+            import re
+            clean_text = re.sub('<[^<]+?>', '', rendered_body)
+            pdf.multi_cell(0, 5, text=clean_text)
 
-                p {{
-                    margin-top: 2px;
-                    margin-bottom: 2px;
-                    padding: 0;
-                }}
-                
-                h1, h2, h3 {{ margin-top: 10px; margin-bottom: 5px; }}
-
-                .variable-token {{
-                    border: none;
-                    background: transparent;
-                }}
-            </style>
-        </head>
-        <body>
-            {rendered_body}
-        </body>
-        </html>
-        """
-
-        # 4. Generowanie PDF
+        # 4. Zapis do pliku
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"dokument_{timestamp}.pdf"
         save_path = os.path.join(output_dir, filename)
 
-        with open(save_path, "wb") as pdf_file:
-            pisa_status = pisa.CreatePDF(
-                src=full_html,
-                dest=pdf_file,
-                encoding='utf-8'
-            )
+        pdf.output(save_path)
 
-        if pisa_status.err:
-            return jsonify({"success": False, "error": "Błąd generowania PDF"}), 500
+        print(f"PDF zapisany: {save_path}")
 
         return jsonify({
             "success": True, 
@@ -166,8 +160,7 @@ def generate_document():
         }), 200
 
     except Exception as e:
-        print(f"Error w generate_document: {e}")
-        # Wydrukuj pełny traceback w konsoli, żeby łatwiej debugować
+        print(f"CRITICAL ERROR: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500

@@ -9,3 +9,5 @@ output/*
 templates_db/*
 !templates_db/.gitkeep
 zpom/*
+app/gotowe_dokumenty/*
+!app/gotowe_dokumenty/.gitkeep
