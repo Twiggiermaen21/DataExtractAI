@@ -6,10 +6,14 @@ export function initGenerator() {
   console.log("Inicjalizacja generatora...");
 
   // 1. Ładowanie danych startowych
-  loadTemplatesForSelect();
-  loadOutputData();
+  refreshAllData();
 
-  // 2. Globalny nasłuchiwacz Live Preview
+  // 2. Uruchomienie cyklicznego odświeżania co 5 sekund
+  setInterval(() => {
+    refreshAllData();
+  }, 5000);
+
+  // 3. Globalny nasłuchiwacz Live Preview
   const container = document.getElementById("dynamic-form-container");
   if (container) {
     container.addEventListener("input", (e) => {
@@ -19,10 +23,16 @@ export function initGenerator() {
     });
   }
 
-  // 3. Eksport funkcji do window
+  // 4. Eksport funkcji do window
   window.loadSelectedTemplate = loadSelectedTemplate;
   window.fillFormData = fillFormData;
   window.generateFinalDocument = generateFinalDocument;
+}
+
+// Funkcja pomocnicza do odświeżania wszystkiego
+function refreshAllData() {
+  loadTemplatesForSelect();
+  loadOutputData();
 }
 
 // --- FUNKCJE LOGIKI ---
@@ -33,20 +43,34 @@ function loadTemplatesForSelect() {
     .then((files) => {
       const select = document.getElementById("template-select");
       if (!select) return;
+
+      // ZAPAMIĘTAJ AKTUALNY WYBÓR
+      const savedValue = select.value;
+
       select.innerHTML =
         '<option value="" disabled selected>-- Wybierz z listy --</option>';
+      
       files.forEach((f) => {
         const opt = document.createElement("option");
         opt.value = f;
         opt.text = f.replace(".html", "").replace(/_/g, " ");
         select.appendChild(opt);
       });
+
+      // PRZYWRÓĆ WYBÓR (jeśli nadal istnieje na liście)
+      if (savedValue) {
+        // Sprawdzamy, czy opcja o takiej wartości istnieje w nowej liście
+        const optionExists = Array.from(select.options).some(o => o.value === savedValue);
+        if (optionExists) {
+            select.value = savedValue;
+        }
+      }
     })
     .catch((err) => console.error("Błąd ładowania listy szablonów:", err));
 }
 
 function loadOutputData() {
-  console.log("Pobieranie danych z /api/get_output_data...");
+  // console.log("Pobieranie danych z /api/get_output_data..."); // Opcjonalnie wyłącz logi, żeby nie spamować konsoli co 5s
 
   fetch("/api/get_output_data")
     .then((r) => {
@@ -54,11 +78,12 @@ function loadOutputData() {
       return r.json();
     })
     .then((data) => {
-      console.log("Otrzymano dane:", data); // Zobacz w konsoli przeglądarki (F12) co przyszło
-
       globalOutputData = data;
       const select = document.getElementById("data-import-select");
       if (!select) return;
+
+      // ZAPAMIĘTAJ AKTUALNY WYBÓR
+      const savedValue = select.value;
 
       select.innerHTML =
         '<option value="" disabled selected>-- Wybierz dane do wstawienia --</option>';
@@ -72,21 +97,20 @@ function loadOutputData() {
 
       data.forEach((item, index) => {
         const option = document.createElement("option");
+        // Uwaga: używamy indexu jako value. Jeśli dojdą nowe pliki na początku listy, 
+        // indexy się przesuną. Dla prostoty zostawiamy index, ale w przyszłości lepiej używać ID pliku.
         option.value = index;
 
         // --- LOGIKA NAZYWANIA REKORDU W SELECTCIE ---
         let label = `Rekord #${index + 1}`;
 
-        // Twój JSON to tablica bloków. Musimy poszukać czegoś sensownego do wyświetlenia.
         if (Array.isArray(item)) {
-          // Próbujemy znaleźć blok z tekstem "Nabywca" lub "Sprzedawca" lub po prostu pierwszy tekst
           const firstTextBlock = item.find(
             (block) =>
               block.block_content && block.block_content.trim().length > 0
           );
 
           if (firstTextBlock) {
-            // Bierzemy pierwsze 30 znaków z pierwszego bloku tekstu
             label =
               firstTextBlock.block_content.split("\n")[0].substring(0, 40) +
               "...";
@@ -94,7 +118,6 @@ function loadOutputData() {
             label = `Dokument OCR #${index + 1} (Brak tekstu)`;
           }
         }
-        // Jeśli to obiekt (nie tablica)
         else if (item.filename) {
           label = item.filename;
         }
@@ -102,14 +125,21 @@ function loadOutputData() {
         option.text = label;
         select.appendChild(option);
       });
+
+      // PRZYWRÓĆ WYBÓR
+      if (savedValue !== "") {
+         // Sprawdzamy czy ten index nadal mieści się w zakresie tablicy
+         if (select.querySelector(`option[value="${savedValue}"]`)) {
+             select.value = savedValue;
+         }
+      }
     })
     .catch((err) => {
       console.error("Błąd ładowania danych z output:", err);
-      const select = document.getElementById("data-import-select");
-      if (select)
-        select.innerHTML = "<option>Błąd połączenia z serwerem</option>";
+      // Nie psujemy UI przy błędzie sieci (zostawiamy stary select, jeśli był)
     });
 }
+
 function loadSelectedTemplate(filename) {
   if (!filename) return;
 
@@ -120,8 +150,6 @@ function loadSelectedTemplate(filename) {
       buildDynamicForm(rawHtml);
 
       // 2. Live Preview:
-      // Zamieniamy {{ zmienna }} na <span data-bind="zmienna">...</span>
-      // Dzięki temu zachowujemy otaczające tagi HTML (gdzie mogą być data-keywords)
       const liveHtml = rawHtml.replace(
         /\{\{\s*([a-zA-Z0-9_ąęćłńóśźżĄĘĆŁŃÓŚŹŻ]+)\s*\}\}/g,
         (match, varName) => {
@@ -138,6 +166,10 @@ function loadSelectedTemplate(filename) {
 function buildDynamicForm(htmlContent) {
   const container = document.getElementById("dynamic-form-container");
   if (!container) return;
+  
+  // Ważne: przy odświeżaniu szablonu formularz jest budowany na nowo.
+  // Jeśli chcesz zachować wpisane wartości przy zmianie szablonu, trzeba by je tu zapamiętać.
+  // Ale zazwyczaj zmiana szablonu oznacza nowy start, więc czyścimy.
   container.innerHTML = "";
 
   const regex = /\{\{\s*([a-zA-Z0-9_ąęćłńóśźżĄĘĆŁŃÓŚŹŻ]+)\s*\}\}/g;
@@ -202,18 +234,14 @@ function fillFormData(selectedIndex) {
   let ocrData = globalOutputData[selectedIndex];
 
   // --- AKTUALIZACJA POD NOWĄ STRUKTURĘ JSON ---
-  // Sprawdzamy, czy dane są opakowane w obiekt i wyciągamy właściwą tablicę
   if (ocrData && !Array.isArray(ocrData)) {
     if (ocrData.parsing_res_list) {
-      // Jeśli Python wysłał "parsing_res_list"
       ocrData = ocrData.parsing_res_list;
     } else if (ocrData.blocks) {
-      // Wsparcie dla starszej wersji (opcjonalnie)
       ocrData = ocrData.blocks;
     }
   }
 
-  // Jeśli po wyciągnięciu to nadal nie jest tablica, przerywamy
   if (!Array.isArray(ocrData)) {
     console.warn("Wybrany rekord nie zawiera poprawnej listy bloków:", ocrData);
     return;
@@ -225,8 +253,6 @@ function fillFormData(selectedIndex) {
     const varName = input.name;
     let foundValue = null;
 
-    // 2. Znajdź element w podglądzie, aby odczytać data-keywords
-    // Szukamy elementu z data-bind="varName"
     const previewElement = document.querySelector(
       `#readonly-preview [data-bind="${varName}"]`
     );
@@ -234,7 +260,6 @@ function fillFormData(selectedIndex) {
     let keywords = [];
 
     if (previewElement) {
-      // Sprawdzamy czy atrybut jest bezpośrednio na elemencie LUB na jego rodzicu (najczęstszy przypadek przy zagnieżdżaniu {{ }})
       const keywordSource = previewElement.closest("[data-keywords]");
       if (keywordSource) {
         const keywordsString = keywordSource.getAttribute("data-keywords");
@@ -246,44 +271,32 @@ function fillFormData(selectedIndex) {
       }
     }
 
-    // 3. Logika wyszukiwania w OCR (JSON)
     if (keywords.length > 0) {
-      // A. Jeśli zdefiniowano słowa kluczowe -> szukamy w treści bloków
       searchLoop: for (const block of ocrData) {
-        // Pomijamy puste bloki lub te bez tekstu
         if (!block.block_content || typeof block.block_content !== "string")
           continue;
 
-        // Dzielimy na linie, żeby wyciągnąć precyzyjną wartość (np. sam numer konta)
         const lines = block.block_content.split("\n");
 
         for (const line of lines) {
           const lowerLine = line.toLowerCase();
-          // Sprawdzamy czy linia zawiera którekolwiek słowo kluczowe
           const isMatch = keywords.some((k) => lowerLine.includes(k));
 
           if (isMatch) {
             foundValue = line.trim();
-            break searchLoop; // Znaleziono - koniec szukania dla tego inputa
+            break searchLoop;
           }
         }
       }
     } else {
-      // B. Fallback: Jeśli brak keywords, szukamy po nazwie zmiennej (proste dopasowanie klucza w JSON - rzadkie przy OCR blokowym, ale warto mieć)
-      // Ta część zadziała tylko jeśli JSON ma strukturę { "nazwa_zmiennej": "wartość" }, a nie listę bloków.
       if (!Array.isArray(ocrData) && ocrData[varName]) {
         foundValue = ocrData[varName];
       }
     }
 
-    // 4. Wstawienie danych do inputa
     if (foundValue) {
       input.value = foundValue;
-
-      // Wyzwalamy zdarzenie input, aby Live Preview się zaktualizował
       input.dispatchEvent(new Event("input", { bubbles: true }));
-
-      // Efekt wizualny (mignięcie)
       input.classList.add("border-emerald-500", "ring-1", "ring-emerald-500");
       setTimeout(
         () =>
@@ -296,9 +309,7 @@ function fillFormData(selectedIndex) {
       );
     } else {
       console.log(
-        `Nie znaleziono dopasowania dla zmiennej: ${varName} (keywords: ${keywords.join(
-          ", "
-        )})`
+        `Nie znaleziono dopasowania dla zmiennej: ${varName}`
       );
     }
   });
@@ -326,10 +337,9 @@ function generateFinalDocument() {
       data: formData,
     }),
   })
-    .then((response) => response.json()) // ZMIANA: Odbieramy JSON, nie text
+    .then((response) => response.json())
     .then((result) => {
       if (result.success) {
-        // Tu możesz wyświetlić ładny komunikat, np. Toast albo alert
         alert("Sukces! Plik zapisano jako: " + result.filename);
         console.log("Pełna ścieżka na serwerze:", result.filepath);
       } else {

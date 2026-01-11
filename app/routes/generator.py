@@ -60,8 +60,6 @@ def get_output_data():
 
     return jsonify(data_list)
 
-
-# --- ENDPOINT DO GENEROWANIA PDF ---
 @generator_bp.route('/generate_document', methods=['POST'])
 def generate_document():
     try:
@@ -75,15 +73,20 @@ def generate_document():
         templates_dir = current_app.config['PROCESSED_TEMPLATES_FOLDER']
         output_dir = os.path.join(base_dir, 'gotowe_dokumenty')
         
-        # --- KLUCZOWE DLA POLSKICH ZNAKÓW ---
-        # Ścieżka do pliku czcionki. Upewnij się, że plik nazywa się tak samo!
-        # Windows: czasami nazwa to 'arial.ttf', czasami 'Arial.ttf' (wielkość liter ma znaczenie na Linuxie)
+        # --- POPRAWKA DLA CZCIONKI ---
         font_path = os.path.join(base_dir, 'GoogleSans.ttf')
         
-        # Jeśli nie masz Arial.ttf, kod zadziała, ale bez polskich znaków.
-        # Warto dodać sprawdzenie:
+        # Sprawdzenie czy plik istnieje fizycznie
         if not os.path.exists(font_path):
-            print(f"UWAGA: Nie znaleziono pliku czcionki: {font_path}")
+            print(f"BŁĄD KRYTYCZNY: Nie znaleziono pliku czcionki w: {font_path}")
+            # Fallback (opcjonalnie): możesz tu ustawić inną ścieżkę lub zwrócić błąd
+            return jsonify({"success": False, "error": "Brak pliku czcionki na serwerze"}), 500
+
+        # KONWERSJA ŚCIEŻKI DLA CSS (xhtml2pdf na Windows tego wymaga)
+        # 1. Zamień \ na /
+        # 2. Dodaj file:/// na początku
+        font_path_for_css = font_path.replace('\\', '/')
+        font_path_for_css = f"file:///{font_path_for_css}"
 
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -94,44 +97,40 @@ def generate_document():
 
         with open(template_path, 'r', encoding='utf-8') as f:
             raw_html_content = f.read()
-
+            # Czyszczenie śmieci z edytorów WYSIWYG
             raw_html_content = raw_html_content.replace("<strong>", "").replace("</strong>", "")
             raw_html_content = raw_html_content.replace("<b>", "").replace("</b>", "")
 
         rendered_body = render_template_string(raw_html_content, **form_data)
 
         # 3. HTML z naprawą odstępów i czcionki
-        # Używamy f-string, więc klamry CSS musimy podwajać: {{ }} to w CSS jedna { }
+        # Używamy zmiennej font_path_for_css zamiast surowego font_path
         full_html = f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
             <style>
-                /* DEFINICJA CZCIONKI (naprawa polskich znaków) */
                 @font-face {{
                     font-family: 'MojaCzcionka';
-                    src: url('{font_path}');
+                    src: url('{font_path_for_css}');
                 }}
 
                 body {{
                     font-family: 'MojaCzcionka', sans-serif;
                     font-size: 11pt;
                     padding: 40px;
-                    line-height: 1.3; /* Optymalna wysokość linii */
+                    line-height: 1.3;
                 }}
 
-                /* NAPRAWA DUŻYCH ENTERÓW */
                 p {{
-                    margin-top: 2px;    /* Minimalny odstęp na górze */
-                    margin-bottom: 2px  /* Minimalny odstęp na dole */
+                    margin-top: 2px;
+                    margin-bottom: 2px;
                     padding: 0;
                 }}
                 
-                /* Inne tagi, które mogą robić odstępy */
                 h1, h2, h3 {{ margin-top: 10px; margin-bottom: 5px; }}
 
-                /* Ukrycie ramek edytora */
                 .variable-token {{
                     border: none;
                     background: transparent;
@@ -167,5 +166,8 @@ def generate_document():
         }), 200
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error w generate_document: {e}")
+        # Wydrukuj pełny traceback w konsoli, żeby łatwiej debugować
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
