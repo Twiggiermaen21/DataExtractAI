@@ -58,13 +58,3 @@ def enhance_image_for_ocr(image_path, scale_factor=2):
     cv2.imwrite(output_path, binary)
     
     return output_path
-
-# --- TESTOWANIE ---
-if __name__ == "__main__":
-    # Test ręczny
-    input_file = "twoja_slaba_faktura.jpg" # Upewnij się, że masz taki plik
-    try:
-        better_file = enhance_image_for_ocr(input_file, scale_factor=3) # 3x powiększenie
-        print(f"Sukces! Przetworzony plik zapisano jako: {better_file}")
-    except Exception as e:
-        print(f"Błąd: {e}")
