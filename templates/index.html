@@ -176,9 +176,34 @@
           name: "Wezwania do zapłaty",
           filename: "wezwania do zapłaty.docx",
           fields: [
-            { id: "fv_nr", label: "Numer Faktury", type: "text" },
-            { id: "fv_date", label: "Data Wystawienia", type: "date" },
-          ],
+                    // Nagłówek
+                    { id: 'doc_place_date', label: 'Miejscowość i Data', type: 'text', placeholder: 'np. Tychy, 13.01.2026 r.' },
+                    
+                    // Wierzyciel (Mocodawca)
+                    { id: 'creditor_name', label: 'Nazwa Wierzyciela', type: 'text', placeholder: 'np. Orlen Spółka Akcyjna' },
+                    { id: 'creditor_address', label: 'Adres Wierzyciela', type: 'text', placeholder: 'ulica, kod, miasto' },
+                    { id: 'creditor_krs', label: 'KRS Wierzyciela', type: 'text' },
+                    { id: 'creditor_nip', label: 'NIP Wierzyciela', type: 'text' },
+                    { id: 'creditor_capital', label: 'Kapitał Zakładowy', type: 'text', placeholder: 'np. 1 451 177 561,25 zł' },
+                    { id: 'creditor_court', label: 'Sąd Rejestrowy', type: 'text', placeholder: 'np. Sąd Rejonowy w Płocku...' },
+
+                    // Dłużnik
+                    { id: 'debtor_name', label: 'Nazwa Dłużnika', type: 'text', placeholder: 'np. CD Projekt S.A.' },
+                    { id: 'debtor_address', label: 'Adres Dłużnika', type: 'text' },
+
+                    // Szczegóły Zadłużenia
+                    { id: 'fv_nr', label: 'Numer Faktury', type: 'text' },
+                    { id: 'fv_date', label: 'Data wystawienia faktury', type: 'date' },
+                    { id: 'debt_amount', label: 'Kwota do zapłaty (PLN)', type: 'number', placeholder: '2350.00' },
+                    { id: 'interest_date', label: 'Data naliczania odsetek (od dnia)', type: 'date' },
+                    
+                    
+                ],
+                uploads: [
+                    { id: 'att_proxy', label: 'Pełnomocnictwo (Skan)', multiple: false },
+                    { id: 'att_invoice', label: 'Faktura (Skan)', multiple: false }
+                ],
+            
           // ZMIANA: Dodano pole 'multiple: true/false'
 
           uploads: [
@@ -273,7 +298,7 @@
           dynamicInputsEl.innerHTML += `
                     <div>
                         <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">${f.label}</label>
-                        <input type="${f.type}" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="...">
+                        <input type="${f.type}" placeholder="${f.placeholder || ''}" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="...">
                     </div>`;
         });
 

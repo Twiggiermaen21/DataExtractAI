@@ -56,6 +56,12 @@ def delete_selected():
             count += 1
     return jsonify({'success': True, 'count': count})
 
+import os
+from flask import current_app, redirect, url_for
+# Pamiętaj o imporcie funkcji! 
+# Jeśli image_enhancer.py jest w tym samym folderze co ten plik, użyj kropki:
+from services.image_enhancer import enhance_image_for_ocr 
+
 @ocr_bp.route('/process/<filename>')
 def process_single_file(filename):
     """
@@ -65,15 +71,50 @@ def process_single_file(filename):
     if pipeline is None:
         return "Model AI niedostępny", 500
 
-    file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-    if os.path.exists(file_path):
+    original_file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    
+    if os.path.exists(original_file_path):
+        # Domyślnie ścieżką do procesowania jest oryginał
+        path_to_process = original_file_path
+        temp_enhanced_path = None
+
+        # --- KROK 1: Upscaling i poprawa jakości ---
         try:
-            output = pipeline.predict(file_path)
+            # Próbujemy powiększyć i wyczyścić obraz (skala 2x)
+            print(f"Rozpoczynam optymalizację obrazu: {filename}")
+            temp_enhanced_path = enhance_image_for_ocr(original_file_path, scale_factor=2)
+            
+            # Jeśli się udało, podmieniamy ścieżkę na ulepszoną
+            path_to_process = temp_enhanced_path
+            print(f"Sukces! OCR otrzyma ulepszony plik: {temp_enhanced_path}")
+            
+        except Exception as e:
+            print(f"Nie udało się ulepszyć obrazu (błąd: {e}). Używam oryginału.")
+            # W razie błędu path_to_process nadal wskazuje na original_file_path
+
+        # --- KROK 2: Właściwy OCR ---
+        try:
+            # pipeline.predict dostaje teraz (potencjalnie) lepszy obraz
+            output = pipeline.predict(path_to_process)
+            
             for res in output:
+                # Zapisujemy wyniki. Uwaga: res.save_to_json może użyć nazwy pliku 
+                # tymczasowego (np. 'ocr_ready_faktura.json'). 
                 res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                 res.save_to_markdown(save_path=current_app.config['OUTPUT_FOLDER'])
+                
         except Exception as e:
-            print(f"Błąd: {e}")
+            print(f"Błąd przetwarzania OCR: {e}")
             
-    # Przekieruj z powrotem do widoku głównego (main.index)
+        finally:
+            # --- KROK 3: Sprzątanie ---
+            # Usuwamy plik tymczasowy 'ocr_ready_...', żeby nie zaśmiecać serwera
+            if temp_enhanced_path and os.path.exists(temp_enhanced_path):
+                try:
+                    os.remove(temp_enhanced_path)
+                    print(f"Usunięto plik tymczasowy: {temp_enhanced_path}")
+                except Exception as cleanup_error:
+                    print(f"Błąd przy usuwaniu pliku tmp: {cleanup_error}")
+            
+    # Przekieruj z powrotem do widoku głównego
     return redirect(url_for('main.index'))
