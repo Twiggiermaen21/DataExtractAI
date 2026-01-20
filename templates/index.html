@@ -4,8 +4,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OCR - Rozpoznawanie Tekstu</title>
+  <title>OCR & AI Document Processor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0a;
+      --bg-card: #111111;
+      --bg-hover: #1a1a1a;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-primary: #ffffff;
+      --text-secondary: #888888;
+      --text-muted: #555555;
+      --accent-blue: #0071e3;
+      --accent-green: #30d158;
+      --accent-purple: #bf5af2;
+      --accent-orange: #ff9f0a;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -13,102 +35,157 @@
     }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       min-height: 100vh;
-      color: #e4e4e7;
-      padding: 2rem;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 1200px;
       margin: 0 auto;
+      padding: 40px 24px;
     }
 
+    /* Header */
     header {
       text-align: center;
-      margin-bottom: 3rem;
+      margin-bottom: 48px;
     }
 
     h1 {
       font-size: 2.5rem;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, #888 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.5rem;
     }
 
     .subtitle {
-      color: #94a3b8;
+      color: var(--text-secondary);
       font-size: 1rem;
+      font-weight: 400;
     }
 
-    .upload-card {
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 1rem;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      backdrop-filter: blur(10px);
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: var(--transition);
     }
 
+    .card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title .icon {
+      font-size: 1.3rem;
+    }
+
+    /* Grid Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Upload Zone */
     .upload-zone {
-      border: 2px dashed rgba(96, 165, 250, 0.4);
-      border-radius: 0.75rem;
-      padding: 3rem 2rem;
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 48px 24px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s ease;
-      background: rgba(96, 165, 250, 0.05);
+      transition: var(--transition);
+      background: linear-gradient(135deg, rgba(0, 113, 227, 0.02) 0%, rgba(191, 90, 242, 0.02) 100%);
     }
 
     .upload-zone:hover {
-      border-color: rgba(96, 165, 250, 0.8);
-      background: rgba(96, 165, 250, 0.1);
+      border-color: var(--accent-blue);
+      background: linear-gradient(135deg, rgba(0, 113, 227, 0.05) 0%, rgba(191, 90, 242, 0.05) 100%);
     }
 
     .upload-zone.dragover {
-      border-color: #60a5fa;
-      background: rgba(96, 165, 250, 0.15);
+      border-color: var(--accent-blue);
+      background: rgba(0, 113, 227, 0.1);
+      transform: scale(1.01);
     }
 
     .upload-icon {
       font-size: 3rem;
-      margin-bottom: 1rem;
+      margin-bottom: 16px;
+      opacity: 0.8;
     }
 
     .upload-text {
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
     }
 
     .upload-hint {
-      color: #64748b;
-      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
     }
 
+    /* File Input */
     #fileInput {
       display: none;
     }
 
+    /* File List */
     .file-list {
-      margin-top: 1.5rem;
+      margin-top: 16px;
     }
 
     .file-item {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 0.5rem;
-      margin-bottom: 0.5rem;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
       font-size: 0.9rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .file-item .icon {
-      color: #60a5fa;
+      color: var(--accent-blue);
     }
 
     .file-item .name {
@@ -119,55 +196,83 @@
     }
 
     .file-item .size {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: 0.8rem;
     }
 
     .file-item .remove {
-      color: #ef4444;
+      color: var(--text-muted);
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      transition: background 0.2s;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
     }
 
     .file-item .remove:hover {
-      background: rgba(239, 68, 68, 0.2);
+      color: #ff453a;
+      background: rgba(255, 69, 58, 0.1);
     }
 
-    .btn-ocr {
+    /* Buttons */
+    .btn {
       width: 100%;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
+      padding: 14px 24px;
+      font-size: 1rem;
       font-weight: 600;
       color: white;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      background: var(--accent-blue);
       border: none;
-      border-radius: 0.75rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.75rem;
+      gap: 10px;
+      margin-top: 16px;
     }
 
-    .btn-ocr:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+    .btn:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
     }
 
-    .btn-ocr:disabled {
-      opacity: 0.6;
+    .btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
-    .btn-ocr.loading {
-      background: linear-gradient(135deg, #6366f1, #a855f7);
+    .btn-green {
+      background: var(--accent-green);
+    }
+
+    .btn-purple {
+      background: var(--accent-purple);
+    }
+
+    .btn.loading {
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-blue));
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
 
     .spinner {
       animation: spin 1s linear infinite;
+      display: inline-block;
     }
 
     @keyframes spin {
@@ -180,68 +285,180 @@
       }
     }
 
-    .results-card {
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 1rem;
-      padding: 2rem;
-      backdrop-filter: blur(10px);
-    }
-
-    .results-title {
-      font-size: 1.25rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .result-item {
-      background: rgba(15, 23, 42, 0.6);
-      border-radius: 0.5rem;
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .result-item .filename {
-      font-weight: 500;
-      color: #60a5fa;
-      margin-bottom: 0.5rem;
-    }
-
-    .result-item .status {
-      font-size: 0.875rem;
-      color: #22c55e;
-    }
-
-    .result-item .status.error {
-      color: #ef4444;
-    }
-
+    /* Progress */
     .progress-bar {
-      height: 4px;
-      background: rgba(96, 165, 250, 0.2);
+      height: 3px;
+      background: var(--bg-hover);
       border-radius: 2px;
-      margin-top: 1rem;
+      margin-top: 16px;
       overflow: hidden;
     }
 
     .progress-bar .fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
       border-radius: 2px;
-      transition: width 0.3s ease;
+      transition: width 0.4s ease;
     }
 
     .status-text {
       text-align: center;
-      color: #94a3b8;
-      margin-top: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 12px;
       font-size: 0.9rem;
     }
 
+    /* Results */
+    .result-item {
+      padding: 16px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+    }
+
+    .result-item .filename {
+      font-weight: 500;
+      color: var(--accent-blue);
+      margin-bottom: 4px;
+    }
+
+    .result-item .status {
+      font-size: 0.85rem;
+      color: var(--accent-green);
+    }
+
+    .result-item .status.error {
+      color: #ff453a;
+    }
+
+    /* Select & Inputs */
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    /* Checkbox List */
+    .checkbox-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .checkbox-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-blue);
+    }
+
+    .checkbox-item label {
+      margin: 0;
+      cursor: pointer;
+      flex: 1;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+    }
+
+    /* Template Preview */
+    .template-preview {
+      background: white;
+      border-radius: var(--radius-md);
+      margin-top: 16px;
+      overflow: hidden;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .template-preview iframe {
+      width: 100%;
+      height: 450px;
+      border: none;
+    }
+
+    /* JSON Output */
+    .json-output {
+      background: var(--bg-secondary);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.85rem;
+      color: var(--accent-green);
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    /* Section divider */
+    .divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: 32px 0;
+    }
+
+    /* Hidden */
     .hidden {
       display: none !important;
+    }
+
+    /* Inline group */
+    .inline-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .inline-group>* {
+      flex: 1;
+    }
+
+    .inline-group .btn {
+      flex: 0 0 auto;
+      width: auto;
+      padding: 12px 20px;
+      margin-top: 0;
     }
   </style>
 </head>
@@ -249,21 +466,24 @@
 <body>
   <div class="container">
     <header>
-      <h1>🔍 OCR Scanner</h1>
-      <p class="subtitle">Wgraj obrazy lub skany, a system rozpozna tekst i zapisze do JSON</p>
+      <h1>Document AI</h1>
+      <p class="subtitle">OCR • Extraction • Template Filling</p>
     </header>
 
-    <div class="upload-card">
+    <!-- OCR Section -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📷</span> Skanowanie OCR</div>
+
       <div class="upload-zone" id="uploadZone">
         <div class="upload-icon">📁</div>
-        <div class="upload-text">Kliknij lub przeciągnij pliki tutaj</div>
-        <div class="upload-hint">Obsługiwane formaty: JPG, PNG, PDF (można wybrać wiele)</div>
+        <div class="upload-text">Przeciągnij pliki lub kliknij aby wybrać</div>
+        <div class="upload-hint">JPG, PNG, PDF • Wiele plików naraz</div>
       </div>
       <input type="file" id="fileInput" multiple accept="image/*,.pdf">
 
       <div class="file-list" id="fileList"></div>
 
-      <button class="btn-ocr" id="btnOcr" disabled>
+      <button class="btn" id="btnOcr" disabled>
         <span id="btnIcon">🚀</span>
         <span id="btnText">Uruchom OCR</span>
       </button>
@@ -271,59 +491,73 @@
       <div class="progress-bar hidden" id="progressBar">
         <div class="fill" id="progressFill" style="width: 0%"></div>
       </div>
-      <div class="status-text hidden" id="statusText">Przetwarzanie...</div>
+      <div class="status-text hidden" id="statusText"></div>
     </div>
 
-    <div class="results-card hidden" id="resultsCard">
-      <div class="results-title">📋 Wyniki przetwarzania</div>
+    <!-- OCR Results -->
+    <div class="card hidden" id="resultsCard">
+      <div class="card-title"><span class="icon">✅</span> Wyniki OCR</div>
       <div id="resultsList"></div>
     </div>
 
-    <!-- Sekcja LLM -->
-    <div class="upload-card" id="llmCard">
-      <div class="results-title">🤖 Ekstrakcja danych AI</div>
-      <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">
-        Wybierz plik JSON z wynikami OCR i przetwórz go przez model AI, aby wyodrębnić strukturalne dane.
-      </p>
+    <div class="divider"></div>
 
-      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-        <select id="jsonSelect"
-          style="flex: 1; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 0.5rem; color: #e4e4e7; font-size: 0.9rem;">
-          <option value="">-- Wybierz plik JSON --</option>
-        </select>
-        <button id="refreshJsonList"
-          style="padding: 0.75rem 1rem; background: rgba(96, 165, 250, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); border-radius: 0.5rem; color: #60a5fa; cursor: pointer;">🔄</button>
+    <!-- Template Section -->
+    <div class="grid-2">
+      <!-- Left: JSON Selection -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📄</span> Wybierz pliki JSON</div>
+
+        <div class="inline-group" style="margin-bottom: 16px;">
+          <div style="flex: 1;">
+            <label>Wyniki OCR do przetworzenia</label>
+          </div>
+          <button class="btn" id="refreshJsonList"
+            style="width: auto; margin-top: 0; padding: 8px 16px; font-size: 0.85rem;">🔄 Odśwież</button>
+        </div>
+
+        <div class="checkbox-list" id="jsonCheckboxList">
+          <div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <label>📋 Szablon dokumentu</label>
+          <select id="templateSelect">
+            <option value="">-- Wybierz szablon --</option>
+          </select>
+        </div>
+
+        <button class="btn btn-green" id="btnTemplate" disabled>
+          <span id="btnTemplateIcon">🤖</span>
+          <span id="btnTemplateText">Wypełnij szablon AI</span>
+        </button>
+
+        <div class="progress-bar hidden" id="templateProgressBar">
+          <div class="fill" id="templateProgressFill" style="width: 0%"></div>
+        </div>
+        <div class="status-text hidden" id="templateStatusText"></div>
       </div>
 
-      <div style="margin-bottom: 1rem;">
-        <label style="color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">
-          📝 Atrybuty do wyodrębnienia (oddzielone przecinkami lub nowe linie):
-        </label>
-        <textarea id="customAttributes"
-          placeholder="np. numer_faktury, data_wystawienia, sprzedawca, nabywca, kwota_brutto..."
-          style="width: 100%; min-height: 80px; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 0.5rem; color: #e4e4e7; font-size: 0.9rem; resize: vertical;"></textarea>
+      <!-- Right: Template Preview -->
+      <div class="card">
+        <div class="card-title"><span class="icon">👁️</span> Podgląd szablonu</div>
+        <div class="template-preview" id="templatePreview">
+          <div style="padding: 48px; text-align: center; color: var(--text-muted);">
+            Wybierz szablon aby zobaczyć podgląd
+          </div>
+        </div>
       </div>
-
-      <button class="btn-ocr" id="btnLlm" disabled style="background: linear-gradient(135deg, #10b981, #059669);">
-        <span id="btnLlmIcon">🤖</span>
-        <span id="btnLlmText">Przetwórz AI</span>
-      </button>
-
-      <div class="progress-bar hidden" id="llmProgressBar">
-        <div class="fill" id="llmProgressFill" style="width: 0%"></div>
-      </div>
-      <div class="status-text hidden" id="llmStatusText"></div>
     </div>
 
-    <!-- Wyniki LLM -->
-    <div class="results-card hidden" id="llmResultsCard">
-      <div class="results-title">📊 Wyekstrahowane dane</div>
-      <pre id="llmResultsContent"
-        style="background: rgba(15, 23, 42, 0.8); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.85rem; color: #a5f3fc; white-space: pre-wrap;"></pre>
+    <!-- Extracted Data -->
+    <div class="card hidden" id="extractedDataCard">
+      <div class="card-title"><span class="icon">📊</span> Wyekstrahowane dane</div>
+      <pre class="json-output" id="extractedDataContent"></pre>
     </div>
   </div>
 
   <script>
+    // ==================== OCR ====================
     const uploadZone = document.getElementById('uploadZone');
     const fileInput = document.getElementById('fileInput');
     const fileList = document.getElementById('fileList');
@@ -338,10 +572,8 @@
 
     let selectedFiles = [];
 
-    // Kliknięcie w strefę upload
     uploadZone.addEventListener('click', () => fileInput.click());
 
-    // Przeciąganie plików
     uploadZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       uploadZone.classList.add('dragover');
@@ -357,7 +589,6 @@
       handleFiles(e.dataTransfer.files);
     });
 
-    // Wybór plików przez input
     fileInput.addEventListener('change', (e) => {
       handleFiles(e.target.files);
     });
@@ -369,24 +600,24 @@
         }
       }
       renderFileList();
-      updateButton();
+      updateOcrButton();
     }
 
     function renderFileList() {
       fileList.innerHTML = selectedFiles.map((file, index) => `
-                <div class="file-item">
-                    <span class="icon">📄</span>
-                    <span class="name">${file.name}</span>
-                    <span class="size">${formatSize(file.size)}</span>
-                    <span class="remove" onclick="removeFile(${index})">✕</span>
-                </div>
-            `).join('');
+        <div class="file-item">
+          <span class="icon">📄</span>
+          <span class="name">${file.name}</span>
+          <span class="size">${formatSize(file.size)}</span>
+          <span class="remove" onclick="removeFile(${index})">✕</span>
+        </div>
+      `).join('');
     }
 
     function removeFile(index) {
       selectedFiles.splice(index, 1);
       renderFileList();
-      updateButton();
+      updateOcrButton();
     }
 
     function formatSize(bytes) {
@@ -395,33 +626,30 @@
       return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
 
-    function updateButton() {
+    function updateOcrButton() {
       btnOcr.disabled = selectedFiles.length === 0;
     }
 
-    // Uruchomienie OCR
     btnOcr.addEventListener('click', async () => {
       if (selectedFiles.length === 0) return;
 
-      // Ustawienia UI
       btnOcr.disabled = true;
       btnOcr.classList.add('loading');
       btnIcon.innerHTML = '<span class="spinner">⏳</span>';
-      btnText.textContent = 'Ładowanie modelu...';
+      btnText.textContent = 'Przetwarzanie...';
       progressBar.classList.remove('hidden');
       statusText.classList.remove('hidden');
-      statusText.textContent = 'Ładowanie modelu OCR (może potrwać kilka sekund)...';
+      statusText.textContent = 'Ładowanie modelu OCR...';
       progressFill.style.width = '10%';
       resultsCard.classList.add('hidden');
 
-      // Przygotowanie FormData
       const formData = new FormData();
       selectedFiles.forEach(file => {
         formData.append('files', file);
       });
 
       try {
-        statusText.textContent = 'Przetwarzanie plików...';
+        statusText.textContent = 'Przetwarzanie obrazów...';
         progressFill.style.width = '30%';
 
         const response = await fetch('/api/process_ocr', {
@@ -430,20 +658,18 @@
         });
 
         progressFill.style.width = '90%';
-
         const data = await response.json();
-
         progressFill.style.width = '100%';
 
         if (data.success) {
-          statusText.textContent = `✅ Gotowe! Przetworzono ${data.processed.length} plików.`;
+          statusText.textContent = `✅ Przetworzono ${data.processed.length} plików`;
           showResults(data);
         } else {
-          statusText.textContent = `❌ Błąd: ${data.error}`;
+          statusText.textContent = `❌ ${data.error}`;
         }
 
       } catch (error) {
-        statusText.textContent = `❌ Błąd połączenia: ${error.message}`;
+        statusText.textContent = `❌ ${error.message}`;
       } finally {
         btnOcr.classList.remove('loading');
         btnIcon.textContent = '🚀';
@@ -460,124 +686,198 @@
       resultsCard.classList.remove('hidden');
 
       let html = '';
-
       data.processed.forEach(filename => {
         html += `
-                    <div class="result-item">
-                        <div class="filename">📄 ${filename}</div>
-                        <div class="status">✓ Przetworzono pomyślnie - JSON zapisany w /output</div>
-                    </div>
-                `;
+          <div class="result-item">
+            <div class="filename">📄 ${filename}</div>
+            <div class="status">✓ JSON zapisany w /output</div>
+          </div>
+        `;
       });
 
       data.errors.forEach(err => {
         html += `
-                    <div class="result-item">
-                        <div class="filename">📄 ${err.file}</div>
-                        <div class="status error">✕ Błąd: ${err.error}</div>
-                    </div>
-                `;
+          <div class="result-item">
+            <div class="filename">📄 ${err.file}</div>
+            <div class="status error">✕ ${err.error}</div>
+          </div>
+        `;
       });
 
       resultsList.innerHTML = html;
-
-      // Wyczyść listę plików po sukcesie
       selectedFiles = [];
       renderFileList();
-      updateButton();
-
-      // Odśwież listę JSON dla LLM
+      updateOcrButton();
       loadJsonFiles();
     }
 
-    // ==================== LLM ====================
-    const jsonSelect = document.getElementById('jsonSelect');
+    // ==================== Templates ====================
+    const jsonCheckboxList = document.getElementById('jsonCheckboxList');
     const refreshJsonList = document.getElementById('refreshJsonList');
-    const btnLlm = document.getElementById('btnLlm');
-    const btnLlmIcon = document.getElementById('btnLlmIcon');
-    const btnLlmText = document.getElementById('btnLlmText');
-    const llmProgressBar = document.getElementById('llmProgressBar');
-    const llmProgressFill = document.getElementById('llmProgressFill');
-    const llmStatusText = document.getElementById('llmStatusText');
-    const llmResultsCard = document.getElementById('llmResultsCard');
-    const llmResultsContent = document.getElementById('llmResultsContent');
+    const templateSelect = document.getElementById('templateSelect');
+    const btnTemplate = document.getElementById('btnTemplate');
+    const btnTemplateIcon = document.getElementById('btnTemplateIcon');
+    const btnTemplateText = document.getElementById('btnTemplateText');
+    const templateProgressBar = document.getElementById('templateProgressBar');
+    const templateProgressFill = document.getElementById('templateProgressFill');
+    const templateStatusText = document.getElementById('templateStatusText');
+    const templatePreview = document.getElementById('templatePreview');
+    const extractedDataCard = document.getElementById('extractedDataCard');
+    const extractedDataContent = document.getElementById('extractedDataContent');
 
-    // Załaduj listę plików JSON
+    let currentTemplateFields = [];
+    let templateIframe = null;
+
     async function loadJsonFiles() {
       try {
         const response = await fetch('/api/ocr_results');
         const files = await response.json();
 
-        jsonSelect.innerHTML = '<option value="">-- Wybierz plik JSON --</option>';
-        files.forEach(file => {
-          jsonSelect.innerHTML += `<option value="${file}">${file}</option>`;
-        });
+        if (files.length === 0) {
+          jsonCheckboxList.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON</div>';
+        } else {
+          jsonCheckboxList.innerHTML = files.map(file => `
+            <div class="checkbox-item">
+              <input type="checkbox" id="json_${file}" value="${file}">
+              <label for="json_${file}">${file}</label>
+            </div>
+          `).join('');
+        }
+        updateTemplateButton();
       } catch (e) {
-        console.error('Błąd ładowania listy JSON:', e);
+        console.error('Error loading JSON files:', e);
       }
     }
 
-    // Załaduj przy starcie
-    loadJsonFiles();
+    async function loadTemplates() {
+      try {
+        const response = await fetch('/api/templates');
+        const templates = await response.json();
 
-    // Odśwież listę
+        templateSelect.innerHTML = '<option value="">-- Wybierz szablon --</option>';
+        templates.forEach(t => {
+          templateSelect.innerHTML += `<option value="${t.filename}">${t.name}</option>`;
+        });
+      } catch (e) {
+        console.error('Error loading templates:', e);
+      }
+    }
+
+    loadJsonFiles();
+    loadTemplates();
+
     refreshJsonList.addEventListener('click', loadJsonFiles);
 
-    // Aktywuj przycisk po wyborze pliku
-    jsonSelect.addEventListener('change', () => {
-      btnLlm.disabled = !jsonSelect.value;
-    });
+    jsonCheckboxList.addEventListener('change', updateTemplateButton);
+    templateSelect.addEventListener('change', async () => {
+      updateTemplateButton();
 
-    // Przetwarzanie LLM
-    btnLlm.addEventListener('click', async () => {
-      const filename = jsonSelect.value;
-      if (!filename) return;
-
-      const customAttributes = document.getElementById('customAttributes').value.trim();
-
-      // UI
-      btnLlm.disabled = true;
-      btnLlm.classList.add('loading');
-      btnLlmIcon.innerHTML = '<span class="spinner">⏳</span>';
-      btnLlmText.textContent = 'Ładowanie modelu...';
-      llmProgressBar.classList.remove('hidden');
-      llmStatusText.classList.remove('hidden');
-      llmStatusText.textContent = 'Ładowanie modelu AI (może potrwać)...';
-      llmProgressFill.style.width = '20%';
-      llmResultsCard.classList.add('hidden');
+      const filename = templateSelect.value;
+      if (!filename) {
+        templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: var(--text-muted);">Wybierz szablon aby zobaczyć podgląd</div>';
+        currentTemplateFields = [];
+        return;
+      }
 
       try {
-        llmStatusText.textContent = 'Przetwarzanie przez AI...';
-        llmProgressFill.style.width = '50%';
+        const response = await fetch(`/api/template/${filename}`);
+        const data = await response.json();
 
-        const response = await fetch('/api/process_llm', {
+        currentTemplateFields = data.fields;
+
+        // Create iframe for preview
+        templatePreview.innerHTML = '';
+        templateIframe = document.createElement('iframe');
+        templateIframe.style.width = '100%';
+        templateIframe.style.height = '450px';
+        templateIframe.style.border = 'none';
+        templatePreview.appendChild(templateIframe);
+
+        templateIframe.contentDocument.open();
+        templateIframe.contentDocument.write(data.content);
+        templateIframe.contentDocument.close();
+
+      } catch (e) {
+        templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
+      }
+    });
+
+    function getSelectedJsonFiles() {
+      const checkboxes = jsonCheckboxList.querySelectorAll('input[type="checkbox"]:checked');
+      return Array.from(checkboxes).map(cb => cb.value);
+    }
+
+    function updateTemplateButton() {
+      const selectedFiles = getSelectedJsonFiles();
+      const hasTemplate = templateSelect.value !== '';
+      btnTemplate.disabled = selectedFiles.length === 0 || !hasTemplate;
+    }
+
+    btnTemplate.addEventListener('click', async () => {
+      const selectedFiles = getSelectedJsonFiles();
+      const templateFilename = templateSelect.value;
+
+      if (selectedFiles.length === 0 || !templateFilename) return;
+
+      btnTemplate.disabled = true;
+      btnTemplate.classList.add('loading');
+      btnTemplateIcon.innerHTML = '<span class="spinner">⏳</span>';
+      btnTemplateText.textContent = 'Przetwarzanie...';
+      templateProgressBar.classList.remove('hidden');
+      templateStatusText.classList.remove('hidden');
+      templateStatusText.textContent = 'Wysyłanie do AI...';
+      templateProgressFill.style.width = '20%';
+      extractedDataCard.classList.add('hidden');
+
+      try {
+        templateStatusText.textContent = 'Ekstrakcja danych...';
+        templateProgressFill.style.width = '50%';
+
+        const response = await fetch('/api/process_template', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename, attributes: customAttributes })
+          body: JSON.stringify({
+            files: selectedFiles,
+            fields: currentTemplateFields
+          })
         });
 
-        llmProgressFill.style.width = '90%';
+        templateProgressFill.style.width = '90%';
         const data = await response.json();
-        llmProgressFill.style.width = '100%';
+        templateProgressFill.style.width = '100%';
 
         if (data.success) {
-          llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
-          llmResultsCard.classList.remove('hidden');
-          llmResultsContent.textContent = JSON.stringify(data.extracted_data, null, 2);
+          templateStatusText.textContent = '✅ Ekstrakcja zakończona!';
+
+          // Show extracted data
+          extractedDataCard.classList.remove('hidden');
+          extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
+
+          // Fill template inputs
+          if (templateIframe && templateIframe.contentDocument) {
+            const doc = templateIframe.contentDocument;
+            for (const [fieldName, value] of Object.entries(data.fields)) {
+              const input = doc.querySelector(`input[name="${fieldName}"]`);
+              if (input && value) {
+                input.value = value;
+                input.style.background = '#e8f5e9';
+              }
+            }
+          }
         } else {
-          llmStatusText.textContent = `❌ Błąd: ${data.error}`;
+          templateStatusText.textContent = `❌ ${data.error}`;
         }
 
       } catch (error) {
-        llmStatusText.textContent = `❌ Błąd połączenia: ${error.message}`;
+        templateStatusText.textContent = `❌ ${error.message}`;
       } finally {
-        btnLlm.classList.remove('loading');
-        btnLlmIcon.textContent = '🤖';
-        btnLlmText.textContent = 'Przetwórz AI';
-        btnLlm.disabled = !jsonSelect.value;
+        btnTemplate.classList.remove('loading');
+        btnTemplateIcon.textContent = '🤖';
+        btnTemplateText.textContent = 'Wypełnij szablon AI';
+        updateTemplateButton();
 
         setTimeout(() => {
-          llmProgressBar.classList.add('hidden');
+          templateProgressBar.classList.add('hidden');
         }, 2000);
       }
     });

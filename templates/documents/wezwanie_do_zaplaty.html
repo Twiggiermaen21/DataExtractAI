@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Formularz Wezwania do Zapłaty</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 50px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .right-align {
+            text-align: right;
+        }
+
+        .section {
+            margin-bottom: 15px;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.3em;
+            margin: 40px 0;
+            text-decoration: underline;
+        }
+
+        input {
+            border: 1px solid #ccc;
+            border-bottom: 1px solid #333;
+            padding: 3px 8px;
+            background: #fffcf0;
+            font-size: 0.95em;
+            color: #222;
+        }
+
+        input::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .full-width {
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+
+        .medium-width {
+            width: 320px;
+        }
+
+        .short-width {
+            width: 180px;
+        }
+
+        .inline-input {
+            border: none;
+            border-bottom: 1px dashed #666;
+            background: transparent;
+            padding: 0 5px;
+        }
+
+        .footer {
+            margin-top: 60px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="right-align section">
+            <input type="text" name="miejscowosc_data" placeholder="Tychy, 13.01.2026 r." class="medium-width">
+        </div>
+
+        <div class="section">
+            <strong>Wierzyciel:</strong><br>
+            <input type="text" name="wierzyciel_nazwa" placeholder="Orlen Spółka Akcyjna" class="full-width"><br>
+            <input type="text" name="wierzyciel_adres" placeholder="Ul. Chemików 7, 09-411 Płock"
+                class="full-width"><br>
+            KRS: <input type="text" name="wierzyciel_krs" placeholder="0987654" class="short-width">
+            NIP: <input type="text" name="wierzyciel_nip" placeholder="09876545" class="short-width">
+        </div>
+
+        <div class="section">
+            zastępowana przez:<br>
+            <input type="text" name="pelnomocnik_godnosc" placeholder="r. pr. Jana Kowalskiego"
+                class="medium-width"><br>
+            <input type="text" name="pelnomocnik_kancelaria" placeholder="Jan Kowalski Kancelaria Radcy Prawnego"
+                class="full-width"><br>
+            <input type="text" name="pelnomocnik_adres" placeholder="Al. Korfantego 100/4, 40-900 Katowice"
+                class="full-width">
+        </div>
+
+        <div class="right-align section">
+            <strong>Dot. Faktury nr:</strong> <input type="text" name="faktura_numer" placeholder="1234"
+                class="short-width"><br><br>
+            <strong>Dłużnik:</strong><br>
+            <input type="text" name="dluznik_nazwa" placeholder="CD Projekt Spółka Akcyjna" class="medium-width"><br>
+            <input type="text" name="dluznik_adres" placeholder="ul. Jagiellońska 74, 03-301 Warszawa"
+                class="medium-width"><br>
+            KRS: <input type="text" name="dluznik_krs" placeholder="0000006865" class="short-width">
+        </div>
+
+        <div class="title">WEZWANIE DO ZAPŁATY</div>
+
+        <div class="section" style="text-align: justify;">
+            Działając w imieniu <input type="text" name="wierzyciel_nazwa_inline" placeholder="Orlen Spółka Akcyjna"
+                class="inline-input" style="width: 200px;">
+            z siedzibą w Płocku, <input type="text" name="wierzyciel_adres_pelny"
+                placeholder="09-411 Płock, Ul. Chemików 7" class="inline-input" style="width: 250px;">
+            wpisaną do rejestru przedsiębiorców KRS pod nr: <input type="text" name="wierzyciel_krs_inline"
+                placeholder="0987654" class="inline-input" style="width: 80px;">,
+            NIP: <input type="text" name="wierzyciel_nip_inline" placeholder="09876545" class="inline-input"
+                style="width: 90px;">
+            o kapitale zakładowym w wysokości <input type="text" name="wierzyciel_kapital"
+                placeholder="1 451 177 561,25 zł" class="inline-input" style="width: 150px;"> opłaconym w całości,
+            na podstawie pełnomocnictwa, w związku z wystawioną fakturą VAT o nr <input type="text"
+                name="faktura_numer_inline" placeholder="1234" class="inline-input" style="width: 60px;">
+            z dnia <input type="text" name="faktura_data" placeholder="15.05.2025 r." class="inline-input"
+                style="width: 100px;">
+            wzywam Państwa do uiszczenia na rzecz mojego mocodawcy kwoty <input type="text" name="kwota"
+                placeholder="2350 zł" class="inline-input" style="width: 80px;">
+            wraz z ustawowymi odsetkami za opóźnienie liczonymi od dnia <input type="text" name="data_odsetek"
+                placeholder="31.05.2025 r." class="inline-input" style="width: 100px;"> do dnia zapłaty.
+        </div>
+
+        <div class="section">
+            Proszę o uregulowanie powyższych kwot na następujący rachunek:<br>
+            <input type="text" name="rachunek_bankowy" placeholder="098765432345678987654" class="medium-width">
+            <input type="text" name="bank_nazwa" placeholder="ING BANK ŚLĄSKI" class="medium-width">
+        </div>
+
+        <div class="section">
+            W tytule proszę o wskazanie nr faktury.<br>
+            Jednocześnie informuję, że w razie braku terminowego uregulowania powyższej należności mój mocodawca
+            skieruje sprawę na drogę sądową.
+        </div>
+
+        <div class="right-align footer">
+            <input type="text" name="pelnomocnik_podpis" placeholder="r. pr. Jan Kowalski" class="medium-width"
+                style="text-align: center;"><br>
+            (podpis)
+        </div>
+
+        <div class="section" style="margin-top: 40px;">
+            <strong>Załączniki:</strong><br>
+            1. Pełnomocnictwo<br>
+            2. Faktura nr <input type="text" name="faktura_numer_zal" placeholder="1234" class="inline-input"
+                style="width: 60px;">
+        </div>
+    </div>
+
+</body>
+
+</html>
