@@ -1,337 +1,587 @@
 <!DOCTYPE html>
-<html lang="pl" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Invoice Manager - Generator</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      rel="stylesheet"
-    />
+<html lang="pl">
 
-    <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
-    <script src="https://unpkg.com/docx-preview/dist/docx-preview.min.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCR - Rozpoznawanie Tekstu</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <style>
-      .fade-in { animation: fadeIn 0.5s ease-in-out; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      .template-card.active { border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); background-color: #1e293b; }
-      .docx-wrapper { background: #5e6470; padding: 20px; overflow-y: auto; overflow-x: hidden; height: 600px; display: flex; flex-direction: column; align-items: center; }
-      .magic-border { background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 50%, rgba(59, 130, 246, 0.1) 100%); background-size: 200% 100%; animation: gradientMove 3s linear infinite; }
-      @keyframes gradientMove { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-      .docx-wrapper section.docx-render { margin-bottom: 20px !important; }
-    </style>
-  </head>
-  <body class="p-6 md:p-10 min-h-screen bg-slate-900 text-slate-200 font-sans">
-    <div class="max-w-7xl mx-auto">
-      <header class="flex justify-between items-center mb-8 border-b border-slate-700 pb-5">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">AI</div>
-          <h1 class="text-2xl font-bold text-white">Generator Dokumentów</h1>
-        </div>
-      </header>
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #e4e4e7;
+      padding: 2rem;
+    }
 
-      <section id="step-1" class="mb-10">
-        <h2 class="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider">1. Wybierz szablon z folderu /docs</h2>
-        <div id="template-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-      </section>
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
 
-      <div id="editor-area" class="hidden fade-in grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <section id="step-2" class="lg:col-span-7 order-2 lg:order-1">
-          <div class="sticky top-5">
-            <h2 class="text-xs font-semibold text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
-              <i class="fa-solid fa-file-word"></i> Podgląd Pliku DOCX
-            </h2>
-            <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden relative">
-              <div id="loading-spinner" class="hidden absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-20">
-                <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-500 mb-3"></i>
-                <span class="text-sm font-medium animate-pulse">Renderowanie podglądu...</span>
-              </div>
-              <div id="docx-container" class="docx-wrapper custom-scrollbar"></div>
-            </div>
-          </div>
-        </section>
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
 
-        <section class="lg:col-span-5 order-1 lg:order-2 space-y-6">
-          <div class="bg-slate-800/80 rounded-xl border border-blue-500/30 shadow-lg overflow-hidden magic-border backdrop-blur-sm">
-            <div class="p-5">
-              <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-2 mb-3">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Inteligentne Autouzupełnianie
-              </h2>
-              <p class="text-xs text-slate-400 mb-4">Wrzuć skan faktury/dokumentu, a system automatycznie wypełni pola.</p>
-              <label for="autofill-upload" class="flex items-center justify-center w-full p-4 border-2 border-dashed border-blue-500/40 rounded-lg cursor-pointer bg-blue-500/10 hover:bg-blue-500/20 transition-all group">
-                <div id="autofill-content" class="flex flex-row items-center gap-3">
-                  <i class="fa-solid fa-bolt text-xl text-blue-400 group-hover:scale-110 transition-transform"></i>
-                  <span class="text-sm font-medium text-blue-100">Wybierz plik źródłowy (OCR)</span>
-                </div>
-                <div id="autofill-loading" class="hidden flex flex-row items-center gap-3">
-                  <i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i>
-                  <span class="text-sm text-blue-200">Analizowanie danych...</span>
-                </div>
-                <input id="autofill-upload" type="file" class="hidden" accept="image/*,.pdf" />
-              </label>
-            </div>
-          </div>
+    h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
 
-          <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
-            <div class="bg-slate-800/50 p-4 border-b border-slate-700">
-              <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-pen-to-square text-blue-500"></i> Dane Dokumentu
-              </h2>
-            </div>
-            <div class="p-5">
-              <div id="dynamic-inputs" class="grid grid-cols-1 gap-4"></div>
-            </div>
-          </div>
+    .subtitle {
+      color: #94a3b8;
+      font-size: 1rem;
+    }
 
-          <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-lg overflow-hidden">
-            <div class="bg-slate-800/50 p-4 border-b border-slate-700">
-              <h2 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-paperclip text-green-500"></i> Załączniki
-              </h2>
-            </div>
-            <div class="p-5">
-              <div id="no-uploads-msg" class="hidden text-slate-500 italic text-sm text-center py-4">Ten szablon nie wymaga załączników.</div>
-              <div id="dynamic-uploads" class="space-y-4"></div>
-            </div>
-          </div>
+    .upload-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
 
-          <button class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/20 transition-all flex items-center justify-center gap-2 mt-4 transform active:scale-95">
-            <i class="fa-solid fa-file-export"></i> Generuj Dokument
-          </button>
-        </section>
+    .upload-zone {
+      border: 2px dashed rgba(96, 165, 250, 0.4);
+      border-radius: 0.75rem;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(96, 165, 250, 0.05);
+    }
+
+    .upload-zone:hover {
+      border-color: rgba(96, 165, 250, 0.8);
+      background: rgba(96, 165, 250, 0.1);
+    }
+
+    .upload-zone.dragover {
+      border-color: #60a5fa;
+      background: rgba(96, 165, 250, 0.15);
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .upload-text {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-hint {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .file-list {
+      margin-top: 1.5rem;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .file-item .icon {
+      color: #60a5fa;
+    }
+
+    .file-item .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-item .size {
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+
+    .file-item .remove {
+      color: #ef4444;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: background 0.2s;
+    }
+
+    .file-item .remove:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .btn-ocr {
+      width: 100%;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .btn-ocr:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-ocr:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-ocr.loading {
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+    }
+
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .results-card {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 1rem;
+      padding: 2rem;
+      backdrop-filter: blur(10px);
+    }
+
+    .results-title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .result-item {
+      background: rgba(15, 23, 42, 0.6);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .result-item .filename {
+      font-weight: 500;
+      color: #60a5fa;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-item .status {
+      font-size: 0.875rem;
+      color: #22c55e;
+    }
+
+    .result-item .status.error {
+      color: #ef4444;
+    }
+
+    .progress-bar {
+      height: 4px;
+      background: rgba(96, 165, 250, 0.2);
+      border-radius: 2px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .status-text {
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🔍 OCR Scanner</h1>
+      <p class="subtitle">Wgraj obrazy lub skany, a system rozpozna tekst i zapisze do JSON</p>
+    </header>
+
+    <div class="upload-card">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-icon">📁</div>
+        <div class="upload-text">Kliknij lub przeciągnij pliki tutaj</div>
+        <div class="upload-hint">Obsługiwane formaty: JPG, PNG, PDF (można wybrać wiele)</div>
       </div>
+      <input type="file" id="fileInput" multiple accept="image/*,.pdf">
+
+      <div class="file-list" id="fileList"></div>
+
+      <button class="btn-ocr" id="btnOcr" disabled>
+        <span id="btnIcon">🚀</span>
+        <span id="btnText">Uruchom OCR</span>
+      </button>
+
+      <div class="progress-bar hidden" id="progressBar">
+        <div class="fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <div class="status-text hidden" id="statusText">Przetwarzanie...</div>
     </div>
 
-    <script>
-      // KONFIGURACJA SZABLONÓW
-      const templatesData = [
-        {
-          id: "tmpl_invoice",
-          name: "Wezwania do zapłaty",
-          filename: "wezwania do zapłaty.docx",
-          fields: [
-            { id: "doc_place_date", label: "Miejscowość i Data", type: "text", placeholder: "np. Tychy, 13.01.2026 r." },
-            { id: "creditor_name", label: "Nazwa Wierzyciela", type: "text", placeholder: "np. Orlen Spółka Akcyjna" },
-            { id: "creditor_address", label: "Adres Wierzyciela", type: "text", placeholder: "ulica, kod, miasto" },
-            { id: "creditor_krs", label: "KRS Wierzyciela", type: "text" },
-            { id: "creditor_nip", label: "NIP Wierzyciela", type: "text" },
-            { id: "creditor_capital", label: "Kapitał Zakładowy", type: "text", placeholder: "np. 1 451 177 561,25 zł" },
-            { id: "creditor_court", label: "Sąd Rejestrowy", type: "text", placeholder: "np. Sąd Rejonowy w Płocku..." },
-            { id: "debtor_name", label: "Nazwa Dłużnika", type: "text", placeholder: "np. CD Projekt S.A." },
-            { id: "debtor_address", label: "Adres Dłużnika", type: "text" },
-            { id: "fv_nr", label: "Numer Faktury", type: "text" },
-            { id: "fv_date", label: "Data wystawienia faktury", type: "date" },
-            { id: "debt_amount", label: "Kwota do zapłaty (PLN)", type: "number", placeholder: "2350.00" },
-            { id: "interest_date", label: "Data naliczania odsetek (od dnia)", type: "date" },
-            { id: "bank_account", label: "Nr Konta", type: "text" },
-            { id: "bank_name", label: "Nazwa Banku", type: "text" },
-          ],
-          uploads: [
-            { id: "adresat", label: "KRS-ADRESAT", multiple: false },
-            { id: "nadawca", label: "KRS-NADAWCA", multiple: false },
-            { id: "factura", label: "FACTURA", multiple: true },
-          ],
-        },
-        {
-          id: "tmpl_calendar",
-          name: "Kalendarz 2026",
-          filename: "Kalendarz_Trojdzielny.docx",
-          fields: [
-            { id: "cal_year", label: "Rok", type: "number" },
-            { id: "cal_txt", label: "Tekst reklamowy", type: "text" },
-          ],
-          uploads: [
-            { id: "cal_img", label: "Zdjęcie główne", multiple: false },
-          ],
-        },
-      ];
+    <div class="results-card hidden" id="resultsCard">
+      <div class="results-title">📋 Wyniki przetwarzania</div>
+      <div id="resultsList"></div>
+    </div>
 
-      const templateListEl = document.getElementById("template-list");
-      const editorAreaEl = document.getElementById("editor-area");
-      const docxContainerEl = document.getElementById("docx-container");
-      const loadingSpinner = document.getElementById("loading-spinner");
-      const dynamicInputsEl = document.getElementById("dynamic-inputs");
-      const dynamicUploadsEl = document.getElementById("dynamic-uploads");
+    <!-- Sekcja LLM -->
+    <div class="upload-card" id="llmCard">
+      <div class="results-title">🤖 Ekstrakcja danych AI</div>
+      <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">
+        Wybierz plik JSON z wynikami OCR i przetwórz go przez model AI, aby wyodrębnić strukturalne dane.
+      </p>
 
-      const autofillInput = document.getElementById("autofill-upload");
-      const autofillContent = document.getElementById("autofill-content");
-      const autofillLoading = document.getElementById("autofill-loading");
+      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+        <select id="jsonSelect"
+          style="flex: 1; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 0.5rem; color: #e4e4e7; font-size: 0.9rem;">
+          <option value="">-- Wybierz plik JSON --</option>
+        </select>
+        <button id="refreshJsonList"
+          style="padding: 0.75rem 1rem; background: rgba(96, 165, 250, 0.2); border: 1px solid rgba(96, 165, 250, 0.4); border-radius: 0.5rem; color: #60a5fa; cursor: pointer;">🔄</button>
+      </div>
 
-      // --- AUTOUZUPEŁNIANIE ---
-      autofillInput.addEventListener("change", async (e) => {
-        if (e.target.files.length === 0) return;
-        const file = e.target.files[0];
+      <div style="margin-bottom: 1rem;">
+        <label style="color: #94a3b8; font-size: 0.85rem; display: block; margin-bottom: 0.5rem;">
+          📝 Atrybuty do wyodrębnienia (oddzielone przecinkami lub nowe linie):
+        </label>
+        <textarea id="customAttributes"
+          placeholder="np. numer_faktury, data_wystawienia, sprzedawca, nabywca, kwota_brutto..."
+          style="width: 100%; min-height: 80px; padding: 0.75rem; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 0.5rem; color: #e4e4e7; font-size: 0.9rem; resize: vertical;"></textarea>
+      </div>
 
-        autofillContent.classList.add("hidden");
-        autofillLoading.classList.remove("hidden");
+      <button class="btn-ocr" id="btnLlm" disabled style="background: linear-gradient(135deg, #10b981, #059669);">
+        <span id="btnLlmIcon">🤖</span>
+        <span id="btnLlmText">Przetwórz AI</span>
+      </button>
 
-        const formData = new FormData();
-        formData.append('file', file);
+      <div class="progress-bar hidden" id="llmProgressBar">
+        <div class="fill" id="llmProgressFill" style="width: 0%"></div>
+      </div>
+      <div class="status-text hidden" id="llmStatusText"></div>
+    </div>
 
-        try {
-            // WYWOŁANIE API BACKENDU
-            // Upewnij się, że '/ocr' to poprawny prefix Twojego blueprinta. 
-            // Jeśli nie używasz url_prefix='/ocr', usuń to.
-            const response = await fetch('/api/extract_data', {
-                method: 'POST',
-                body: formData
-            });
+    <!-- Wyniki LLM -->
+    <div class="results-card hidden" id="llmResultsCard">
+      <div class="results-title">📊 Wyekstrahowane dane</div>
+      <pre id="llmResultsContent"
+        style="background: rgba(15, 23, 42, 0.8); padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-size: 0.85rem; color: #a5f3fc; white-space: pre-wrap;"></pre>
+    </div>
+  </div>
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Błąd serwera");
-            }
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const btnOcr = document.getElementById('btnOcr');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnText = document.getElementById('btnText');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const statusText = document.getElementById('statusText');
+    const resultsCard = document.getElementById('resultsCard');
+    const resultsList = document.getElementById('resultsList');
 
-            const data = await response.json();
-            fillFormFields(data);
-            
-            // Mały efekt sukcesu na przycisku
-            autofillLoading.innerHTML = '<i class="fa-solid fa-check text-green-400"></i> <span class="text-green-200">Gotowe!</span>';
-            setTimeout(() => {
-                autofillContent.classList.remove("hidden");
-                autofillLoading.classList.add("hidden");
-                autofillLoading.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i><span class="text-sm text-blue-200">Analizowanie danych...</span>';
-            }, 2000);
+    let selectedFiles = [];
 
-        } catch (error) {
-            console.error("Błąd:", error);
-            alert("Błąd analizy: " + error.message);
-            autofillContent.classList.remove("hidden");
-            autofillLoading.classList.add("hidden");
-        } finally {
-            autofillInput.value = "";
+    // Kliknięcie w strefę upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    // Przeciąganie plików
+    uploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+      uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      handleFiles(e.dataTransfer.files);
+    });
+
+    // Wybór plików przez input
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+      for (const file of files) {
+        if (!selectedFiles.find(f => f.name === file.name)) {
+          selectedFiles.push(file);
         }
+      }
+      renderFileList();
+      updateButton();
+    }
+
+    function renderFileList() {
+      fileList.innerHTML = selectedFiles.map((file, index) => `
+                <div class="file-item">
+                    <span class="icon">📄</span>
+                    <span class="name">${file.name}</span>
+                    <span class="size">${formatSize(file.size)}</span>
+                    <span class="remove" onclick="removeFile(${index})">✕</span>
+                </div>
+            `).join('');
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      renderFileList();
+      updateButton();
+    }
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function updateButton() {
+      btnOcr.disabled = selectedFiles.length === 0;
+    }
+
+    // Uruchomienie OCR
+    btnOcr.addEventListener('click', async () => {
+      if (selectedFiles.length === 0) return;
+
+      // Ustawienia UI
+      btnOcr.disabled = true;
+      btnOcr.classList.add('loading');
+      btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+      btnText.textContent = 'Ładowanie modelu...';
+      progressBar.classList.remove('hidden');
+      statusText.classList.remove('hidden');
+      statusText.textContent = 'Ładowanie modelu OCR (może potrwać kilka sekund)...';
+      progressFill.style.width = '10%';
+      resultsCard.classList.add('hidden');
+
+      // Przygotowanie FormData
+      const formData = new FormData();
+      selectedFiles.forEach(file => {
+        formData.append('files', file);
       });
 
-      function fillFormFields(data) {
-        let filledCount = 0;
-        for (const [key, value] of Object.entries(data)) {
-          const inputEl = document.getElementById(key);
-          if (inputEl && value) {
-            inputEl.value = value;
-            inputEl.classList.add('bg-blue-900/40', 'border-blue-500');
-            setTimeout(() => inputEl.classList.remove('bg-blue-900/40', 'border-blue-500'), 1500);
-            filledCount++;
-          }
-        }
-        if(filledCount === 0) alert("Nie udało się dopasować żadnych danych do tego szablonu.");
-      }
+      try {
+        statusText.textContent = 'Przetwarzanie plików...';
+        progressFill.style.width = '30%';
 
-      // --- RESZTA FUNKCJI (DOCX, RENDEROWANIE) ---
-      function autoScaleDocx() {
+        const response = await fetch('/api/process_ocr', {
+          method: 'POST',
+          body: formData
+        });
+
+        progressFill.style.width = '90%';
+
+        const data = await response.json();
+
+        progressFill.style.width = '100%';
+
+        if (data.success) {
+          statusText.textContent = `✅ Gotowe! Przetworzono ${data.processed.length} plików.`;
+          showResults(data);
+        } else {
+          statusText.textContent = `❌ Błąd: ${data.error}`;
+        }
+
+      } catch (error) {
+        statusText.textContent = `❌ Błąd połączenia: ${error.message}`;
+      } finally {
+        btnOcr.classList.remove('loading');
+        btnIcon.textContent = '🚀';
+        btnText.textContent = 'Uruchom OCR';
+        btnOcr.disabled = false;
+
         setTimeout(() => {
-          const wrapper = docxContainerEl;
-          const pages = wrapper.querySelectorAll(".docx-render");
-          if (pages.length === 0) return;
-          const pageWidth = pages[0].offsetWidth;
-          const containerWidth = wrapper.clientWidth - 40;
-          let scale = containerWidth / pageWidth;
-          if (scale > 1) scale = 1;
-          pages.forEach((page) => {
-            page.style.transform = `scale(${scale})`;
-            page.style.transformOrigin = "top center";
-            page.style.marginBottom = `-${page.offsetHeight * (1 - scale) - 20}px`;
-          });
-        }, 100);
+          progressBar.classList.add('hidden');
+        }, 2000);
       }
+    });
 
-      window.addEventListener("resize", autoScaleDocx);
+    function showResults(data) {
+      resultsCard.classList.remove('hidden');
 
-      function init() {
-        templatesData.forEach((tmpl) => {
-          const card = document.createElement("div");
-          card.className = "template-card bg-slate-800 border-2 border-slate-700 rounded-xl p-4 cursor-pointer hover:border-slate-500 transition-all flex flex-col items-center gap-3 group";
-          card.onclick = () => selectTemplate(tmpl, card);
-          card.innerHTML = `
-                <div class="w-full aspect-video bg-slate-900 rounded border border-slate-700 flex items-center justify-center text-slate-500">
-                    <i class="fa-solid fa-file-word text-3xl group-hover:text-blue-500 transition-colors"></i>
-                </div>
-                <span class="font-medium text-sm text-center group-hover:text-white transition-colors">${tmpl.name}</span>
-            `;
-          templateListEl.appendChild(card);
-        });
-      }
+      let html = '';
 
-      async function selectTemplate(tmpl, cardElement) {
-        document.querySelectorAll(".template-card").forEach((c) => c.classList.remove("active"));
-        cardElement.classList.add("active");
-        editorAreaEl.classList.remove("hidden");
-
-        // Inputy
-        dynamicInputsEl.innerHTML = "";
-        tmpl.fields.forEach((f) => {
-          dynamicInputsEl.innerHTML += `
-            <div>
-                <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">${f.label}</label>
-                <input id="${f.id}" type="${f.type}" placeholder="${f.placeholder || ''}" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600">
-            </div>`;
-        });
-
-        // Uploads
-        dynamicUploadsEl.innerHTML = "";
-        if (tmpl.uploads.length === 0)
-          document.getElementById("no-uploads-msg").classList.remove("hidden");
-        else {
-          document.getElementById("no-uploads-msg").classList.add("hidden");
-          tmpl.uploads.forEach((u) => {
-            const inputId = `file-${u.id}`;
-            const listId = `list-${u.id}`;
-            const isMultiple = u.multiple ? "multiple" : "";
-            const multipleLabel = u.multiple ? "(Możesz wybrać wiele)" : "(Tylko jeden plik)";
-
-            const wrapper = document.createElement("div");
-            wrapper.className = "group";
-            wrapper.innerHTML = `
-                    <label class="block text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wide">${u.label} <span class="text-[10px] opacity-60 normal-case">${multipleLabel}</span></label>
-                    <label for="${inputId}" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer bg-slate-800/30 hover:bg-slate-700/50 hover:border-blue-500 transition-all">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <i class="fa-solid fa-cloud-arrow-up text-2xl text-slate-400 mb-2 group-hover:text-blue-400 transition-colors"></i>
-                            <p class="text-xs text-slate-400">Kliknij aby wybrać pliki</p>
-                        </div>
-                        <input id="${inputId}" type="file" class="hidden" ${isMultiple} />
-                    </label>
-                    <ul id="${listId}" class="mt-2 space-y-1"></ul>
+      data.processed.forEach(filename => {
+        html += `
+                    <div class="result-item">
+                        <div class="filename">📄 ${filename}</div>
+                        <div class="status">✓ Przetworzono pomyślnie - JSON zapisany w /output</div>
+                    </div>
                 `;
-            dynamicUploadsEl.appendChild(wrapper);
+      });
 
-            const input = wrapper.querySelector(`#${inputId}`);
-            const list = wrapper.querySelector(`#${listId}`);
-            input.addEventListener("change", (e) => {
-              list.innerHTML = "";
-              if (e.target.files.length > 0) {
-                Array.from(e.target.files).forEach((file) => {
-                  list.innerHTML += `
-                        <li class="flex items-center gap-2 text-xs text-slate-300 bg-slate-700/50 px-2 py-1 rounded border border-slate-600">
-                            <i class="fa-regular fa-file text-blue-400"></i>
-                            <span class="truncate">${file.name}</span>
-                            <span class="text-slate-500 ml-auto">${(file.size / 1024).toFixed(1)} KB</span>
-                        </li>`;
-                });
-              }
-            });
-          });
-        }
+      data.errors.forEach(err => {
+        html += `
+                    <div class="result-item">
+                        <div class="filename">📄 ${err.file}</div>
+                        <div class="status error">✕ Błąd: ${err.error}</div>
+                    </div>
+                `;
+      });
 
-        // Render DOCX
-        loadingSpinner.classList.remove("hidden");
-        docxContainerEl.innerHTML = "";
-        try {
-          const response = await fetch(`/get-template/${tmpl.filename}`);
-          if (!response.ok) throw new Error(`Błąd pobierania: ${response.statusText}`);
-          const blob = await response.blob();
-          const renderOptions = { className: "docx-render", inWrapper: false, ignoreWidth: false, experimental: true };
-          await docx.renderAsync(blob, docxContainerEl, null, renderOptions);
-          autoScaleDocx();
-        } catch (error) {
-          docxContainerEl.innerHTML = `<div class="text-red-400 text-center p-10">${error.message}</div>`;
-        } finally {
-          loadingSpinner.classList.add("hidden");
-        }
+      resultsList.innerHTML = html;
+
+      // Wyczyść listę plików po sukcesie
+      selectedFiles = [];
+      renderFileList();
+      updateButton();
+
+      // Odśwież listę JSON dla LLM
+      loadJsonFiles();
+    }
+
+    // ==================== LLM ====================
+    const jsonSelect = document.getElementById('jsonSelect');
+    const refreshJsonList = document.getElementById('refreshJsonList');
+    const btnLlm = document.getElementById('btnLlm');
+    const btnLlmIcon = document.getElementById('btnLlmIcon');
+    const btnLlmText = document.getElementById('btnLlmText');
+    const llmProgressBar = document.getElementById('llmProgressBar');
+    const llmProgressFill = document.getElementById('llmProgressFill');
+    const llmStatusText = document.getElementById('llmStatusText');
+    const llmResultsCard = document.getElementById('llmResultsCard');
+    const llmResultsContent = document.getElementById('llmResultsContent');
+
+    // Załaduj listę plików JSON
+    async function loadJsonFiles() {
+      try {
+        const response = await fetch('/api/ocr_results');
+        const files = await response.json();
+
+        jsonSelect.innerHTML = '<option value="">-- Wybierz plik JSON --</option>';
+        files.forEach(file => {
+          jsonSelect.innerHTML += `<option value="${file}">${file}</option>`;
+        });
+      } catch (e) {
+        console.error('Błąd ładowania listy JSON:', e);
       }
+    }
 
-      init();
-    </script>
-  </body>
+    // Załaduj przy starcie
+    loadJsonFiles();
+
+    // Odśwież listę
+    refreshJsonList.addEventListener('click', loadJsonFiles);
+
+    // Aktywuj przycisk po wyborze pliku
+    jsonSelect.addEventListener('change', () => {
+      btnLlm.disabled = !jsonSelect.value;
+    });
+
+    // Przetwarzanie LLM
+    btnLlm.addEventListener('click', async () => {
+      const filename = jsonSelect.value;
+      if (!filename) return;
+
+      const customAttributes = document.getElementById('customAttributes').value.trim();
+
+      // UI
+      btnLlm.disabled = true;
+      btnLlm.classList.add('loading');
+      btnLlmIcon.innerHTML = '<span class="spinner">⏳</span>';
+      btnLlmText.textContent = 'Ładowanie modelu...';
+      llmProgressBar.classList.remove('hidden');
+      llmStatusText.classList.remove('hidden');
+      llmStatusText.textContent = 'Ładowanie modelu AI (może potrwać)...';
+      llmProgressFill.style.width = '20%';
+      llmResultsCard.classList.add('hidden');
+
+      try {
+        llmStatusText.textContent = 'Przetwarzanie przez AI...';
+        llmProgressFill.style.width = '50%';
+
+        const response = await fetch('/api/process_llm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename, attributes: customAttributes })
+        });
+
+        llmProgressFill.style.width = '90%';
+        const data = await response.json();
+        llmProgressFill.style.width = '100%';
+
+        if (data.success) {
+          llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
+          llmResultsCard.classList.remove('hidden');
+          llmResultsContent.textContent = JSON.stringify(data.extracted_data, null, 2);
+        } else {
+          llmStatusText.textContent = `❌ Błąd: ${data.error}`;
+        }
+
+      } catch (error) {
+        llmStatusText.textContent = `❌ Błąd połączenia: ${error.message}`;
+      } finally {
+        btnLlm.classList.remove('loading');
+        btnLlmIcon.textContent = '🤖';
+        btnLlmText.textContent = 'Przetwórz AI';
+        btnLlm.disabled = !jsonSelect.value;
+
+        setTimeout(() => {
+          llmProgressBar.classList.add('hidden');
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+
 </html>
