@@ -11,8 +11,17 @@ def enhance_image_for_ocr(image_path, scale_factor=2):
     # 1. Wczytanie obrazu
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Nie znaleziono pliku: {image_path}")
-        
-    img = cv2.imread(image_path)
+    
+    # Użyj numpy.fromfile + imdecode zamiast imread
+    # To obsługuje polskie znaki i specjalne ścieżki na Windows
+    try:
+        img_array = np.fromfile(image_path, dtype=np.uint8)
+        img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+    except Exception as e:
+        raise ValueError(f"Nie można zdekodować obrazu: {image_path}. Błąd: {e}")
+    
+    if img is None:
+        raise ValueError(f"Nie można wczytać obrazu: {image_path}. Sprawdź czy plik jest prawidłowym obrazem (JPG, PNG).")
     
     # --- ETAP 1: UPSCALING (Powiększanie) ---
     # Jeśli faktura jest mała (np. mała rozdzielczość skanu), powiększamy ją.
@@ -49,12 +58,25 @@ def enhance_image_for_ocr(image_path, scale_factor=2):
     )
     
     # --- ZAPIS WYNIKU ---
-    # Tworzymy nazwę dla pliku tymczasowego
-    base_dir = os.path.dirname(image_path)
-    filename = os.path.basename(image_path)
-    new_filename = f"ocr_ready_{filename}"
-    output_path = os.path.join(base_dir, new_filename)
+    # Tworzymy folder "ulepszone_zdjecia" w katalogu output
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    enhanced_dir = os.path.join(project_root, "output", "ulepszone_zdjecia")
     
-    cv2.imwrite(output_path, binary)
+    # Upewniamy się, że folder istnieje
+    os.makedirs(enhanced_dir, exist_ok=True)
+    
+    filename = os.path.basename(image_path)
+    new_filename = f"ulepszone_{filename}"
+    output_path = os.path.join(enhanced_dir, new_filename)
+    
+    # Użyj imencode + tofile zamiast imwrite (obsługuje polskie znaki)
+    ext = os.path.splitext(filename)[1]
+    is_success, encoded_img = cv2.imencode(ext, binary)
+    if is_success:
+        encoded_img.tofile(output_path)
+    else:
+        raise ValueError(f"Nie można zakodować obrazu: {output_path}")
+    
+    print(f"Ulepszone zdjęcie zapisano: {output_path}")
     
     return output_path

@@ -3,7 +3,7 @@ import json
 import traceback
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 
-from app.services.ocr_service import get_pipeline
+from app.services.ocr_service import get_pipeline, unload_pipeline
 from app.services.image_enhancer import enhance_image_for_ocr
 
 ocr_bp = Blueprint('ocr', __name__)
@@ -49,14 +49,19 @@ def process_ocr():
             file.save(original_path)
             print(f"📁 Przetwarzanie: {filename}")
             
-            # Poprawa obrazu
+            # Poprawa obrazu (tylko dla obrazów, nie PDF)
             path_to_process = original_path
-            try:
-                temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
-                path_to_process = temp_enhanced_path
-                print(f"  ✨ Obraz ulepszony")
-            except Exception as e:
-                print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
+            file_ext = os.path.splitext(filename)[1].lower()
+            
+            if file_ext == '.pdf':
+                print(f"  📄 Plik PDF - pomijam ulepszanie obrazu")
+            else:
+                try:
+                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
+                    path_to_process = temp_enhanced_path
+                    print(f"  ✨ Obraz ulepszony")
+                except Exception as e:
+                    print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
             
             # OCR
             print(f"  🔍 Uruchamiam OCR...")
@@ -68,6 +73,34 @@ def process_ocr():
                     res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                     print(f"  💾 Zapisano JSON")
             
+            # Uprość JSON - zostaw tylko block_content z parsing_res_list
+            output_folder = current_app.config['OUTPUT_FOLDER']
+            base_name = os.path.splitext(filename)[0]
+            
+            for json_file in os.listdir(output_folder):
+                if json_file.startswith(base_name) and json_file.endswith('.json'):
+                    json_path = os.path.join(output_folder, json_file)
+                    try:
+                        with open(json_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        
+                        # Wyciągnij input_path i tylko block_content z parsing_res_list
+                        simplified = {
+                            'input_path': data.get('input_path', ''),
+                            'parsing_res_list': [
+                                {'block_content': block.get('block_content', '')}
+                                for block in data.get('parsing_res_list', [])
+                                if block.get('block_content')
+                            ]
+                        }
+                        
+                        with open(json_path, 'w', encoding='utf-8') as f:
+                            json.dump(simplified, f, ensure_ascii=False, indent=2)
+                        
+                        print(f"  📝 Uproszczono JSON")
+                    except Exception as e:
+                        print(f"  ⚠️ Nie udało się uprościć JSON: {e}")
+            
             processed_files.append(filename)
             print(f"  ✅ Sukces!")
             
@@ -75,16 +108,10 @@ def process_ocr():
             print(f"  ❌ Błąd: {e}")
             traceback.print_exc()
             errors.append({'file': filename, 'error': str(e)})
-        
-        finally:
-            # Usuwanie pliku tymczasowego
-            if temp_enhanced_path and os.path.exists(temp_enhanced_path):
-                try:
-                    os.remove(temp_enhanced_path)
-                except:
-                    pass
     
-    # Model pozostaje w pamięci dla kolejnych żądań
+    # Zwolnij model z pamięci po zakończeniu przetwarzania
+    unload_pipeline()
+    print("🧹 Model OCR zwolniony z pamięci")
     
     return jsonify({
         'success': True,

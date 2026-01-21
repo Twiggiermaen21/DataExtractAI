@@ -3,82 +3,98 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Formularz Wezwania do Zapłaty</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            margin: 40px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 10px;
             background-color: #f4f4f4;
+            color: #333;
         }
 
         .container {
             max-width: 800px;
+            min-width: 280px;
             margin: auto;
             background: white;
-            padding: 50px;
+            padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
         }
 
-        .header-section {
+        .flex-group {
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 15px;
         }
 
         .right-align {
             text-align: right;
         }
 
-        .section {
-            margin-bottom: 15px;
-        }
-
-        .title {
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.3em;
-            margin: 40px 0;
-            text-decoration: underline;
-        }
-
         input {
             border: 1px solid #ccc;
             border-bottom: 1px solid #333;
-            padding: 3px 8px;
+            padding: 4px 8px;
             background: #fffcf0;
-            font-size: 0.95em;
-            color: #222;
-        }
-
-        input::placeholder {
-            color: #999;
-            font-style: italic;
+            font-size: 13px;
+            box-sizing: border-box;
+            max-width: 100%;
         }
 
         .full-width {
             width: 100%;
-            box-sizing: border-box;
-            margin-top: 5px;
-        }
-
-        .medium-width {
-            width: 320px;
-        }
-
-        .short-width {
-            width: 180px;
+            margin-top: 4px;
         }
 
         .inline-input {
             border: none;
             border-bottom: 1px dashed #666;
             background: transparent;
-            padding: 0 5px;
+            padding: 0 2px;
+            font-weight: 600;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin: 25px 0;
+            text-decoration: underline;
+        }
+
+        .content-text {
+            text-align: justify;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 15px;
         }
 
         .footer {
-            margin-top: 60px;
+            margin-top: 40px;
+        }
+
+        /* Responsywność dla ekranu 300px i więcej */
+        @media (min-width: 600px) {
+            body {
+                padding: 40px;
+            }
+
+            .container {
+                padding: 40px;
+            }
+
+            .flex-group {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
@@ -87,83 +103,87 @@
 
     <div class="container">
         <div class="right-align section">
-            <input type="text" name="miejscowosc_data" placeholder="Tychy, 13.01.2026 r." class="medium-width">
+            <input type="text" name="dokument_miejscowosc_data" placeholder="Tychy, 13.01.2026 r."
+                style="width: 180px;">
         </div>
 
-        <div class="section">
-            <strong>Wierzyciel:</strong><br>
-            <input type="text" name="wierzyciel_nazwa" placeholder="Orlen Spółka Akcyjna" class="full-width"><br>
-            <input type="text" name="wierzyciel_adres" placeholder="Ul. Chemików 7, 09-411 Płock"
-                class="full-width"><br>
-            KRS: <input type="text" name="wierzyciel_krs" placeholder="0987654" class="short-width">
-            NIP: <input type="text" name="wierzyciel_nip" placeholder="09876545" class="short-width">
+        <div class="flex-group">
+            <div class="section">
+                <strong>Wierzyciel:</strong><br>
+                <input type="text" name="wierzyciel_nazwa_pelna" placeholder="Orlen Spółka Akcyjna"
+                    class="full-width"><br>
+                <input type="text" name="wierzyciel_adres_naglowek" placeholder="Ul. Chemików 7, 09-411 Płock"
+                    class="full-width"><br>
+                KRS: <input type="text" name="wierzyciel_krs_naglowek" placeholder="0987654" style="width: 80px;">
+                NIP: <input type="text" name="wierzyciel_nip_naglowek" placeholder="09876545" style="width: 90px;">
+            </div>
+
+            <div class="section" style="font-size: 0.9em; border-left: 2px solid #eee; padding-left: 10px;">
+                <em>zastępowana przez:</em><br>
+                <strong>r. pr. Jan Kowalski</strong><br>
+                Kancelaria Radcy Prawnego<br>
+                Al. Korfantego 100/4, 40-900 Katowice
+            </div>
         </div>
 
-        <div class="section">
-            zastępowana przez:<br>
-            <input type="text" name="pelnomocnik_godnosc" placeholder="r. pr. Jana Kowalskiego"
-                class="medium-width"><br>
-            <input type="text" name="pelnomocnik_kancelaria" placeholder="Jan Kowalski Kancelaria Radcy Prawnego"
-                class="full-width"><br>
-            <input type="text" name="pelnomocnik_adres" placeholder="Al. Korfantego 100/4, 40-900 Katowice"
-                class="full-width">
-        </div>
-
-        <div class="right-align section">
-            <strong>Dot. Faktury nr:</strong> <input type="text" name="faktura_numer" placeholder="1234"
-                class="short-width"><br><br>
-            <strong>Dłużnik:</strong><br>
-            <input type="text" name="dluznik_nazwa" placeholder="CD Projekt Spółka Akcyjna" class="medium-width"><br>
-            <input type="text" name="dluznik_adres" placeholder="ul. Jagiellońska 74, 03-301 Warszawa"
-                class="medium-width"><br>
-            KRS: <input type="text" name="dluznik_krs" placeholder="0000006865" class="short-width">
+        <div class="flex-group" style="background: #fafafa; padding: 10px; border-radius: 4px;">
+            <div>
+                <strong>Dot. Faktury nr:</strong><br>
+                <input type="text" name="faktura_numer_referencyjny" placeholder="1234" style="width: 120px;">
+            </div>
+            <div class="right-align">
+                <strong>Dłużnik:</strong><br>
+                <input type="text" name="dluznik_nazwa" placeholder="CD Projekt S.A." style="width: 200px;"><br>
+                <input type="text" name="dluznik_adres" placeholder="ul. Jagiellońska 74, Warszawa"
+                    style="width: 200px;"><br>
+                KRS: <input type="text" name="dluznik_krs" placeholder="0000006865" style="width: 100px;">
+            </div>
         </div>
 
         <div class="title">WEZWANIE DO ZAPŁATY</div>
 
-        <div class="section" style="text-align: justify;">
-            Działając w imieniu <input type="text" name="wierzyciel_nazwa_inline" placeholder="Orlen Spółka Akcyjna"
+        <div class="content-text section">
+            Działając w imieniu
+            <input type="text" name="wierzyciel_nazwa_tresc" placeholder="Orlen S.A." class="inline-input"
+                style="width: 130px;">
+            z siedzibą w
+            <input type="text" name="wierzyciel_miasto_siedziba" placeholder="Płocku" class="inline-input"
+                style="width: 100px;">,
+            <input type="text" name="wierzyciel_adres_pelny_tresc" placeholder="09-411 Płock, ul. Chemików 7"
                 class="inline-input" style="width: 200px;">
-            z siedzibą w Płocku, <input type="text" name="wierzyciel_adres_pelny"
-                placeholder="09-411 Płock, Ul. Chemików 7" class="inline-input" style="width: 250px;">
-            wpisaną do rejestru przedsiębiorców KRS pod nr: <input type="text" name="wierzyciel_krs_inline"
-                placeholder="0987654" class="inline-input" style="width: 80px;">,
-            NIP: <input type="text" name="wierzyciel_nip_inline" placeholder="09876545" class="inline-input"
+            KRS: <input type="text" name="wierzyciel_krs_tresc" placeholder="0987654" class="inline-input"
+                style="width: 80px;">,
+            kapitał zakładowy: <input type="text" name="wierzyciel_kapital_zakladowy" placeholder="1 451 177 561 zł"
+                class="inline-input" style="width: 120px;">,
+            na podstawie pełnomocnictwa, w związku z fakturą nr
+            <input type="text" name="faktura_numer_tresc" placeholder="1234" class="inline-input" style="width: 60px;">
+            z dnia <input type="text" name="faktura_data_wystawienia" placeholder="15.05.2025" class="inline-input"
                 style="width: 90px;">
-            o kapitale zakładowym w wysokości <input type="text" name="wierzyciel_kapital"
-                placeholder="1 451 177 561,25 zł" class="inline-input" style="width: 150px;"> opłaconym w całości,
-            na podstawie pełnomocnictwa, w związku z wystawioną fakturą VAT o nr <input type="text"
-                name="faktura_numer_inline" placeholder="1234" class="inline-input" style="width: 60px;">
-            z dnia <input type="text" name="faktura_data" placeholder="15.05.2025 r." class="inline-input"
-                style="width: 100px;">
-            wzywam Państwa do uiszczenia na rzecz mojego mocodawcy kwoty <input type="text" name="kwota"
-                placeholder="2350 zł" class="inline-input" style="width: 80px;">
-            wraz z ustawowymi odsetkami za opóźnienie liczonymi od dnia <input type="text" name="data_odsetek"
-                placeholder="31.05.2025 r." class="inline-input" style="width: 100px;"> do dnia zapłaty.
+            wzywam do zapłaty kwoty
+            <input type="text" name="platnosc_kwota_glowna" placeholder="2350 zł" class="inline-input"
+                style="width: 80px;">
+            wraz z odsetkami od dnia
+            <input type="text" name="platnosc_data_odsetek" placeholder="31.05.2025" class="inline-input"
+                style="width: 90px;">.
         </div>
 
         <div class="section">
-            Proszę o uregulowanie powyższych kwot na następujący rachunek:<br>
-            <input type="text" name="rachunek_bankowy" placeholder="098765432345678987654" class="medium-width">
-            <input type="text" name="bank_nazwa" placeholder="ING BANK ŚLĄSKI" class="medium-width">
-        </div>
-
-        <div class="section">
-            W tytule proszę o wskazanie nr faktury.<br>
-            Jednocześnie informuję, że w razie braku terminowego uregulowania powyższej należności mój mocodawca
-            skieruje sprawę na drogę sądową.
+            <strong>Numer rachunku do wpłaty:</strong><br>
+            <input type="text" name="bank_numer_konta" placeholder="00 0000 0000 0000 0000 0000 0000"
+                class="full-width"><br>
+            <input type="text" name="bank_nazwa_banku" placeholder="ING BANK ŚLĄSKI S.A." class="full-width">
         </div>
 
         <div class="right-align footer">
-            <input type="text" name="pelnomocnik_podpis" placeholder="r. pr. Jan Kowalski" class="medium-width"
-                style="text-align: center;"><br>
-            (podpis)
+            <strong>r. pr. Jan Kowalski</strong><br>
+            <span style="font-size: 0.8em; color: #666;">podpis wygenerowany systemowo</span>
         </div>
 
-        <div class="section" style="margin-top: 40px;">
+        <div class="section"
+            style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
             <strong>Załączniki:</strong><br>
             1. Pełnomocnictwo<br>
-            2. Faktura nr <input type="text" name="faktura_numer_zal" placeholder="1234" class="inline-input"
+            2. Faktura nr <input type="text" name="zalacznik_faktura_nr" placeholder="1234" class="inline-input"
                 style="width: 60px;">
         </div>
     </div>

@@ -68,7 +68,24 @@ def _parse_json_response(text: str) -> dict:
 def extract_invoice_data(ocr_json_path: str, custom_attributes: str = '') -> dict:
     """
     Ekstrahuje dane z dokumentu na podstawie wyników OCR.
+    Wynik zapisywany jest automatycznie do output/extract_data/.
     """
+    
+    # System role - jasna rola dla LLM
+    SYSTEM_ROLE = """Jesteś specjalistycznym asystentem do ekstrakcji danych z dokumentów.
+
+TWOJA ROLA:
+- Analizujesz tekst dokumentów (faktury, paragony, umowy, itp.)
+- Wyodrębniasz TYLKO konkretne dane określone przez użytkownika
+- Zwracasz dane WYŁĄCZNIE w formacie JSON
+
+ZASADY:
+1. Odpowiadaj TYLKO kodem JSON - bez żadnych komentarzy, wyjaśnień czy tekstu
+2. Jeśli nie możesz znaleźć danej wartości, wstaw null lub pusty string ""
+3. Zachowaj oryginalne formatowanie liczb i dat z dokumentu
+4. Dla list (np. pozycje faktury) użyj tablicy JSON []
+5. Używaj polskich nazw kluczy jeśli tak podano w atrybutach"""
+
     try:
         full_text = _get_text_from_ocr_json(ocr_json_path)
         
@@ -88,26 +105,51 @@ def extract_invoice_data(ocr_json_path: str, custom_attributes: str = '') -> dic
 - sposob_platnosci
 - numer_konta"""
         
-        prompt = f"""Wyodrębnij następujące dane z tego dokumentu i zwróć TYLKO jako JSON:
+        prompt = f"""Wyodrębnij następujące dane z dokumentu i zwróć jako JSON:
+
+DANE DO WYODRĘBNIENIA:
 {attributes_list}
 
-Tekst dokumentu:
-{full_text}"""
+TEKST DOKUMENTU:
+{full_text}
+
+Zwróć TYLKO JSON:"""
         
         print("🤖 Wysyłanie zapytania do llama-server...")
         
-        generated_text = _call_llm(
-            prompt,
-            "Jesteś asystentem do ekstrakcji danych z dokumentów. Zwracaj TYLKO JSON."
-        )
+        generated_text = _call_llm(prompt, SYSTEM_ROLE)
         
         extracted_data = _parse_json_response(generated_text)
         
-        print("✅ Ekstrakcja zakończona.")
+        # --- ZAPIS DO PLIKU JSON ---
+        source_filename = os.path.basename(ocr_json_path)
+        source_name = os.path.splitext(source_filename)[0]
+        
+        # Folder output/extract_data
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        extract_dir = os.path.join(project_root, "output", "extract_data")
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        # Nazwa pliku: extracted_[oryginalna_nazwa].json
+        output_filename = f"extracted_{source_name}.json"
+        output_path = os.path.join(extract_dir, output_filename)
+        
+        # Zapisz wyekstrahowane dane
+        output_data = {
+            'source_file': source_filename,
+            'extracted_data': extracted_data
+        }
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(output_data, f, ensure_ascii=False, indent=2)
+        
+        print(f"✅ Ekstrakcja zakończona. Zapisano: {output_path}")
         
         return {
             'success': True,
-            'source_file': os.path.basename(ocr_json_path),
+            'source_file': source_filename,
+            'output_file': output_filename,
+            'output_path': output_path,
             'extracted_data': extracted_data
         }
         
@@ -131,35 +173,51 @@ def extract_template_fields(json_paths: list, field_names: list) -> dict:
     Returns:
         Słownik z wyekstrahowanymi wartościami pól
     """
+    
+    # System role - precyzyjny dla Llama 3.2
+    SYSTEM_ROLE = """Jesteś precyzyjnym systemem ekstrakcji danych z dokumentów.
+Twoim zadaniem jest przeanalizowanie dostarczonej treści i wygenerowanie poprawnego obiektu JSON.
+
+ZASADY:
+1. Odpowiadaj WYŁĄCZNIE kodem JSON - bez żadnych komentarzy, wyjaśnień czy tekstu przed/po
+2. Ignoruj numery stron, stopki i nagłówki dokumentów
+3. Jeśli dane różnią się między dokumentami, wybierz te z najnowszą datą (np. "Stan na dzień...")
+4. Jeśli nie możesz znaleźć wartości dla pola, wstaw pusty string ""
+5. Zachowaj oryginalne formatowanie dat i liczb
+6. Dla adresów łącz wszystkie elementy w jeden string (ulica, numer, kod, miasto)
+7. Używaj dokładnie tych samych nazw kluczy jakie podano w schemacie
+8. ZACHOWAJ POLSKIE ZNAKI - nie usuwaj ani nie zamieniaj: ą, ę, ś, ć, ź, ż, ó, ł, ń, Ą, Ę, Ś, Ć, Ź, Ż, Ó, Ł, Ń
+9. Odpowiadaj po polsku - wszystkie wartości tekstowe mają być w języku polskim"""
+
     try:
         # Zbierz tekst ze wszystkich plików
         all_texts = []
         for path in json_paths:
             text = _get_text_from_ocr_json(path)
             filename = os.path.basename(path)
-            all_texts.append(f"=== Dokument: {filename} ===\n{text}")
+            all_texts.append(f"--- DOKUMENT: {filename} ---\n{text}")
         
         combined_text = '\n\n'.join(all_texts)
         
-        # Przygotuj listę pól do ekstrakcji
-        fields_list = '\n'.join(f'- {field}' for field in field_names)
+        # Przygotuj schemat JSON
+        schema_fields = ',\n  '.join(f'"{field}": "string"' for field in field_names)
         
-        prompt = f"""Przeanalizuj poniższe dokumenty i wyodrębnij wartości dla następujących pól.
-Zwróć TYLKO JSON gdzie klucze to nazwy pól, a wartości to wyodrębnione dane.
-Jeśli nie możesz znaleźć wartości dla pola, ustaw wartość na pusty string "".
+        prompt = f"""Na podstawie poniższych dokumentów wypełnij schemat JSON.
+Wybierz najbardziej aktualne i kompletne dane.
 
-Pola do wyodrębnienia:
-{fields_list}
+WYMAGANY FORMAT ODPOWIEDZI (wypełnij wartości):
+{{
+  {schema_fields}
+}}
 
-Dokumenty:
-{combined_text}"""
+TREŚĆ DOKUMENTÓW:
+{combined_text}
+
+Zwróć TYLKO wypełniony JSON:"""
         
         print(f"🤖 Przetwarzanie {len(json_paths)} plików przez LLM...")
         
-        generated_text = _call_llm(
-            prompt,
-            "Jesteś asystentem do ekstrakcji danych z dokumentów. Dopasuj dane z dokumentów do podanych pól. Zwracaj TYLKO JSON."
-        )
+        generated_text = _call_llm(prompt, SYSTEM_ROLE)
         
         extracted_data = _parse_json_response(generated_text)
         

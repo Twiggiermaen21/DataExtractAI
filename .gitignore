@@ -11,3 +11,6 @@ templates_db/*
 zpom/*
 app/gotowe_dokumenty/*
 !app/gotowe_dokumenty/.gitkeep
+llama.md
+models/*
+!models/.gitkeep
