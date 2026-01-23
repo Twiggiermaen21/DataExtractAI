@@ -1,0 +1,47 @@
+<div id="tab-quick" class="tab-content active">
+    <div class="card">
+        <div class="card-title"><span class="icon">⚡</span> Szybkie przetwarzanie</div>
+
+        <div class="grid-2" style="margin-bottom: 20px;">
+            <div>
+                <label>📁 Wrzuć dokumenty do OCR</label>
+                <div class="upload-zone" id="quickUploadZone" style="padding: 32px 20px;">
+                    <div class="upload-icon" style="font-size: 2rem;">📄</div>
+                    <div class="upload-text">Przeciągnij pliki lub kliknij</div>
+                    <div class="upload-hint">JPG, PNG, PDF</div>
+                </div>
+                <input type="file" id="quickFileInput" multiple accept="image/*,.pdf" style="display:none;">
+                <div class="file-list" id="quickFileList"></div>
+            </div>
+
+            <div>
+                <label>📋 Wybierz szablon do wypełnienia</label>
+                <select id="quickTemplateSelect">
+                    <option value="">-- Wybierz szablon --</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn btn-purple" id="btnQuickProcess" disabled>
+            <span id="btnQuickIcon">🚀</span>
+            <span id="btnQuickText">Przetwórz i wypełnij</span>
+        </button>
+
+        <div class="progress-bar hidden" id="quickProgressBar">
+            <div class="fill" id="quickProgressFill" style="width: 0%"></div>
+        </div>
+        <div class="status-text hidden" id="quickStatusText"></div>
+    </div>
+
+    <!-- Quick Result Preview -->
+    <div class="card hidden" id="quickResultCard">
+        <div class="card-title"><span class="icon">📝</span> Wypełniony dokument (możesz edytować pola)</div>
+        <div class="quick-preview" id="quickPreview">
+            <div class="quick-status">Tutaj pojawi się wypełniony dokument</div>
+        </div>
+        <button class="btn btn-green" id="btnPrintPdf" style="margin-top: 16px;">
+            <span>🖨️</span>
+            <span>Drukuj / Zapisz jako PDF</span>
+        </button>
+    </div>
+</div>

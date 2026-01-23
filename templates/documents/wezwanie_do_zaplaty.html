@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0">
     <title>Formularz Wezwania do Zapłaty</title>
     <style>
         body {
@@ -57,6 +57,8 @@
             background: transparent;
             padding: 0 2px;
             font-weight: 600;
+            width: 300px;
+            /* Zwiększona szerokość domyślna */
         }
 
         .title {
@@ -107,18 +109,18 @@
                 style="width: 180px;">
         </div>
 
-        <div class="flex-group">
+        <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
             <div class="section">
                 <strong>Wierzyciel:</strong><br>
                 <input type="text" name="wierzyciel_nazwa_pelna" placeholder="Orlen Spółka Akcyjna"
-                    class="full-width"><br>
+                    style="width: 250px;"><br>
                 <input type="text" name="wierzyciel_adres_naglowek" placeholder="Ul. Chemików 7, 09-411 Płock"
-                    class="full-width"><br>
-                KRS: <input type="text" name="wierzyciel_krs_naglowek" placeholder="0987654" style="width: 80px;">
-                NIP: <input type="text" name="wierzyciel_nip_naglowek" placeholder="09876545" style="width: 90px;">
+                    style="width: 250px;"><br>
+                KRS: <input type="text" name="wierzyciel_krs_naglowek" placeholder="0987654"><br>
+                NIP: <input type="text" name="wierzyciel_nip_naglowek" placeholder="09876545">
             </div>
 
-            <div class="section" style="font-size: 0.9em; border-left: 2px solid #eee; padding-left: 10px;">
+            <div class="section" style="font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px;">
                 <em>zastępowana przez:</em><br>
                 <strong>r. pr. Jan Kowalski</strong><br>
                 Kancelaria Radcy Prawnego<br>
@@ -133,10 +135,10 @@
             </div>
             <div class="right-align">
                 <strong>Dłużnik:</strong><br>
-                <input type="text" name="dluznik_nazwa" placeholder="CD Projekt S.A." style="width: 200px;"><br>
+                <input type="text" name="dluznik_nazwa" placeholder="CD Projekt S.A." style="width: 250px;"><br>
                 <input type="text" name="dluznik_adres" placeholder="ul. Jagiellońska 74, Warszawa"
-                    style="width: 200px;"><br>
-                KRS: <input type="text" name="dluznik_krs" placeholder="0000006865" style="width: 100px;">
+                    style="width: 250px;"><br>
+                KRS: <input type="text" name="dluznik_krs" placeholder="0000006865">
             </div>
         </div>
 
@@ -156,7 +158,8 @@
             kapitał zakładowy: <input type="text" name="wierzyciel_kapital_zakladowy" placeholder="1 451 177 561 zł"
                 class="inline-input" style="width: 120px;">,
             na podstawie pełnomocnictwa, w związku z fakturą nr
-            <input type="text" name="faktura_numer_tresc" placeholder="1234" class="inline-input" style="width: 60px;">
+            <input type="text" name="faktura_numer_referencyjny" placeholder="1234" class="inline-input"
+                style="width: 60px;">
             z dnia <input type="text" name="faktura_data_wystawienia" placeholder="15.05.2025" class="inline-input"
                 style="width: 90px;">
             wzywam do zapłaty kwoty
@@ -183,10 +186,59 @@
             style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
             <strong>Załączniki:</strong><br>
             1. Pełnomocnictwo<br>
-            2. Faktura nr <input type="text" name="zalacznik_faktura_nr" placeholder="1234" class="inline-input"
+            2. Faktura nr <input type="text" name="faktura_numer_referencyjny" placeholder="1234" class="inline-input"
                 style="width: 60px;">
         </div>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // 1. Znajdź pole input
+            const inputField = document.querySelector('input[name="dokument_miejscowosc_data"]');
+
+            // 2. Pobierz aktualną datę
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const currentDate = `${day}.${month}.${year} r.`;
+
+            // Ustaw wartość początkową
+            inputField.value = `..., ${currentDate}`;
+
+            // 3. Pobierz lokalizację
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async function (position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    try {
+                        // ZMIANA: Używamy API BigDataCloud, które nie blokuje (nie zwraca błędu 403)
+                        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pl`;
+
+                        const response = await fetch(url);
+                        const data = await response.json();
+
+                        // To API zwraca dane w innej strukturze:
+                        // city = miasto, locality = miejscowość/gmina
+                        const city = data.city || data.locality || data.principalSubdivision || "Miejscowość";
+
+                        // 4. Aktualizujemy pole input
+                        inputField.value = `${city}, ${currentDate}`;
+
+                    } catch (error) {
+                        console.error("Błąd pobierania miasta:", error);
+                        inputField.value = `${currentDate}`;
+                    }
+                }, function (error) {
+                    console.warn("Brak zgody na lokalizację:", error);
+                    inputField.value = `${currentDate}`;
+                });
+            } else {
+                inputField.value = `${currentDate}`;
+            }
+        });
+    </script>
 
 </body>
 
