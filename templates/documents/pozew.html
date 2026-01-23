@@ -162,6 +162,41 @@
         .page-number-footer {
             display: none;
         }
+
+        #btnShowInPrint {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            margin-bottom: 12px;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #btnShowInPrint:hover {
+            background-color: #e0e0e0;
+            border-color: #bbb;
+        }
+
+        #btnShowInPrint::before {
+            content: "👁️";
+        }
+
+        #btnShowInPrint.active {
+            background-color: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        #btnShowInPrint.active::before {
+            content: "✓";
+        }
     </style>
 </head>
 
@@ -512,11 +547,18 @@
 
             if (btn && section) {
                 btn.addEventListener('click', function () {
-                    // Dodajemy klasę, która ukrywa element na wydruku
-                    section.classList.add('no-print');
+                    // Toggle visibility class
+                    section.classList.toggle('no-print');
 
-                    // Opcjonalnie: Możesz tu od razu wywołać drukowanie
-                    // window.print(); 
+                    // Toggle button styling
+                    btn.classList.toggle('active');
+
+                    // Update text
+                    if (section.classList.contains('no-print')) {
+                        btn.textContent = 'Opcje ukryte w druku (Kliknij aby pokazać)';
+                    } else {
+                        btn.textContent = 'Przygotuj do druku / Ukryj opcje';
+                    }
                 });
             }
         });
