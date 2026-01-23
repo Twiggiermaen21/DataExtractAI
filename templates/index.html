@@ -493,6 +493,74 @@
       padding: 12px 20px;
       margin-top: 0;
     }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 14px 20px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Quick OCR Preview */
+    .quick-preview {
+      background: white;
+      border-radius: var(--radius-lg);
+      min-height: 400px;
+      overflow: hidden;
+    }
+
+    .quick-preview iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+    }
+
+    .quick-status {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 
@@ -503,89 +571,143 @@
       <p class="subtitle">OCR • Extraction • Template Filling</p>
     </header>
 
-    <!-- OCR Section -->
-    <div class="card">
-      <div class="card-title"><span class="icon">📷</span> Skanowanie OCR</div>
-
-      <div class="upload-zone" id="uploadZone">
-        <div class="upload-icon">📁</div>
-        <div class="upload-text">Przeciągnij pliki lub kliknij aby wybrać</div>
-        <div class="upload-hint">JPG, PNG, PDF • Wiele plików naraz</div>
-      </div>
-      <input type="file" id="fileInput" multiple accept="image/*,.pdf">
-
-      <div class="file-list" id="fileList"></div>
-
-      <button class="btn" id="btnOcr" disabled>
-        <span id="btnIcon">🚀</span>
-        <span id="btnText">Uruchom OCR</span>
-      </button>
-
-      <div class="progress-bar hidden" id="progressBar">
-        <div class="fill" id="progressFill" style="width: 0%"></div>
-      </div>
-      <div class="status-text hidden" id="statusText"></div>
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="quick">⚡ Szybki OCR</button>
+      <button class="tab-btn" data-tab="advanced">📋 Tryb Zaawansowany</button>
     </div>
 
-    <!-- OCR Results -->
-    <div class="card hidden" id="resultsCard">
-      <div class="card-title"><span class="icon">✅</span> Wyniki OCR</div>
-      <div id="resultsList"></div>
-    </div>
-
-    <div class="divider"></div>
-
-    <!-- Template Section -->
-    <div class="grid-2">
-      <!-- Left: JSON Selection -->
+    <!-- ==================== TAB: QUICK OCR ==================== -->
+    <div id="tab-quick" class="tab-content active">
       <div class="card">
-        <div class="card-title"><span class="icon">📄</span> Wybierz pliki JSON</div>
+        <div class="card-title"><span class="icon">⚡</span> Szybkie przetwarzanie</div>
 
-        <div class="inline-group" style="margin-bottom: 16px;">
-          <div style="flex: 1;">
-            <label>Wyniki OCR do przetworzenia</label>
+        <div class="grid-2" style="margin-bottom: 20px;">
+          <div>
+            <label>📁 Wrzuć dokumenty do OCR</label>
+            <div class="upload-zone" id="quickUploadZone" style="padding: 32px 20px;">
+              <div class="upload-icon" style="font-size: 2rem;">📄</div>
+              <div class="upload-text">Przeciągnij pliki lub kliknij</div>
+              <div class="upload-hint">JPG, PNG, PDF</div>
+            </div>
+            <input type="file" id="quickFileInput" multiple accept="image/*,.pdf" style="display:none;">
+            <div class="file-list" id="quickFileList"></div>
           </div>
-          <button class="btn" id="refreshJsonList"
-            style="width: auto; margin-top: 0; padding: 8px 16px; font-size: 0.85rem;">🔄 Odśwież</button>
+
+          <div>
+            <label>📋 Wybierz szablon do wypełnienia</label>
+            <select id="quickTemplateSelect">
+              <option value="">-- Wybierz szablon --</option>
+            </select>
+          </div>
         </div>
 
-        <div class="checkbox-list" id="jsonCheckboxList">
-          <div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON</div>
-        </div>
-
-        <div style="margin-top: 20px;">
-          <label>📋 Szablon dokumentu</label>
-          <select id="templateSelect">
-            <option value="">-- Wybierz szablon --</option>
-          </select>
-        </div>
-
-        <button class="btn btn-green" id="btnTemplate" disabled>
-          <span id="btnTemplateIcon">🤖</span>
-          <span id="btnTemplateText">Wypełnij szablon AI</span>
+        <button class="btn btn-purple" id="btnQuickProcess" disabled>
+          <span id="btnQuickIcon">🚀</span>
+          <span id="btnQuickText">Przetwórz i wypełnij</span>
         </button>
 
-        <div class="progress-bar hidden" id="templateProgressBar">
-          <div class="fill" id="templateProgressFill" style="width: 0%"></div>
+        <div class="progress-bar hidden" id="quickProgressBar">
+          <div class="fill" id="quickProgressFill" style="width: 0%"></div>
         </div>
-        <div class="status-text hidden" id="templateStatusText"></div>
+        <div class="status-text hidden" id="quickStatusText"></div>
       </div>
 
-      <!-- Right: Template Preview -->
-      <div class="card">
-        <div class="card-title"><span class="icon">👁️</span> Podgląd szablonu</div>
-        <div class="template-preview" id="templatePreview">
-          <div style="padding: 48px; text-align: center; color: var(--text-muted);">
-            Wybierz szablon aby zobaczyć podgląd
-          </div>
+      <!-- Quick Result Preview -->
+      <div class="card hidden" id="quickResultCard">
+        <div class="card-title"><span class="icon">📝</span> Wypełniony dokument (możesz edytować pola)</div>
+        <div class="quick-preview" id="quickPreview">
+          <div class="quick-status">Tutaj pojawi się wypełniony dokument</div>
         </div>
       </div>
     </div>
 
-    <!-- Extracted Data -->
-    <div class="card hidden" id="extractedDataCard">
-      <div class="card-title"><span class="icon">📊</span> Wyekstrahowane dane</div>
-      <pre class="json-output" id="extractedDataContent"></pre>
+    <!-- ==================== TAB: ADVANCED ==================== -->
+    <div id="tab-advanced" class="tab-content">
+      <!-- OCR Section -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📷</span> Skanowanie OCR</div>
+
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Przeciągnij pliki lub kliknij aby wybrać</div>
+          <div class="upload-hint">JPG, PNG, PDF • Wiele plików naraz</div>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*,.pdf">
+
+        <div class="file-list" id="fileList"></div>
+
+        <button class="btn" id="btnOcr" disabled>
+          <span id="btnIcon">🚀</span>
+          <span id="btnText">Uruchom OCR</span>
+        </button>
+
+        <div class="progress-bar hidden" id="progressBar">
+          <div class="fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="status-text hidden" id="statusText"></div>
+      </div>
+
+      <!-- OCR Results -->
+      <div class="card hidden" id="resultsCard">
+        <div class="card-title"><span class="icon">✅</span> Wyniki OCR</div>
+        <div id="resultsList"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Template Section -->
+      <div class="grid-2">
+        <!-- Left: JSON Selection -->
+        <div class="card">
+          <div class="card-title"><span class="icon">📄</span> Wybierz pliki JSON</div>
+
+          <div class="inline-group" style="margin-bottom: 16px;">
+            <div style="flex: 1;">
+              <label>Wyniki OCR do przetworzenia</label>
+            </div>
+            <button class="btn" id="refreshJsonList"
+              style="width: auto; margin-top: 0; padding: 8px 16px; font-size: 0.85rem;">🔄 Odśwież</button>
+          </div>
+
+          <div class="checkbox-list" id="jsonCheckboxList">
+            <div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON</div>
+          </div>
+
+          <div style="margin-top: 20px;">
+            <label>📋 Szablon dokumentu</label>
+            <select id="templateSelect">
+              <option value="">-- Wybierz szablon --</option>
+            </select>
+          </div>
+
+          <button class="btn btn-green" id="btnTemplate" disabled>
+            <span id="btnTemplateIcon">🤖</span>
+            <span id="btnTemplateText">Wypełnij szablon AI</span>
+          </button>
+
+          <div class="progress-bar hidden" id="templateProgressBar">
+            <div class="fill" id="templateProgressFill" style="width: 0%"></div>
+          </div>
+          <div class="status-text hidden" id="templateStatusText"></div>
+        </div>
+
+        <!-- Right: Template Preview -->
+        <div class="card">
+          <div class="card-title"><span class="icon">👁️</span> Podgląd szablonu</div>
+          <div class="template-preview" id="templatePreview">
+            <div style="padding: 48px; text-align: center; color: var(--text-muted);">
+              Wybierz szablon aby zobaczyć podgląd
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extracted Data -->
+      <div class="card hidden" id="extractedDataCard">
+        <div class="card-title"><span class="icon">📊</span> Wyekstrahowane dane</div>
+        <pre class="json-output" id="extractedDataContent"></pre>
+      </div>
     </div>
   </div>
 
@@ -911,6 +1033,197 @@
 
         setTimeout(() => {
           templateProgressBar.classList.add('hidden');
+        }, 2000);
+      }
+    });
+
+    // ==================== TABS ====================
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active from all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+        // Activate clicked tab
+        btn.classList.add('active');
+        const tabId = btn.dataset.tab;
+        document.getElementById('tab-' + tabId).classList.add('active');
+      });
+    });
+
+    // ==================== QUICK OCR ====================
+    const quickUploadZone = document.getElementById('quickUploadZone');
+    const quickFileInput = document.getElementById('quickFileInput');
+    const quickFileList = document.getElementById('quickFileList');
+    const quickTemplateSelect = document.getElementById('quickTemplateSelect');
+    const btnQuickProcess = document.getElementById('btnQuickProcess');
+    const btnQuickIcon = document.getElementById('btnQuickIcon');
+    const btnQuickText = document.getElementById('btnQuickText');
+    const quickProgressBar = document.getElementById('quickProgressBar');
+    const quickProgressFill = document.getElementById('quickProgressFill');
+    const quickStatusText = document.getElementById('quickStatusText');
+    const quickResultCard = document.getElementById('quickResultCard');
+    const quickPreview = document.getElementById('quickPreview');
+
+    let quickFiles = [];
+
+    // Load templates for quick OCR
+    async function loadQuickTemplates() {
+      try {
+        const response = await fetch('/api/templates');
+        const templates = await response.json();
+
+        quickTemplateSelect.innerHTML = '<option value="">-- Wybierz szablon --</option>';
+        templates.forEach(t => {
+          quickTemplateSelect.innerHTML += `<option value="${t.filename}">${t.name}</option>`;
+        });
+      } catch (e) {
+        console.error('Error loading templates:', e);
+      }
+    }
+    loadQuickTemplates();
+
+    // Upload zone events
+    quickUploadZone.addEventListener('click', () => quickFileInput.click());
+
+    quickUploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      quickUploadZone.classList.add('dragover');
+    });
+
+    quickUploadZone.addEventListener('dragleave', () => {
+      quickUploadZone.classList.remove('dragover');
+    });
+
+    quickUploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      quickUploadZone.classList.remove('dragover');
+      handleQuickFiles(e.dataTransfer.files);
+    });
+
+    quickFileInput.addEventListener('change', (e) => {
+      handleQuickFiles(e.target.files);
+    });
+
+    function handleQuickFiles(files) {
+      for (const file of files) {
+        if (!quickFiles.find(f => f.name === file.name)) {
+          quickFiles.push(file);
+        }
+      }
+      renderQuickFileList();
+      updateQuickButton();
+    }
+
+    function renderQuickFileList() {
+      quickFileList.innerHTML = quickFiles.map((file, index) => `
+        <div class="file-item">
+          <span class="icon">📄</span>
+          <span class="name">${file.name}</span>
+          <span class="size">${formatSize(file.size)}</span>
+          <span class="remove" onclick="removeQuickFile(${index})">✕</span>
+        </div>
+      `).join('');
+    }
+
+    window.removeQuickFile = function (index) {
+      quickFiles.splice(index, 1);
+      renderQuickFileList();
+      updateQuickButton();
+    };
+
+    function updateQuickButton() {
+      btnQuickProcess.disabled = quickFiles.length === 0 || !quickTemplateSelect.value;
+    }
+
+    quickTemplateSelect.addEventListener('change', updateQuickButton);
+
+    // Quick Process Button
+    btnQuickProcess.addEventListener('click', async () => {
+      if (quickFiles.length === 0 || !quickTemplateSelect.value) return;
+
+      btnQuickProcess.disabled = true;
+      btnQuickProcess.classList.add('loading');
+      btnQuickIcon.innerHTML = '<span class="spinner">⏳</span>';
+      btnQuickText.textContent = 'Przetwarzanie...';
+      quickProgressBar.classList.remove('hidden');
+      quickStatusText.classList.remove('hidden');
+      quickStatusText.textContent = '📷 Ładowanie modelu OCR...';
+      quickProgressFill.style.width = '10%';
+      quickResultCard.classList.add('hidden');
+
+      const formData = new FormData();
+      quickFiles.forEach(file => {
+        formData.append('files', file);
+      });
+      formData.append('template', quickTemplateSelect.value);
+
+      try {
+        quickStatusText.textContent = '📷 Przetwarzanie OCR...';
+        quickProgressFill.style.width = '30%';
+
+        const response = await fetch('/api/quick_process', {
+          method: 'POST',
+          body: formData
+        });
+
+        quickStatusText.textContent = '🤖 Ekstrakcja danych przez AI...';
+        quickProgressFill.style.width = '70%';
+
+        const data = await response.json();
+        quickProgressFill.style.width = '100%';
+
+        if (data.success) {
+          quickStatusText.textContent = '✅ Zakończono! Ładowanie szablonu...';
+
+          // Load template and fill with data
+          const templateResponse = await fetch(`/api/template/${data.template}`);
+          const templateData = await templateResponse.json();
+
+          // Create iframe with filled template
+          quickResultCard.classList.remove('hidden');
+          quickPreview.innerHTML = '';
+
+          const iframe = document.createElement('iframe');
+          iframe.style.width = '100%';
+          iframe.style.height = '500px';
+          iframe.style.border = 'none';
+          quickPreview.appendChild(iframe);
+
+          iframe.contentDocument.open();
+          iframe.contentDocument.write(templateData.content);
+          iframe.contentDocument.close();
+
+          // Fill inputs
+          setTimeout(() => {
+            const doc = iframe.contentDocument;
+            for (const [fieldName, value] of Object.entries(data.fields)) {
+              const input = doc.querySelector(`input[name="${fieldName}"]`);
+              if (input && value) {
+                input.value = value;
+                input.style.background = '#e8f5e9';
+              }
+            }
+          }, 100);
+
+          // Clear files
+          quickFiles = [];
+          renderQuickFileList();
+
+        } else {
+          quickStatusText.textContent = `❌ ${data.error}`;
+        }
+
+      } catch (error) {
+        quickStatusText.textContent = `❌ ${error.message}`;
+      } finally {
+        btnQuickProcess.classList.remove('loading');
+        btnQuickIcon.textContent = '🚀';
+        btnQuickText.textContent = 'Przetwórz i wypełnij';
+        updateQuickButton();
+
+        setTimeout(() => {
+          quickProgressBar.classList.add('hidden');
         }, 2000);
       }
     });

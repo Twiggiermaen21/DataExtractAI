@@ -153,3 +153,137 @@ def get_result(filename):
 def serve_input(filename):
     """Serwuje plik wejściowy."""
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
+
+@ocr_bp.route('/api/quick_process', methods=['POST'])
+def quick_process():
+    """
+    Szybki OCR - łączy OCR + ekstrakcję szablonu w jeden call.
+    Przyjmuje: pliki, nazwa szablonu
+    Zwraca: wyekstrahowane dane gotowe do wstawienia w szablon
+    """
+    from app.services.llm_service import extract_template_fields
+    
+    if 'files' not in request.files:
+        return jsonify({'success': False, 'error': 'Brak plików'}), 400
+    
+    files = request.files.getlist('files')
+    template_name = request.form.get('template', '')
+    
+    if not files or files[0].filename == '':
+        return jsonify({'success': False, 'error': 'Nie wybrano plików'}), 400
+    
+    if not template_name:
+        return jsonify({'success': False, 'error': 'Nie wybrano szablonu'}), 400
+    
+    # KROK 1: OCR
+    try:
+        pipeline = get_pipeline()
+        if pipeline is None:
+            return jsonify({'success': False, 'error': 'Nie można załadować modelu OCR'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Błąd ładowania modelu: {str(e)}'}), 500
+    
+    processed_jsons = []
+    
+    for file in files:
+        if file.filename == '':
+            continue
+        
+        filename = file.filename
+        original_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        
+        try:
+            file.save(original_path)
+            print(f"📁 [Quick] Przetwarzanie: {filename}")
+            
+            # Poprawa obrazu (tylko dla obrazów, nie PDF)
+            path_to_process = original_path
+            file_ext = os.path.splitext(filename)[1].lower()
+            
+            if file_ext != '.pdf':
+                try:
+                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
+                    path_to_process = temp_enhanced_path
+                except Exception:
+                    pass
+            
+            # OCR
+            ocr_output = pipeline.predict(path_to_process)
+            
+            # Zapis wyników do JSON
+            for res in ocr_output:
+                if hasattr(res, 'save_to_json'):
+                    res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
+            
+            # Uprość JSON
+            output_folder = current_app.config['OUTPUT_FOLDER']
+            base_name = os.path.splitext(filename)[0]
+            
+            for json_file in os.listdir(output_folder):
+                if json_file.startswith(base_name) and json_file.endswith('.json'):
+                    json_path = os.path.join(output_folder, json_file)
+                    try:
+                        with open(json_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        
+                        simplified = {
+                            'input_path': data.get('input_path', ''),
+                            'parsing_res_list': [
+                                {'block_content': block.get('block_content', '')}
+                                for block in data.get('parsing_res_list', [])
+                                if block.get('block_content')
+                            ]
+                        }
+                        
+                        with open(json_path, 'w', encoding='utf-8') as f:
+                            json.dump(simplified, f, ensure_ascii=False, indent=2)
+                        
+                        processed_jsons.append(json_path)
+                    except Exception:
+                        pass
+            
+            print(f"  ✅ [Quick] OCR zakończone: {filename}")
+            
+        except Exception as e:
+            print(f"  ❌ [Quick] Błąd: {e}")
+    
+    # Zwolnij model OCR
+    unload_pipeline()
+    
+    if not processed_jsons:
+        return jsonify({'success': False, 'error': 'Nie udało się przetworzyć żadnego pliku'}), 500
+    
+    # KROK 2: Pobierz pola szablonu
+    template_path = os.path.join(current_app.config['TEMPLATES_FOLDER'], template_name)
+    
+    if not os.path.exists(template_path):
+        return jsonify({'success': False, 'error': f'Nie znaleziono szablonu: {template_name}'}), 404
+    
+    # Wyciągnij nazwy pól input z szablonu
+    import re
+    with open(template_path, 'r', encoding='utf-8') as f:
+        template_content = f.read()
+    
+    field_names = re.findall(r'name=["\']([^"\']+)["\']', template_content)
+    field_names = list(set(field_names))  # unique
+    
+    if not field_names:
+        return jsonify({'success': False, 'error': 'Szablon nie zawiera pól input'}), 400
+    
+    # KROK 3: Ekstrakcja przez LLM
+    print(f"🤖 [Quick] Ekstrakcja {len(field_names)} pól z {len(processed_jsons)} plików...")
+    
+    result = extract_template_fields(processed_jsons, field_names)
+    
+    if 'error' in result:
+        return jsonify({'success': False, 'error': result['error']}), 500
+    
+    print(f"✅ [Quick] Zakończono pomyślnie")
+    
+    return jsonify({
+        'success': True,
+        'ocr_files': [os.path.basename(p) for p in processed_jsons],
+        'template': template_name,
+        'fields': result.get('fields', {})
+    })
