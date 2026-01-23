@@ -103,6 +103,10 @@
                 margin: 0;
             }
 
+            .no-print {
+                display: none !important;
+            }
+
             body {
                 background: white;
                 padding: 2.5cm 2cm 2cm 2cm !important;
@@ -210,7 +214,10 @@
         </div>
 
         <div class="section" style="background: #fafafa; padding: 15px; border-radius: 4px;">
-            <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd;">
+            <button class="no-print" id="btnShowInPrint">Przygotuj do druku / Ukryj opcje</button>
+
+            <div id="sekcjaOpcji40Eur"
+                style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd;">
                 <label
                     style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; font-weight: bold;">
                     <input type="checkbox" id="add40EurCheckbox">
@@ -218,7 +225,6 @@
                 </label>
                 <div id="euroInfo"
                     style="font-size: 0.85em; color: #666; margin-top: 5px; margin-left: 24px; display: none;">
-                    <!-- Tu trafi info o kursie -->
                 </div>
             </div>
 
@@ -498,7 +504,23 @@
             }
         });
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Znajdujemy przycisk i sekcję
+            const btn = document.getElementById('btnShowInPrint');
+            const section = document.getElementById('sekcjaOpcji40Eur');
 
+            if (btn && section) {
+                btn.addEventListener('click', function () {
+                    // Dodajemy klasę, która ukrywa element na wydruku
+                    section.classList.add('no-print');
+
+                    // Opcjonalnie: Możesz tu od razu wywołać drukowanie
+                    // window.print(); 
+                });
+            }
+        });
+    </script>
     <div class="page-number-footer"></div>
 </body>
 
