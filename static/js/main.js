@@ -251,6 +251,18 @@ templateSelect.addEventListener('change', async () => {
 
         templateIframe.contentDocument.close();
 
+        // Enable print button
+        const btnPrint = document.getElementById('btnPrintTemplate');
+        if (btnPrint) {
+            btnPrint.disabled = false;
+            btnPrint.onclick = function () {
+                if (templateIframe && templateIframe.contentWindow) {
+                    templateIframe.contentWindow.focus();
+                    templateIframe.contentWindow.print();
+                }
+            };
+        }
+
     } catch (e) {
         templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
     }

@@ -98,6 +98,37 @@
                 align-items: flex-start;
             }
         }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            body {
+                background: white;
+                padding: 2.5cm !important;
+                /* Marginesy dokumentu */
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            input {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+
+            /* Ukryj placeholdery przy druku (opcjonalne, ale inputy usually mają wartości) */
+            ::placeholder {
+                color: transparent;
+            }
+        }
     </style>
 </head>
 
