@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Pozew o wydanie nakazu zapłaty</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.5;
+            margin: 0;
+            padding: 10px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            min-width: 280px;
+            margin: auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .flex-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .right-align {
+            text-align: right;
+        }
+
+        input {
+            border: 1px solid #ccc;
+            border-bottom: 1px solid #333;
+            padding: 4px 8px;
+            background: #fffcf0;
+            font-size: 13px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .full-width {
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .inline-input {
+            border: none;
+            border-bottom: 1px dashed #666;
+            background: transparent;
+            padding: 0 2px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 30px 0;
+            text-transform: uppercase;
+        }
+
+        .content-text {
+            text-align: justify;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .section {
+            margin-bottom: 15px;
+        }
+
+        .court-header {
+            margin-bottom: 30px;
+        }
+
+        .footer {
+            margin-top: 50px;
+        }
+
+        @media (min-width: 700px) {
+            .flex-group {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+            }
+
+            .half-width {
+                width: 48%;
+            }
+        }
+
+        @media print {
+            @page {
+                margin: 0;
+            }
+
+            body {
+                background: white;
+                padding: 2.5cm 2cm 2cm 2cm !important;
+                /* Marginesy treści */
+                position: relative;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            /* Ukrywanie inputów */
+            input {
+                border: none !important;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+
+            ::placeholder {
+                color: transparent;
+            }
+
+            .inline-input {
+                border-bottom: none;
+                text-align: left;
+                padding: 0;
+            }
+
+            /* Custom Page Numbering */
+            .page-number-footer {
+                display: block !important;
+                position: fixed;
+                bottom: 10mm;
+                right: 20mm;
+                font-size: 10px;
+                color: #555;
+            }
+
+            .page-number-footer::after {
+                content: "Strona " counter(page);
+            }
+
+            /* Przycisk druku ukryty */
+            #btnPrintTemplate {
+                display: none !important;
+            }
+        }
+
+        .page-number-footer {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="right-align section">
+            <input type="text" name="meta_miejscowosc_data_dokumentu" placeholder="Szczecin, ..."
+                style="width: 200px; text-align: right;">
+        </div>
+
+        <div class="court-header section">
+            <strong>Do Sądu Rejonowego</strong><br>
+            <input type="text" name="sad_nazwa_pelna" class="full-width"
+                placeholder="Szczecin-Centrum w Szczecinie"><br>
+            <input type="text" name="sad_wydzial_gospodarczy" class="full-width"
+                placeholder="X Wydział Gospodarczy"><br>
+            <input type="text" name="sad_adres_pelny" class="full-width"
+                placeholder="ul. Narutowicza 19, 70-231 Szczecin">
+        </div>
+
+        <div class="flex-group">
+            <div class="half-width">
+                <strong>Strona powodowa:</strong><br>
+                <input type="text" name="powod_nazwa_pelna" class="full-width" placeholder="Orlen Spółka Akcyjna"
+                    style="font-weight: bold;"><br>
+                <input type="text" name="powod_adres_pelny" class="full-width"
+                    placeholder="Ul. Chemików 7, 09-411 Płock"><br>
+                KRS: <input type="text" name="powod_numer_krs" placeholder="0000754320" style="width: 100px;">
+
+                <div style="margin-top: 15px; padding-left: 10px; border-left: 2px solid #eee;">
+                    <em>zastępowana przez:</em><br>
+                    <strong>r. pr.</strong> <input type="text" name="pelnomocnik_imie_nazwisko"
+                        placeholder="Adama Nowaka" style="width: 150px;"><br>
+                    <input type="text" name="pelnomocnik_kancelaria_nazwa" class="full-width"
+                        placeholder="Kancelaria Radcy Prawnego"><br>
+                    <input type="text" name="pelnomocnik_adres_pelny" class="full-width"
+                        placeholder="Ul. Poziomkowa 2/4, 43-100 Tychy">
+                </div>
+            </div>
+
+            <div class="half-width">
+                <strong>Strona pozwana:</strong><br>
+                <input type="text" name="pozwany_nazwa_pelna" class="full-width" placeholder="CD Projekt Spółka Akcyjna"
+                    style="font-weight: bold;"><br>
+                <input type="text" name="pozwany_adres_pelny" class="full-width"
+                    placeholder="ul. Jagiellońska 74, 03-301 Warszawa"><br>
+                KRS: <input type="text" name="pozwany_numer_krs" placeholder="0000006865" style="width: 100px;">
+            </div>
+        </div>
+
+        <div class="section" style="background: #fafafa; padding: 15px; border-radius: 4px;">
+            <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd;">
+                <label
+                    style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; font-weight: bold;">
+                    <input type="checkbox" id="add40EurCheckbox">
+                    <span>Dolicz rekompensatę 40 EUR (koszty odzyskiwania należności)</span>
+                </label>
+                <div id="euroInfo"
+                    style="font-size: 0.85em; color: #666; margin-top: 5px; margin-left: 24px; display: none;">
+                    <!-- Tu trafi info o kursie -->
+                </div>
+            </div>
+
+            <strong>Wartość przedmiotu sporu:</strong>
+            <input type="text" name="platnosc_kwota_glowna" placeholder="2 350,00"
+                style="width: 120px; font-weight: bold;"><br>
+
+            <strong>Opłata sądowa:</strong>
+            <input type="text" name="finanse_oplata_sadowa_kwota" placeholder="100 zł" style="width: 100px;"><br>
+            <span style="font-size: 0.85em; color: #666;">(słownie: <input type="text" name="finanse_wps_slownie"
+                    class="inline-input" placeholder="dwa tysiące trzysta pięćdziesiąt złotych 00/100"
+                    style="width: 300px; text-align: left;">)</span>
+        </div>
+
+        <div class="title">
+            POZEW O WYDANIE NAKAZU ZAPŁATY<br>
+            W POSTĘPOWANIU UPOMINAWCZYM
+        </div>
+
+        <div class="content-text">
+            Działając w imieniu strony powodowej, tj. spółki pod firmą
+            <input type="text" name="powod_nazwa_krotka" class="inline-input" placeholder="Orlen Spółka Akcyjna"
+                style="width: 200px;">
+            z siedzibą w <input type="text" name="powod_siedziba_miasto" class="inline-input" placeholder="Płocku"
+                style="width: 100px;">
+            (wpisanej do rejestru przedsiębiorców KRS pod numerem <input type="text" name="powod_numer_krs"
+                class="inline-input" placeholder="0000754320" style="width: 90px;">),
+            na podstawie pełnomocnictwa, które załączam, niniejszym wnoszę o:
+        </div>
+
+        <div class="content-text">
+            1. orzeczenie nakazem zapłaty w postępowaniu upominawczym, że pozwana ma zapłacić powódce kwotę w wysokości:
+            <input type="text" name="roszczenie_kwota_glowna" class="inline-input" placeholder="2 350 zł"
+                style="width: 80px; font-weight: bold;">
+            (słownie: <input type="text" name="roszczenie_kwota_slownie" class="inline-input"
+                placeholder="dwa tysiące..." style="width: 150px;">)
+            wraz z odsetkami w wysokości ustawowej od dnia
+            <input type="text" name="roszczenie_odsetki_data_poczatkowa" class="inline-input"
+                placeholder="28 czerwca 2019 r." style="width: 140px;">
+            do dnia zapłaty,<br>
+            2. zasądzenie od pozwanej na rzecz powódki kosztów procesu w tym kosztów zastępstwa procesowego według norm
+            przepisanych.
+        </div>
+
+        <div class="content-text">
+            W przypadku skierowania sprawy do rozpoznania w trybie zwykłym lub w wypadku wniesienia przez stronę pozwaną
+            w terminie sprzeciwu od nakazu zapłaty wnoszę o:
+            orzeczenie wyrokiem, iż pozwana ma zapłacić powódce kwotę wskazaną powyżej wraz z odsetkami i kosztami
+            procesu, a także o:
+            <ul>
+                <li>rozpoznanie sprawy również pod nieobecność strony powodowej;</li>
+                <li>wydanie wyroku zaocznego, opatrzonego rygorem natychmiastowej wykonalności, w przypadku zaistnienia
+                    przesłanek przewidzianych w art. 339 k.p.c.;</li>
+                <li>przeprowadzenie posiedzenia przygotowawczego również pod nieobecność powódki.</li>
+            </ul>
+        </div>
+
+        <div class="content-text">
+            <strong>Wnoszę o przeprowadzenie dowodu z następujących dokumentów:</strong>
+            <ul>
+                <li>Faktury VAT nr <input type="text" name="dowod_faktura_numer" class="inline-input" placeholder="1234"
+                        style="width: 60px;">
+                    z dnia <input type="text" name="dowod_faktura_data_wystawienia" class="inline-input"
+                        placeholder="15.05.2025 r." style="width: 100px;">
+                    - celem wykazania faktu sprzedaży towarów na kwotę <input type="text" name="platnosc_kwota_glowna"
+                        class="inline-input" placeholder="2 350 zł" style="width: 70px;"> pozwanemu.</li>
+                <li>Wezwanie do zapłaty wraz z potwierdzeniem odbioru - celem wykazania faktu podjęcia próby polubownego
+                    rozwiązania sporu.</li>
+            </ul>
+        </div>
+
+        <div class="title" style="font-size: 1em; margin: 20px 0;">UZASADNIENIE</div>
+
+        <div class="content-text">
+            Powód w ramach prowadzonej przez siebie działalności gospodarczej, w związku ze stale prowadzoną z pozwaną
+            współpracą, sprzedała pozwanej towary na kwotę
+            <input type="text" name="platnosc_kwota_glowna" class="inline-input" placeholder="2 350 zł"
+                style="width: 70px;">.
+            Z tytułu zaciągnięcia przez pozwanego zobowiązania powód wystawił fakturę VAT nr
+            <input type="text" name="dowod_faktura_numer" class="inline-input" placeholder="1234" style="width: 60px;">
+            z dnia <input type="text" name="uzasadnienie_faktura_data" class="inline-input" placeholder="15.05.2025 r."
+                style="width: 90px;">.<br>
+            <em>Dowód: faktura VAT załączona do pozwu.</em>
+        </div>
+
+        <div class="content-text">
+            Termin płatności należności określony został na dzień
+            <input type="text" name="uzasadnienie_termin_platnosci" class="inline-input" placeholder="30.05.2025 r."
+                style="width: 90px;">
+            i wskazany był na fakturze VAT. Pomimo upływu terminu płatności - pozwany nie uiścił należności.
+        </div>
+
+        <div class="content-text">
+            Wobec powyższego powód wezwał pozwanego do dobrowolnej spłaty zadłużenia pismem z dnia
+            <input type="text" name="uzasadnienie_wezwanie_data" class="inline-input" placeholder="......"
+                style="width: 90px;">,
+            w którym jednocześnie poinformował pozwanego, iż niezastosowanie się do wyżej wymienionego wezwania
+            skutkować będzie skierowaniem sprawy na drogę postępowania sądowego.
+            Pomimo skierowania do pozwanej wezwania do zapłaty nie przyniosło to rezultatu i pozwany, do dnia wniesienia
+            pozwu, nie uiścił należności.<br>
+            <em>Dowód: kopia wezwania do zapłaty wraz z potwierdzeniem odbioru.</em>
+        </div>
+
+        <div class="content-text">
+            Reasumując, wskazać należy, że pozwany, pomimo upływu terminu zapłaty określonego na fakturze VAT i w
+            wezwaniu do zapłaty, nie spełnił ciążącego na nim zobowiązania.
+            Stąd dochodzenie przedmiotowej wierzytelności jest w pełni uzasadnione i konieczne.
+            Odsetki ustawowe wynikające z nieterminowo dokonanych płatności z faktury VAT objętych żądaniem pozwu
+            należne są powodowi z mocy prawa, zgodnie z treścią art. 481 § 1 w zw. z art. 359 § 2 k.c.
+        </div>
+
+        <div class="content-text">
+            Właściwość miejscowa tutejszego sądu wynika z art. 34 § 1 k.p.c. w zw. z art. 34 § 2 k.p.c. (miejsce
+            wykonania umowy).
+            Strony nie podjęły próby mediacji ani pozasądowego zakończenia zaistniałego sporu, z uwagi na postawę
+            pozwanego.
+            W tym stanie rzeczy żądanie jest w pełni uzasadnione.
+        </div>
+
+        <div class="right-align footer">
+            ................................................................<br>
+            <strong>r. pr.</strong> <input type="text" name="stopka_pelnomocnik_podpis" class="inline-input"
+                placeholder="Adam Nowak" style="width: 150px; text-align: center;">
+        </div>
+
+        <div class="section"
+            style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
+            <strong>Załączniki:</strong>
+            <ol style="margin-top: 5px;">
+                <li>Odpis pozwu dla strony pozwanej</li>
+                <li>Pełnomocnictwo</li>
+                <li>Dowód uiszczenia opłaty skarbowej od pełnomocnictwa</li>
+                <li>Dowód uiszczenia opłaty sądowej od pozwu</li>
+                <li>Oryginał/Kopia Faktury VAT nr <input type="text" name="dowod_faktura_numer" class="inline-input"
+                        placeholder="1234" style="width: 50px;"></li>
+                <li>Wezwanie do zapłaty wraz z potwierdzeniem odbioru</li>
+                <li>Odpis KRS powoda</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Skrypt celuje w nazwę: "meta_miejscowosc_data_dokumentu"
+            const inputField = document.querySelector('input[name="meta_miejscowosc_data_dokumentu"]');
+
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            const currentDate = `${day}.${month}.${year} r.`;
+
+            inputField.value = `..., ${currentDate}`;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(async function (position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    try {
+                        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pl`;
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        const city = data.city || data.locality || data.principalSubdivision || "Miejscowość";
+                        inputField.value = `${city}, ${currentDate}`;
+                    } catch (error) {
+                        inputField.value = `${currentDate}`;
+                    }
+                }, function (error) {
+                    inputField.value = `${currentDate}`;
+                });
+            } else {
+                inputField.value = `${currentDate}`;
+            }
+
+            // === AUTOMATYCZNA ZAMIANA KWOT NA SŁOWA ===
+            // Mapa pól: źródło (kwota) -> cel (słownie)
+            const mapAmountToWords = [
+                { source: 'platnosc_kwota_glowna', target: 'finanse_wps_slownie' },
+                { source: 'roszczenie_kwota_glowna', target: 'roszczenie_kwota_slownie' }
+            ];
+
+            mapAmountToWords.forEach(pair => {
+                const sourceInput = document.querySelector(`input[name="${pair.source}"]`);
+                const targetInput = document.querySelector(`input[name="${pair.target}"]`);
+
+                if (sourceInput && targetInput) {
+                    sourceInput.addEventListener('change', async function () {
+                        const amount = this.value;
+                        if (!amount) return;
+
+                        try {
+                            // Wywołaj backend
+                            const safeAmount = amount.replace(' zł', '');
+                            const response = await fetch(`/api/slownie/${encodeURIComponent(safeAmount)}`);
+                            const data = await response.json();
+
+                            if (data.slownie) {
+                                targetInput.value = data.slownie;
+                            }
+                        } catch (error) {
+                            console.error('Błąd konwersji kwoty:', error);
+                        }
+                    });
+                }
+            });
+
+            // === 40 EUR COMPENSATION LOGIC ===
+            const add40EurCheckbox = document.getElementById('add40EurCheckbox');
+            const euroInfo = document.getElementById('euroInfo');
+            const mainAmountInput = document.querySelector('input[name="platnosc_kwota_glowna"]');
+
+            // Przechowujemy bazową kwotę, żeby można było cofnąć (odjąć)
+            let baseAmount = 0;
+            let currentEuroRate = 0;
+            let compensationPLN = 0;
+
+            if (add40EurCheckbox && mainAmountInput) {
+                add40EurCheckbox.addEventListener('change', async function () {
+                    let currentVal = mainAmountInput.value.replace(' zł', '').replace(/\s/g, '').replace(',', '.');
+                    let val = parseFloat(currentVal);
+                    if (isNaN(val)) val = 0;
+
+                    if (this.checked) {
+                        try {
+                            euroInfo.style.display = 'block';
+                            euroInfo.textContent = 'Pobieranie kursu NBP...';
+
+                            // 1. Pobierz kurs
+                            const response = await fetch("https://api.nbp.pl/api/exchangerates/rates/a/eur/?format=json");
+                            const data = await response.json();
+
+                            const rate = data.rates[0].mid; // np. 4.3215
+                            const date = data.rates[0].effectiveDate; // np. 2025-01-23
+
+                            currentEuroRate = rate;
+                            compensationPLN = parseFloat((40 * rate).toFixed(2));
+
+                            euroInfo.innerHTML = `
+                                <strong>+ 40 EUR</strong> (${compensationPLN.toFixed(2).replace('.', ',')} zł) <br>
+                                wg średniego kursu NBP z dnia ${date} (1 EUR = ${rate} zł)
+                            `;
+
+                            // 2. Dodaj do kwoty (zapisz bazową, jeśli to pierwsze dodanie)
+                            // Zakładamy, że jak zaznaczamy, to obecna wartość jest "bazą"
+                            // Ale uwaga: użytkownik mógł już coś wpisać.
+                            // Dla uproszczenia: dodajemy do tego co jest w inpucie
+
+                            const newVal = val + compensationPLN;
+                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',') + ' zł';
+
+                            // Trigger change event to update words
+                            mainAmountInput.dispatchEvent(new Event('change'));
+
+                        } catch (error) {
+                            console.error("Błąd NBP:", error);
+                            euroInfo.textContent = 'Błąd pobierania kursu NBP.';
+                            this.checked = false; // Cofnij zaznaczenie
+                        }
+                    } else {
+                        // Odznaczono - odedejmijmy
+                        // Uwaga: zakładamy, że w inpucie jest (base + compensation)
+                        // Ale użytkownik mógł zmienić ręcznie w międzyczasie.
+                        // Bezpieczniej: odejmujemy compensationPLN od tego co jest teraz
+
+                        if (compensationPLN > 0) {
+                            const newVal = Math.max(0, val - compensationPLN);
+                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',') + ' zł';
+
+                            // Trigger change event to update words
+                            mainAmountInput.dispatchEvent(new Event('change'));
+                        }
+
+                        euroInfo.style.display = 'none';
+                        compensationPLN = 0;
+                    }
+                });
+            }
+        });
+    </script>
+
+    <div class="page-number-footer"></div>
+</body>
+
+</html>
