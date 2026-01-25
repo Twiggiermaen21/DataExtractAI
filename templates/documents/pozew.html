@@ -268,7 +268,7 @@
                 style="width: 120px; font-weight: bold;"><br>
 
             <strong>Opłata sądowa:</strong>
-            <input type="text" name="finanse_oplata_sadowa_kwota" placeholder="100 zł" style="width: 100px;"><br>
+            <input type="text" id="courtFeeInput" placeholder="100 zł" style="width: 100px;" readonly><br>
             <span style="font-size: 0.85em; color: #666;">(słownie: <input type="text" name="finanse_wps_slownie"
                     class="inline-input" placeholder="dwa tysiące trzysta pięćdziesiąt złotych 00/100"
                     style="width: 300px; text-align: left;">)</span>
@@ -537,6 +537,57 @@
                     }
                 });
             }
+            // === OBLICZANIE OPŁATY SĄDOWEJ ===
+            function oblicz_oplate_sadowa(wartosc_sporu) {
+                // Zabezpieczenie przed wartościami ujemnymi
+                if (wartosc_sporu < 0) return 0;
+
+                // 1. Opłaty stałe (progi do 20 000 zł)
+                if (wartosc_sporu <= 500) return 30;
+                else if (wartosc_sporu <= 1500) return 100;
+                else if (wartosc_sporu <= 4000) return 200;
+                else if (wartosc_sporu <= 7500) return 400;
+                else if (wartosc_sporu <= 10000) return 500;
+                else if (wartosc_sporu <= 15000) return 750;
+                else if (wartosc_sporu <= 20000) return 1000;
+
+                // 2. Opłata stosunkowa (powyżej 20 000 zł)
+                else {
+                    let oplata = wartosc_sporu * 0.05; // 5% wartości
+
+                    // Górny limit opłaty to 100 000 zł
+                    if (oplata > 100000) return 100000;
+
+                    return Math.round(oplata * 100) / 100;
+                }
+            }
+
+            const courtFeeInput = document.getElementById('courtFeeInput');
+            // Wykorzystujemy istniejący selektor jeśli dostępny w zasięgu, albo pobieramy ponownie
+            const wpsInput = document.querySelector('input[name="platnosc_kwota_glowna"]');
+
+            if (courtFeeInput && wpsInput) {
+                const updateCourtFee = () => {
+                    let rawVal = wpsInput.value.replace(' zł', '').replace(/\s/g, '').replace(',', '.');
+                    let val = parseFloat(rawVal);
+                    if (isNaN(val)) val = 0;
+
+                    const fee = oblicz_oplate_sadowa(val);
+
+                    let feeStr = fee.toString();
+                    // Formatowanie po polsku (przecinek zamiast kropki)
+                    feeStr = feeStr.replace('.', ',');
+
+                    courtFeeInput.value = feeStr + ' zł';
+                };
+
+                wpsInput.addEventListener('input', updateCourtFee);
+                wpsInput.addEventListener('change', updateCourtFee);
+
+                // Oblicz na starcie
+                updateCourtFee();
+            }
+
         });
     </script>
     <script>
