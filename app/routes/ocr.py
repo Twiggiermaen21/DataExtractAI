@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 
 from app.services.ocr_service import get_pipeline, unload_pipeline
-from app.services.image_enhancer import enhance_image_for_ocr
+# from app.services.image_enhancer import enhance_image_for_ocr
 
 ocr_bp = Blueprint('ocr', __name__)
 
@@ -49,19 +49,20 @@ def process_ocr():
             file.save(original_path)
             print(f"📁 Przetwarzanie: {filename}")
             
-            # Poprawa obrazu (tylko dla obrazów, nie PDF)
+            # Poprawa obrazu (skipping as requested)
             path_to_process = original_path
-            file_ext = os.path.splitext(filename)[1].lower()
+            # file_ext = os.path.splitext(filename)[1].lower()
             
-            if file_ext == '.pdf':
-                print(f"  📄 Plik PDF - pomijam ulepszanie obrazu")
-            else:
-                try:
-                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
-                    path_to_process = temp_enhanced_path
-                    print(f"  ✨ Obraz ulepszony")
-                except Exception as e:
-                    print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
+            # if file_ext == '.pdf':
+            #     print(f"  📄 Plik PDF - pomijam ulepszanie obrazu")
+            # else:
+            #     try:
+            #         # temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
+            #         # path_to_process = temp_enhanced_path
+            #         # print(f"  ✨ Obraz ulepszony")
+            #         pass
+            #     except Exception as e:
+            #         print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
             
             # OCR
             print(f"  🔍 Uruchamiam OCR...")
@@ -197,16 +198,15 @@ def quick_process():
             file.save(original_path)
             print(f"📁 [Quick] Przetwarzanie: {filename}")
             
-            # Poprawa obrazu (tylko dla obrazów, nie PDF)
+            # Poprawa obrazu (skipping as requested)
             path_to_process = original_path
-            file_ext = os.path.splitext(filename)[1].lower()
             
-            if file_ext != '.pdf':
-                try:
-                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
-                    path_to_process = temp_enhanced_path
-                except Exception:
-                    pass
+            # if file_ext != '.pdf':
+            #     try:
+            #         temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
+            #         path_to_process = temp_enhanced_path
+            #     except Exception:
+            #         pass
             
             # OCR
             ocr_output = pipeline.predict(path_to_process)
