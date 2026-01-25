@@ -147,7 +147,6 @@
                     style="width: 250px;"><br>
                 <input type="text" name="wierzyciel_adres_naglowek" placeholder="Ul. Chemików 7, 09-411 Płock"
                     style="width: 250px;"><br>
-                KRS: <input type="text" name="wierzyciel_krs_naglowek" placeholder="0987654"><br>
                 NIP: <input type="text" name="wierzyciel_nip_naglowek" placeholder="09876545">
             </div>
 
@@ -169,7 +168,7 @@
                 <input type="text" name="dluznik_nazwa" placeholder="CD Projekt S.A." style="width: 250px;"><br>
                 <input type="text" name="dluznik_adres" placeholder="ul. Jagiellońska 74, Warszawa"
                     style="width: 250px;"><br>
-                KRS: <input type="text" name="dluznik_krs" placeholder="0000006865">
+                NIP: <input type="text" name="dluznik_nip" placeholder="0000006865">
             </div>
         </div>
 
@@ -184,7 +183,7 @@
                 style="width: 100px;">,
             <input type="text" name="wierzyciel_adres_pelny_tresc" placeholder="09-411 Płock, ul. Chemików 7"
                 class="inline-input" style="width: 200px;">
-            KRS: <input type="text" name="wierzyciel_krs_tresc" placeholder="0987654" class="inline-input"
+            NIP: <input type="text" name="wierzyciel_nip_tresc" placeholder="0987654" class="inline-input"
                 style="width: 80px;">,
             kapitał zakładowy: <input type="text" name="wierzyciel_kapital_zakladowy" placeholder="1 451 177 561 zł"
                 class="inline-input" style="width: 120px;">,
@@ -267,6 +266,41 @@
                 });
             } else {
                 inputField.value = `${currentDate}`;
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const interestInput = document.querySelector('input[name="platnosc_data_odsetek"]');
+            if (interestInput) {
+                interestInput.addEventListener('change', function () {
+                    let val = this.value.trim();
+                    // Basic cleanup if user enters 'r.' or typical suffixes
+                    val = val.replace(/r\.?$/i, '').trim();
+
+                    // Expected format: DD.MM.YYYY
+                    const parts = val.split('.');
+                    if (parts.length === 3) {
+                        const d = parseInt(parts[0], 10);
+                        const m = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                        const y = parseInt(parts[2], 10);
+
+                        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+                            const date = new Date(y, m, d);
+                            // Check if date is valid (e.g. not 32.01.2025)
+                            if (date.getFullYear() === y && date.getMonth() === m && date.getDate() === d) {
+                                // Add 1 day
+                                date.setDate(date.getDate() + 1);
+
+                                const newDay = String(date.getDate()).padStart(2, '0');
+                                const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+                                const newYear = date.getFullYear();
+
+                                this.value = `${newDay}.${newMonth}.${newYear}`;
+                            }
+                        }
+                    }
+                });
             }
         });
     </script>

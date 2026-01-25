@@ -249,9 +249,9 @@
         </div>
 
         <div class="section" style="background: #fafafa; padding: 15px; border-radius: 4px;">
-            <button class="no-print" id="btnShowInPrint">Przygotuj do druku / Ukryj opcje</button>
 
-            <div id="sekcjaOpcji40Eur"
+
+            <div id="sekcjaOpcji40Eur" class="no-print"
                 style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #ddd;">
                 <label
                     style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; font-weight: bold;">
@@ -590,30 +590,7 @@
 
         });
     </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Znajdujemy przycisk i sekcję
-            const btn = document.getElementById('btnShowInPrint');
-            const section = document.getElementById('sekcjaOpcji40Eur');
 
-            if (btn && section) {
-                btn.addEventListener('click', function () {
-                    // Toggle visibility class
-                    section.classList.toggle('no-print');
-
-                    // Toggle button styling
-                    btn.classList.toggle('active');
-
-                    // Update text
-                    if (section.classList.contains('no-print')) {
-                        btn.textContent = 'Opcje ukryte w druku (Kliknij aby pokazać)';
-                    } else {
-                        btn.textContent = 'Przygotuj do druku / Ukryj opcje';
-                    }
-                });
-            }
-        });
-    </script>
     <div class="page-number-footer"></div>
 </body>
 
