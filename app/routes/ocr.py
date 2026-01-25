@@ -69,38 +69,11 @@ def process_ocr():
             ocr_output = pipeline.predict(path_to_process)
             
             # Zapis wyników do JSON
+            # Zapis wyników do JSON
             for res in ocr_output:
                 if hasattr(res, 'save_to_json'):
                     res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                     print(f"  💾 Zapisano JSON")
-            
-            # Uprość JSON - zostaw tylko block_content z parsing_res_list
-            output_folder = current_app.config['OUTPUT_FOLDER']
-            base_name = os.path.splitext(filename)[0]
-            
-            for json_file in os.listdir(output_folder):
-                if json_file.startswith(base_name) and json_file.endswith('.json'):
-                    json_path = os.path.join(output_folder, json_file)
-                    try:
-                        with open(json_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        
-                        # Wyciągnij input_path i tylko block_content z parsing_res_list
-                        simplified = {
-                            'input_path': data.get('input_path', ''),
-                            'parsing_res_list': [
-                                {'block_content': block.get('block_content', '')}
-                                for block in data.get('parsing_res_list', [])
-                                if block.get('block_content')
-                            ]
-                        }
-                        
-                        with open(json_path, 'w', encoding='utf-8') as f:
-                            json.dump(simplified, f, ensure_ascii=False, indent=2)
-                        
-                        print(f"  📝 Uproszczono JSON")
-                    except Exception as e:
-                        print(f"  ⚠️ Nie udało się uprościć JSON: {e}")
             
             processed_files.append(filename)
             print(f"  ✅ Sukces!")
@@ -212,41 +185,17 @@ def quick_process():
             ocr_output = pipeline.predict(path_to_process)
             
             # Zapis wyników do JSON
+            # Zapis wyników do JSON
             for res in ocr_output:
                 if hasattr(res, 'save_to_json'):
-                    res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
+                    saved_path = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
+                    if saved_path:
+                        processed_jsons.append(saved_path)
             
-            # Uprość JSON
-            output_folder = current_app.config['OUTPUT_FOLDER']
-            base_name = os.path.splitext(filename)[0]
-            
-            for json_file in os.listdir(output_folder):
-                if json_file.startswith(base_name) and json_file.endswith('.json'):
-                    json_path = os.path.join(output_folder, json_file)
-                    try:
-                        with open(json_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        
-                        simplified = {
-                            'input_path': data.get('input_path', ''),
-                            'parsing_res_list': [
-                                {'block_content': block.get('block_content', '')}
-                                for block in data.get('parsing_res_list', [])
-                                if block.get('block_content')
-                            ]
-                        }
-                        
-                        with open(json_path, 'w', encoding='utf-8') as f:
-                            json.dump(simplified, f, ensure_ascii=False, indent=2)
-                        
-                        processed_jsons.append(json_path)
-                    except Exception:
-                        pass
-            
-            print(f"  ✅ [Quick] OCR zakończone: {filename}")
+            print(f"✅ [Quick] OCR zakończone: {filename}")
             
         except Exception as e:
-            print(f"  ❌ [Quick] Błąd: {e}")
+            print(f"❌ [Quick] Błąd: {e}")
     
     # Zwolnij model OCR
     unload_pipeline()
@@ -255,7 +204,8 @@ def quick_process():
         return jsonify({'success': False, 'error': 'Nie udało się przetworzyć żadnego pliku'}), 500
     
     # KROK 2: Pobierz pola szablonu
-    template_path = os.path.join(current_app.config['TEMPLATES_FOLDER'], template_name)
+    templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
+    template_path = os.path.join(templates_dir, template_name)
     
     if not os.path.exists(template_path):
         return jsonify({'success': False, 'error': f'Nie znaleziono szablonu: {template_name}'}), 404

@@ -96,6 +96,8 @@ class OCRResult:
             with open(full_output_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
             print(f"💾 JSON saved to: {full_output_path}")
+            return full_output_path
         except Exception as e:
             print(f"⚠️ Failed to save JSON: {e}")
+            return None
 
