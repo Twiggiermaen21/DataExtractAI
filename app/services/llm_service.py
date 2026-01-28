@@ -32,6 +32,19 @@ def _call_llm(prompt: str, system_prompt: str = None) -> str:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
+    # === LOGOWANIE PROMPTÓW ===
+    print("\n" + "="*60)
+    print("📤 WYSYŁANIE DO LLM")
+    print("="*60)
+    if system_prompt:
+        print("\n🔧 SYSTEM PROMPT:")
+        print("-"*40)
+        print(system_prompt)
+    print("\n💬 USER PROMPT:")
+    print("-"*40)
+    print(prompt)
+    print("="*60 + "\n")
+    
     response = requests.post(
         f"{LLAMA_SERVER_URL}/v1/chat/completions",
         json={
@@ -46,7 +59,17 @@ def _call_llm(prompt: str, system_prompt: str = None) -> str:
         raise Exception(f'Błąd serwera LLM: {response.status_code}')
     
     result = response.json()
-    return result['choices'][0]['message']['content'].strip()
+    llm_response = result['choices'][0]['message']['content'].strip()
+    
+    # === LOGOWANIE ODPOWIEDZI ===
+    print("\n" + "="*60)
+    print("📥 ODPOWIEDŹ LLM:")
+    print("="*60)
+    print(llm_response)
+    print("="*60 + "\n")
+    
+    return llm_response
+
 
 
 def _parse_json_response(text: str) -> dict:

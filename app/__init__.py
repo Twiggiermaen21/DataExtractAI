@@ -18,9 +18,11 @@ def create_app():
     from app.routes.main import main_bp
     from app.routes.ocr import ocr_bp
     from app.routes.llm import llm_bp
+    from app.routes.wezwania import wezwania_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(llm_bp)
+    app.register_blueprint(wezwania_bp)
 
     return app

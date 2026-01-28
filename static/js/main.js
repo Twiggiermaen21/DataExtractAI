@@ -371,7 +371,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     });
 });
 
-// ==================== QUICK OCR ====================
+// ==================== QUICK OCR - NOWY WORKFLOW ====================
 const quickUploadZone = document.getElementById('quickUploadZone');
 const quickFileInput = document.getElementById('quickFileInput');
 const quickFileList = document.getElementById('quickFileList');
@@ -385,7 +385,26 @@ const quickStatusText = document.getElementById('quickStatusText');
 const quickResultCard = document.getElementById('quickResultCard');
 const quickPreview = document.getElementById('quickPreview');
 
+// Nowe elementy workflow
+const stepWezwanie = document.getElementById('stepWezwanie');
+const stepPozew = document.getElementById('stepPozew');
+const dividerStep2 = document.getElementById('dividerStep2');
+const wezwaniaList = document.getElementById('wezwaniaList');
+const refreshWezwaniaList = document.getElementById('refreshWezwaniaList');
+const saveWezwanieSection = document.getElementById('saveWezwanieSection');
+const btnSaveWezwanie = document.getElementById('btnSaveWezwanie');
+
+// KRS elements
+const btnKrsPowodUpload = document.getElementById('btnKrsPowodUpload');
+const btnKrsPowodManual = document.getElementById('btnKrsPowodManual');
+const krsPowodFile = document.getElementById('krsPowodFile');
+const krsPowodManualFields = document.getElementById('krsPowodManualFields');
+const krsPowodUploadStatus = document.getElementById('krsPowodUploadStatus');
+
 let quickFiles = [];
+let selectedWezwania = [];
+let currentWorkflowType = null; // 'wezwanie' or 'pozew'
+let krsPowodFileData = null;
 
 // Load templates for quick OCR
 async function loadQuickTemplates() {
@@ -403,27 +422,139 @@ async function loadQuickTemplates() {
 }
 loadQuickTemplates();
 
-// Upload zone events
-quickUploadZone.addEventListener('click', () => quickFileInput.click());
+// === TEMPLATE SELECTION - WORKFLOW BRANCHING ===
+quickTemplateSelect.addEventListener('change', function () {
+    const template = this.value;
 
-quickUploadZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    quickUploadZone.classList.add('dragover');
+    // Hide all step 2 sections
+    stepWezwanie.classList.add('hidden');
+    stepPozew.classList.add('hidden');
+    dividerStep2.classList.add('hidden');
+    btnQuickProcess.classList.add('hidden');
+
+    if (!template) {
+        currentWorkflowType = null;
+        return;
+    }
+
+    dividerStep2.classList.remove('hidden');
+    btnQuickProcess.classList.remove('hidden');
+
+    if (template.includes('wezwanie')) {
+        // Workflow: Wezwanie do Zapłaty
+        currentWorkflowType = 'wezwanie';
+        stepWezwanie.classList.remove('hidden');
+        btnQuickText.textContent = 'Przetwórz fakturę';
+    } else if (template.includes('pozew')) {
+        // Workflow: Pozew
+        currentWorkflowType = 'pozew';
+        stepPozew.classList.remove('hidden');
+        btnQuickText.textContent = 'Generuj pozew';
+        loadWezwaniaList();
+    }
+
+    updateQuickButton();
 });
 
-quickUploadZone.addEventListener('dragleave', () => {
-    quickUploadZone.classList.remove('dragover');
-});
+// === WEZWANIA LIST ===
+async function loadWezwaniaList() {
+    try {
+        const response = await fetch('/api/wezwania');
+        const wezwania = await response.json();
 
-quickUploadZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    quickUploadZone.classList.remove('dragover');
-    handleQuickFiles(e.dataTransfer.files);
-});
+        if (wezwania.length === 0) {
+            wezwaniaList.innerHTML = `
+                <div style="color: var(--text-muted); padding: 16px; text-align: center;">
+                    Brak zapisanych wezwań. Najpierw wygeneruj Wezwanie do Zapłaty.
+                </div>`;
+        } else {
+            wezwaniaList.innerHTML = wezwania.map(w => `
+                <div class="wezwanie-item">
+                    <input type="checkbox" id="wezwanie_${w.id}" value="${w.id}" 
+                        onchange="toggleWezwanieSelection('${w.id}')">
+                    <div class="wezwanie-info">
+                        <div class="wezwanie-dluznik">${w.dluznik_nazwa}</div>
+                        <div class="wezwanie-details">
+                            Faktura: ${w.faktura_numer} | Kwota: ${w.kwota} | 
+                            ${new Date(w.created_at).toLocaleDateString('pl-PL')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('Error loading wezwania:', e);
+        wezwaniaList.innerHTML = '<div style="color: red; padding: 16px;">Błąd ładowania wezwań</div>';
+    }
+}
 
-quickFileInput.addEventListener('change', (e) => {
-    handleQuickFiles(e.target.files);
-});
+window.toggleWezwanieSelection = function (id) {
+    const index = selectedWezwania.indexOf(id);
+    if (index > -1) {
+        selectedWezwania.splice(index, 1);
+    } else {
+        selectedWezwania.push(id);
+    }
+    updateQuickButton();
+};
+
+if (refreshWezwaniaList) {
+    refreshWezwaniaList.addEventListener('click', loadWezwaniaList);
+}
+
+// === KRS HANDLING ===
+if (btnKrsPowodUpload) {
+    btnKrsPowodUpload.addEventListener('click', () => {
+        krsPowodFile.click();
+    });
+}
+
+if (btnKrsPowodManual) {
+    btnKrsPowodManual.addEventListener('click', () => {
+        krsPowodManualFields.classList.toggle('hidden');
+        btnKrsPowodManual.classList.toggle('active');
+        krsPowodUploadStatus.classList.add('hidden');
+        krsPowodFileData = null;
+    });
+}
+
+if (krsPowodFile) {
+    krsPowodFile.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            krsPowodFileData = e.target.files[0];
+            krsPowodUploadStatus.classList.remove('hidden');
+            krsPowodUploadStatus.textContent = `✅ Plik KRS załadowany: ${krsPowodFileData.name}`;
+            krsPowodManualFields.classList.add('hidden');
+            btnKrsPowodManual.classList.remove('active');
+        }
+    });
+}
+
+// === UPLOAD ZONE EVENTS ===
+if (quickUploadZone) {
+    quickUploadZone.addEventListener('click', () => quickFileInput.click());
+
+    quickUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        quickUploadZone.classList.add('dragover');
+    });
+
+    quickUploadZone.addEventListener('dragleave', () => {
+        quickUploadZone.classList.remove('dragover');
+    });
+
+    quickUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        quickUploadZone.classList.remove('dragover');
+        handleQuickFiles(e.dataTransfer.files);
+    });
+}
+
+if (quickFileInput) {
+    quickFileInput.addEventListener('change', (e) => {
+        handleQuickFiles(e.target.files);
+    });
+}
 
 function handleQuickFiles(files) {
     for (const file of files) {
@@ -453,14 +584,31 @@ window.removeQuickFile = function (index) {
 };
 
 function updateQuickButton() {
-    btnQuickProcess.disabled = quickFiles.length === 0 || !quickTemplateSelect.value;
+    if (!btnQuickProcess) return;
+
+    if (currentWorkflowType === 'wezwanie') {
+        btnQuickProcess.disabled = quickFiles.length === 0;
+    } else if (currentWorkflowType === 'pozew') {
+        btnQuickProcess.disabled = selectedWezwania.length === 0;
+    } else {
+        btnQuickProcess.disabled = true;
+    }
 }
 
-quickTemplateSelect.addEventListener('change', updateQuickButton);
+// === PROCESS BUTTON ===
+if (btnQuickProcess) {
+    btnQuickProcess.addEventListener('click', async () => {
+        if (currentWorkflowType === 'wezwanie') {
+            await processWezwanie();
+        } else if (currentWorkflowType === 'pozew') {
+            await processPozew();
+        }
+    });
+}
 
-// Quick Process Button
-btnQuickProcess.addEventListener('click', async () => {
-    if (quickFiles.length === 0 || !quickTemplateSelect.value) return;
+// === WEZWANIE PROCESSING ===
+async function processWezwanie() {
+    if (quickFiles.length === 0) return;
 
     btnQuickProcess.disabled = true;
     btnQuickProcess.classList.add('loading');
@@ -495,63 +643,9 @@ btnQuickProcess.addEventListener('click', async () => {
 
         if (data.success) {
             quickStatusText.textContent = '✅ Zakończono! Ładowanie szablonu...';
-
-            // Load template and fill with data
-            const templateResponse = await fetch(`/api/template/${data.template}`);
-            const templateData = await templateResponse.json();
-
-            // Create iframe with filled template
-            quickResultCard.classList.remove('hidden');
-            quickPreview.innerHTML = '';
-
-            const iframe = document.createElement('iframe');
-            iframe.style.width = '100%';
-            iframe.style.height = '500px';
-            iframe.style.border = 'none';
-            quickPreview.appendChild(iframe);
-
-            iframe.contentDocument.open();
-            iframe.contentDocument.write(templateData.content);
-
-            // Wstrzyknij style paska przewijania
-            const style = iframe.contentDocument.createElement('style');
-            style.textContent = `
-                body::-webkit-scrollbar { width: 8px; }
-                body::-webkit-scrollbar-track { background: #f1f1f1; }
-                body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-                body::-webkit-scrollbar-thumb:hover { background: #555; }
-                /* Firefox */
-                body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
-            `;
-            iframe.contentDocument.head.appendChild(style);
-
-            iframe.contentDocument.close();
-
-            // Fill inputs
-            setTimeout(() => {
-                const doc = iframe.contentDocument;
-                // Pola do pominięcia (uzupełniane automatycznie przez skrypt szablonu)
-                const skipFields = ['dokument_miejscowosc_data'];
-
-                for (const [fieldName, value] of Object.entries(data.fields)) {
-                    // Pomijaj pola, które są uzupełniane automatycznie
-                    if (skipFields.includes(fieldName)) continue;
-
-                    // Znajdź WSZYSTKIE pola o danej nazwie (nie tylko pierwsze)
-                    const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
-                    inputs.forEach(input => {
-                        if (input && value) {
-                            input.value = value;
-                            input.style.background = '#e8f5e9';
-                        }
-                    });
-                }
-            }, 100);
-
-            // Clear files
+            await showFilledTemplate(data.template, data.fields, 'wezwanie');
             quickFiles = [];
             renderQuickFileList();
-
         } else {
             quickStatusText.textContent = `❌ ${data.error}`;
         }
@@ -561,28 +655,202 @@ btnQuickProcess.addEventListener('click', async () => {
     } finally {
         btnQuickProcess.classList.remove('loading');
         btnQuickIcon.textContent = '🚀';
-        btnQuickText.textContent = 'Przetwórz i wypełnij';
+        btnQuickText.textContent = 'Przetwórz fakturę';
         updateQuickButton();
 
         setTimeout(() => {
             quickProgressBar.classList.add('hidden');
         }, 2000);
     }
-});
+}
+
+// === POZEW PROCESSING ===
+async function processPozew() {
+    if (selectedWezwania.length === 0) return;
+
+    btnQuickProcess.disabled = true;
+    btnQuickProcess.classList.add('loading');
+    btnQuickIcon.innerHTML = '<span class="spinner">⏳</span>';
+    btnQuickText.textContent = 'Generowanie pozwu...';
+    quickProgressBar.classList.remove('hidden');
+    quickStatusText.classList.remove('hidden');
+    quickStatusText.textContent = '📋 Pobieranie danych z wezwań...';
+    quickProgressFill.style.width = '20%';
+    quickResultCard.classList.add('hidden');
+
+    try {
+        // Get summary from selected wezwania
+        const summaryResponse = await fetch('/api/wezwania/summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: selectedWezwania })
+        });
+
+        const summaryData = await summaryResponse.json();
+        quickProgressFill.style.width = '50%';
+
+        if (!summaryData.success) {
+            throw new Error(summaryData.error);
+        }
+
+        // Collect manual KRS data
+        const krsPowod = {};
+        if (krsPowodManualFields && !krsPowodManualFields.classList.contains('hidden')) {
+            krsPowod.nazwa = document.querySelector('input[name="powod_nazwa_pelna"]')?.value || '';
+            krsPowod.adres = document.querySelector('input[name="powod_adres_pelny"]')?.value || '';
+            krsPowod.krs = document.querySelector('input[name="powod_numer_krs"]')?.value || '';
+        }
+
+        const pozwanyOznaczenie = document.querySelector('input[name="pozwany_oznaczenie_pelne"]')?.value || '';
+
+        quickStatusText.textContent = '📄 Ładowanie szablonu pozwu...';
+        quickProgressFill.style.width = '70%';
+
+        // Prepare fields for pozew
+        const fields = {
+            platnosc_kwota_glowna: summaryData.summary.total_amount_formatted,
+            roszczenie_kwota_glowna: summaryData.summary.total_amount_formatted,
+            powod_nazwa_pelna: krsPowod.nazwa,
+            powod_adres_pelny: krsPowod.adres,
+            powod_numer_krs: krsPowod.krs,
+            pozwany_oznaczenie_pelne: pozwanyOznaczenie
+        };
+
+        // Add invoice data from first wezwanie
+        if (summaryData.summary.invoices.length > 0) {
+            const inv = summaryData.summary.invoices[0];
+            fields.dowod_faktura_numer = inv.numer;
+            fields.dowod_faktura_data_wystawienia = inv.data;
+            fields.roszczenie_odsetki_data_poczatkowa = inv.termin;
+        }
+
+        quickProgressFill.style.width = '100%';
+        quickStatusText.textContent = '✅ Zakończono!';
+
+        await showFilledTemplate(quickTemplateSelect.value, fields, 'pozew');
+
+    } catch (error) {
+        quickStatusText.textContent = `❌ ${error.message}`;
+    } finally {
+        btnQuickProcess.classList.remove('loading');
+        btnQuickIcon.textContent = '🚀';
+        btnQuickText.textContent = 'Generuj pozew';
+        updateQuickButton();
+
+        setTimeout(() => {
+            quickProgressBar.classList.add('hidden');
+        }, 2000);
+    }
+}
+
+// === SHOW FILLED TEMPLATE ===
+async function showFilledTemplate(templateFilename, fields, docType) {
+    const templateResponse = await fetch(`/api/template/${templateFilename}`);
+    const templateData = await templateResponse.json();
+
+    quickResultCard.classList.remove('hidden');
+    quickPreview.innerHTML = '';
+
+    // Show save button only for wezwanie
+    if (docType === 'wezwanie') {
+        saveWezwanieSection.classList.remove('hidden');
+    } else {
+        saveWezwanieSection.classList.add('hidden');
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.style.width = '100%';
+    iframe.style.height = '600px';
+    iframe.style.border = 'none';
+    iframe.id = 'documentIframe';
+    quickPreview.appendChild(iframe);
+
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(templateData.content);
+
+    // Inject scrollbar styles
+    const style = iframe.contentDocument.createElement('style');
+    style.textContent = `
+        body::-webkit-scrollbar { width: 8px; }
+        body::-webkit-scrollbar-track { background: #f1f1f1; }
+        body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        body::-webkit-scrollbar-thumb:hover { background: #555; }
+        body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
+    `;
+    iframe.contentDocument.head.appendChild(style);
+    iframe.contentDocument.close();
+
+    // Fill inputs after a short delay
+    setTimeout(() => {
+        const doc = iframe.contentDocument;
+        const skipFields = ['dokument_miejscowosc_data', 'meta_miejscowosc_data_dokumentu'];
+
+        for (const [fieldName, value] of Object.entries(fields)) {
+            if (skipFields.includes(fieldName) || !value) continue;
+
+            const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+            inputs.forEach(input => {
+                input.value = value;
+                input.style.background = '#e8f5e9';
+            });
+        }
+    }, 100);
+}
+
+// === SAVE WEZWANIE ===
+if (btnSaveWezwanie) {
+    btnSaveWezwanie.addEventListener('click', async () => {
+        const iframe = document.getElementById('documentIframe');
+        if (!iframe) {
+            alert('Brak dokumentu do zapisania!');
+            return;
+        }
+
+        const doc = iframe.contentDocument;
+        const fields = {};
+
+        // Collect all input values
+        doc.querySelectorAll('input[name]').forEach(input => {
+            fields[input.name] = input.value;
+        });
+
+        try {
+            const response = await fetch('/api/wezwania/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`✅ Wezwanie zapisane!\nID: ${result.id}`);
+                saveWezwanieSection.innerHTML = `
+                    <p style="margin: 0; color: #2e7d32; font-weight: 500;">
+                        ✅ Wezwanie zapisane (ID: ${result.id})
+                    </p>`;
+            } else {
+                alert(`❌ Błąd: ${result.error}`);
+            }
+        } catch (e) {
+            alert(`❌ Błąd zapisu: ${e.message}`);
+        }
+    });
+}
 
 // ==================== PRINT TO PDF ====================
 const btnPrintPdf = document.getElementById('btnPrintPdf');
 
-btnPrintPdf.addEventListener('click', () => {
-    // Znajdź iframe z wypełnionym szablonem
-    const iframe = quickPreview.querySelector('iframe');
+if (btnPrintPdf) {
+    btnPrintPdf.addEventListener('click', () => {
+        const iframe = quickPreview.querySelector('iframe');
 
-    if (!iframe || !iframe.contentWindow) {
-        alert('Brak dokumentu do wydrukowania!');
-        return;
-    }
+        if (!iframe || !iframe.contentWindow) {
+            alert('Brak dokumentu do wydrukowania!');
+            return;
+        }
 
-    // Drukuj zawartość iframe
-    iframe.contentWindow.focus();
-    iframe.contentWindow.print();
-});
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+    });
+}

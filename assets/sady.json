@@ -1,0 +1,22 @@
+{
+    "34-100 Wadowice": [
+        {
+            "wlasciwy_sad": "Sąd Rejonowy dla Krakowa-Śródmieścia w Krakowie, Wydział Gospodarczy, Kordylewskiego 11\n31-542 Kraków",
+            "typ_sadu": "rejonowy"
+        },
+        {
+            "wlasciwy_sad": "Sąd Okręgowy w Krakowie, Wydział Gospodarczy, Przy Rondzie 7\n31-547 Kraków",
+            "typ_sadu": "okręgowy"
+        }
+    ],
+    "03-301 Warszawa": [
+        {
+            "wlasciwy_sad": "Sąd Rejonowy dla m.st. Warszawy w Warszawie, Wydział Gospodarczy, Czerniakowska 100A\n00-454 Warszawa",
+            "typ_sadu": "rejonowy"
+        },
+        {
+            "wlasciwy_sad": "Sąd Okręgowy w Warszawie, Wydział Gospodarczy, Czerniakowska 100\n00-454 Warszawa",
+            "typ_sadu": "okręgowy"
+        }
+    ]
+}

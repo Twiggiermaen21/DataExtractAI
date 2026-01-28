@@ -209,7 +209,7 @@
         </div>
 
         <div class="court-header section">
-            <strong>Do Sądu Rejonowego</strong><br>
+            <strong>Do <span id="sad_typ">Sądu Rejonowego</span></strong><br>
             <input type="text" name="sad_nazwa_pelna" class="full-width"
                 placeholder="Szczecin-Centrum w Szczecinie"><br>
             <input type="text" name="sad_wydzial_gospodarczy" class="full-width"
@@ -240,11 +240,12 @@
 
             <div class="half-width">
                 <strong>Strona pozwana:</strong><br>
-                <input type="text" name="pozwany_nazwa_pelna" class="full-width" placeholder="CD Projekt Spółka Akcyjna"
-                    style="font-weight: bold;"><br>
-                <input type="text" name="pozwany_adres_pelny" class="full-width"
-                    placeholder="ul. Jagiellońska 74, 03-301 Warszawa"><br>
-                KRS: <input type="text" name="pozwany_numer_krs" placeholder="0000006865" style="width: 100px;">
+                <input type="text" name="pozwany_oznaczenie_pelne" class="full-width"
+                    placeholder="CD Projekt Spółka akcyjna ul. Jagiellońska 43, 00-100 Warszawa"
+                    style="font-weight: bold;">
+                <p style="font-size: 0.8em; color: #666; margin: 4px 0 0;">
+                    Format: Nazwa firmy + ulica i numer + kod pocztowy i miasto
+                </p>
             </div>
         </div>
 
@@ -586,6 +587,31 @@
 
                 // Oblicz na starcie
                 updateCourtFee();
+            }
+
+            // === LOGIKA WŁAŚCIWOŚCI SĄDU (WPS) ===
+            const courtTypeSpan = document.getElementById('sad_typ');
+
+            function updateCourtType() {
+                if (!wpsInput || !courtTypeSpan) return;
+
+                let rawVal = wpsInput.value.replace(' zł', '').replace(/\s/g, '').replace(',', '.');
+                let wps = parseFloat(rawVal) || 0;
+
+                if (wps > 100000) {
+                    courtTypeSpan.textContent = 'Sądu Okręgowego';
+                    courtTypeSpan.style.color = '#1565c0';
+                } else {
+                    courtTypeSpan.textContent = 'Sądu Rejonowego';
+                    courtTypeSpan.style.color = 'inherit';
+                }
+            }
+
+            if (wpsInput) {
+                wpsInput.addEventListener('input', updateCourtType);
+                wpsInput.addEventListener('change', updateCourtType);
+                // Wywołaj na starcie
+                updateCourtType();
             }
 
         });
