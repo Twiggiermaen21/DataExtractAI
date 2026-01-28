@@ -1,4 +1,29 @@
+// ==================== HELPER FUNCTIONS ====================
+// Przesuwa datę o jeden dzień (format: DD.MM.YYYY)
+function addOneDay(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return dateStr;
+
+    const parts = dateStr.split('.');
+    if (parts.length !== 3) return dateStr;
+
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+    const year = parseInt(parts[2], 10);
+
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return dateStr;
+
+    const date = new Date(year, month, day);
+    date.setDate(date.getDate() + 1);
+
+    const newDay = String(date.getDate()).padStart(2, '0');
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const newYear = date.getFullYear();
+
+    return `${newDay}.${newMonth}.${newYear}`;
+}
+
 // ==================== OCR ====================
+
 const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const fileList = document.getElementById('fileList');
@@ -13,26 +38,29 @@ const resultsList = document.getElementById('resultsList');
 
 let selectedFiles = [];
 
-uploadZone.addEventListener('click', () => fileInput.click());
+if (uploadZone) {
+    uploadZone.addEventListener('click', () => fileInput.click());
 
-uploadZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadZone.classList.add('dragover');
-});
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
 
-uploadZone.addEventListener('dragleave', () => {
-    uploadZone.classList.remove('dragover');
-});
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
 
-uploadZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadZone.classList.remove('dragover');
-    handleFiles(e.dataTransfer.files);
-});
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+}
 
-fileInput.addEventListener('change', (e) => {
-    handleFiles(e.target.files);
-});
+if (fileInput) {
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+}
+
 
 function handleFiles(files) {
     for (const file of files) {
@@ -45,6 +73,7 @@ function handleFiles(files) {
 }
 
 function renderFileList() {
+    if (!fileList) return;
     fileList.innerHTML = selectedFiles.map((file, index) => `
     <div class="file-item">
       <span class="icon">📄</span>
@@ -68,62 +97,69 @@ function formatSize(bytes) {
 }
 
 function updateOcrButton() {
+    if (!btnOcr) return;
     btnOcr.disabled = selectedFiles.length === 0;
 }
 
-btnOcr.addEventListener('click', async () => {
-    if (selectedFiles.length === 0) return;
+if (btnOcr) {
+    btnOcr.addEventListener('click', async () => {
+        if (selectedFiles.length === 0) return;
 
-    btnOcr.disabled = true;
-    btnOcr.classList.add('loading');
-    btnIcon.innerHTML = '<span class="spinner">⏳</span>';
-    btnText.textContent = 'Przetwarzanie...';
-    progressBar.classList.remove('hidden');
-    statusText.classList.remove('hidden');
-    statusText.textContent = 'Ładowanie modelu OCR...';
-    progressFill.style.width = '10%';
-    resultsCard.classList.add('hidden');
+        btnOcr.disabled = true;
+        btnOcr.classList.add('loading');
+        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnText) btnText.textContent = 'Przetwarzanie...';
+        if (progressBar) progressBar.classList.remove('hidden');
+        if (statusText) {
+            statusText.classList.remove('hidden');
+            statusText.textContent = 'Ładowanie modelu OCR...';
+        }
+        if (progressFill) progressFill.style.width = '10%';
+        if (resultsCard) resultsCard.classList.add('hidden');
 
-    const formData = new FormData();
-    selectedFiles.forEach(file => {
-        formData.append('files', file);
-    });
+        const formData = new FormData();
 
-    try {
-        statusText.textContent = 'Przetwarzanie obrazów...';
-        progressFill.style.width = '30%';
-
-        const response = await fetch('/api/process_ocr', {
-            method: 'POST',
-            body: formData
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
         });
 
-        progressFill.style.width = '90%';
-        const data = await response.json();
-        progressFill.style.width = '100%';
+        try {
+            if (statusText) statusText.textContent = 'Przetwarzanie obrazów...';
+            if (progressFill) progressFill.style.width = '30%';
 
-        if (data.success) {
-            statusText.textContent = `✅ Przetworzono ${data.processed.length} plików`;
-            showResults(data);
-        } else {
-            statusText.textContent = `❌ ${data.error}`;
+            const response = await fetch('/api/process_ocr', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (progressFill) progressFill.style.width = '90%';
+            const data = await response.json();
+            if (progressFill) progressFill.style.width = '100%';
+
+            if (data.success) {
+                if (statusText) statusText.textContent = `✅ Przetworzono ${data.processed.length} plików`;
+                showResults(data);
+            } else {
+                if (statusText) statusText.textContent = `❌ ${data.error}`;
+            }
+
+        } catch (error) {
+            if (statusText) statusText.textContent = `❌ ${error.message}`;
+        } finally {
+            btnOcr.classList.remove('loading');
+            if (btnIcon) btnIcon.textContent = '🚀';
+            if (btnText) btnText.textContent = 'Uruchom OCR';
+            btnOcr.disabled = false;
+
+            setTimeout(() => {
+                if (progressBar) progressBar.classList.add('hidden');
+            }, 2000);
         }
-
-    } catch (error) {
-        statusText.textContent = `❌ ${error.message}`;
-    } finally {
-        btnOcr.classList.remove('loading');
-        btnIcon.textContent = '🚀';
-        btnText.textContent = 'Uruchom OCR';
-        btnOcr.disabled = false;
-
-        setTimeout(() => {
-            progressBar.classList.add('hidden');
-        }, 2000);
-    }
-});
+    });
+}
 
 function showResults(data) {
+    if (!resultsCard || !resultsList) return;
     resultsCard.classList.remove('hidden');
 
     let html = '';
@@ -152,45 +188,64 @@ function showResults(data) {
     loadJsonFiles();
 }
 
-// ==================== Templates ====================
-const jsonCheckboxList = document.getElementById('jsonCheckboxList');
-const refreshJsonList = document.getElementById('refreshJsonList');
+// ==================== Templates - ADVANCED MODE ====================
 const templateSelect = document.getElementById('templateSelect');
-const btnTemplate = document.getElementById('btnTemplate');
-const btnTemplateIcon = document.getElementById('btnTemplateIcon');
-const btnTemplateText = document.getElementById('btnTemplateText');
-const templateProgressBar = document.getElementById('templateProgressBar');
-const templateProgressFill = document.getElementById('templateProgressFill');
-const templateStatusText = document.getElementById('templateStatusText');
 const templatePreview = document.getElementById('templatePreview');
 const extractedDataCard = document.getElementById('extractedDataCard');
 const extractedDataContent = document.getElementById('extractedDataContent');
+const advSaveWezwanieSection = document.getElementById('advSaveWezwanieSection');
+const advBtnSaveWezwanie = document.getElementById('advBtnSaveWezwanie');
+
+// Kroki workflow
+const advStepSource = document.getElementById('advStepSource');
+const advStepLlm = document.getElementById('advStepLlm');
+const advStepPozewExtra = document.getElementById('advStepPozewExtra');
+const advDividerStep2 = document.getElementById('advDividerStep2');
+const advDividerStep3 = document.getElementById('advDividerStep3');
+
+// Źródło danych - OCR vs JSON
+const btnSourceOcr = document.getElementById('btnSourceOcr');
+const btnSourceJson = document.getElementById('btnSourceJson');
+const ocrSection = document.getElementById('ocrSection');
+const jsonSection = document.getElementById('jsonSection');
+const jsonCheckboxList = document.getElementById('jsonCheckboxList');
+const refreshJsonList = document.getElementById('refreshJsonList');
+
+// OCR elementy
+const advUploadZone = document.getElementById('advUploadZone');
+const advFileInput = document.getElementById('advFileInput');
+const advFileList = document.getElementById('advFileList');
+const btnRunOcr = document.getElementById('btnRunOcr');
+const btnOcrIcon = document.getElementById('btnOcrIcon');
+const btnOcrText = document.getElementById('btnOcrText');
+const ocrProgressBar = document.getElementById('ocrProgressBar');
+const ocrProgressFill = document.getElementById('ocrProgressFill');
+const ocrStatusText = document.getElementById('ocrStatusText');
+
+// LLM elementy
+const btnRunLlm = document.getElementById('btnRunLlm');
+const btnLlmIcon = document.getElementById('btnLlmIcon');
+const btnLlmText = document.getElementById('btnLlmText');
+const llmProgressBar = document.getElementById('llmProgressBar');
+const llmProgressFill = document.getElementById('llmProgressFill');
+const llmStatusText = document.getElementById('llmStatusText');
+const selectedJsonInfo = document.getElementById('selectedJsonInfo');
+
+// KRS elements
+const advBtnKrsPowodManual = document.getElementById('advBtnKrsPowodManual');
+const advKrsPowodFile = document.getElementById('advKrsPowodFile');
+const advKrsPowodManualFields = document.getElementById('advKrsPowodManualFields');
+const advKrsPowodUploadStatus = document.getElementById('advKrsPowodUploadStatus');
+const krsPowodUploadZone = document.getElementById('krsPowodUploadZone');
 
 let currentTemplateFields = [];
 let templateIframe = null;
-
-async function loadJsonFiles() {
-    try {
-        const response = await fetch('/api/ocr_results');
-        const files = await response.json();
-
-        if (files.length === 0) {
-            jsonCheckboxList.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON</div>';
-        } else {
-            jsonCheckboxList.innerHTML = files.map(file => `
-        <div class="checkbox-item">
-          <input type="checkbox" id="json_${file}" value="${file}">
-          <label for="json_${file}">${file}</label>
-        </div>
-      `).join('');
-        }
-        updateTemplateButton();
-    } catch (e) {
-        console.error('Error loading JSON files:', e);
-    }
-}
+let advWorkflowType = null; // 'wezwanie' or 'pozew'
+let advUploadedFiles = [];
+let advDataSource = 'ocr'; // 'ocr' or 'json'
 
 async function loadTemplates() {
+    if (!templateSelect) return;
     try {
         const response = await fetch('/api/templates');
         const templates = await response.json();
@@ -204,158 +259,458 @@ async function loadTemplates() {
     }
 }
 
-loadJsonFiles();
+async function loadJsonFiles() {
+    if (!jsonCheckboxList) return;
+    try {
+        const response = await fetch('/api/ocr_results');
+        const files = await response.json();
+
+        if (files.length === 0) {
+            jsonCheckboxList.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON. Najpierw uruchom OCR.</div>';
+        } else {
+            jsonCheckboxList.innerHTML = files.map(file => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="json_${file}" value="${file}" onchange="updateLlmButton()">
+                    <label for="json_${file}">${file}</label>
+                </div>
+            `).join('');
+        }
+        updateLlmButton();
+    } catch (e) {
+        console.error('Error loading JSON files:', e);
+    }
+}
+
 loadTemplates();
 
-refreshJsonList.addEventListener('click', loadJsonFiles);
+// === PRZEŁĄCZANIE ŹRÓDŁA (OCR vs JSON) ===
+if (btnSourceOcr) {
+    btnSourceOcr.addEventListener('click', () => {
+        advDataSource = 'ocr';
+        btnSourceOcr.classList.add('active');
+        btnSourceJson.classList.remove('active');
+        ocrSection.classList.remove('hidden');
+        jsonSection.classList.add('hidden');
+        updateLlmButton();
+    });
+}
 
-jsonCheckboxList.addEventListener('change', updateTemplateButton);
-templateSelect.addEventListener('change', async () => {
-    updateTemplateButton();
+if (btnSourceJson) {
+    btnSourceJson.addEventListener('click', () => {
+        advDataSource = 'json';
+        btnSourceJson.classList.add('active');
+        btnSourceOcr.classList.remove('active');
+        jsonSection.classList.remove('hidden');
+        ocrSection.classList.add('hidden');
+        loadJsonFiles();
+        updateLlmButton();
+    });
+}
 
-    const filename = templateSelect.value;
-    if (!filename) {
-        templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: var(--text-muted);">Wybierz szablon aby zobaczyć podgląd</div>';
-        currentTemplateFields = [];
-        return;
-    }
+if (refreshJsonList) {
+    refreshJsonList.addEventListener('click', loadJsonFiles);
+}
 
-    try {
-        const response = await fetch(`/api/template/${filename}`);
-        const data = await response.json();
+// === UPLOAD ZONE DLA OCR ===
+if (advUploadZone) {
+    advUploadZone.addEventListener('click', () => advFileInput.click());
 
-        currentTemplateFields = data.fields;
+    advUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        advUploadZone.classList.add('dragover');
+    });
 
-        // Create iframe for preview
-        templatePreview.innerHTML = '';
-        templateIframe = document.createElement('iframe');
-        templateIframe.style.width = '100%';
-        templateIframe.style.height = '850px';
-        templateIframe.style.border = 'none';
-        templatePreview.appendChild(templateIframe);
+    advUploadZone.addEventListener('dragleave', () => {
+        advUploadZone.classList.remove('dragover');
+    });
 
-        templateIframe.contentDocument.open();
-        templateIframe.contentDocument.write(data.content);
+    advUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        advUploadZone.classList.remove('dragover');
+        handleAdvUploadFiles(e.dataTransfer.files);
+    });
+}
 
-        // Wstrzyknij style paska przewijania
-        const style = templateIframe.contentDocument.createElement('style');
-        style.textContent = `
-            body::-webkit-scrollbar { width: 8px; }
-            body::-webkit-scrollbar-track { background: #f1f1f1; }
-            body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-            body::-webkit-scrollbar-thumb:hover { background: #555; }
-            /* Firefox */
-            body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
-        `;
-        templateIframe.contentDocument.head.appendChild(style);
+if (advFileInput) {
+    advFileInput.addEventListener('change', (e) => {
+        handleAdvUploadFiles(e.target.files);
+    });
+}
 
-        templateIframe.contentDocument.close();
-
-        // Enable print button
-        const btnPrint = document.getElementById('btnPrintTemplate');
-        if (btnPrint) {
-            btnPrint.disabled = false;
-            btnPrint.onclick = function () {
-                if (templateIframe && templateIframe.contentWindow) {
-                    templateIframe.contentWindow.focus();
-                    templateIframe.contentWindow.print();
-                }
-            };
+function handleAdvUploadFiles(files) {
+    for (const file of files) {
+        if (!advUploadedFiles.find(f => f.name === file.name)) {
+            advUploadedFiles.push(file);
         }
-
-    } catch (e) {
-        templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
     }
-});
+    renderAdvFileList();
+    updateOcrButton();
+}
+
+function renderAdvFileList() {
+    if (!advFileList) return;
+    advFileList.innerHTML = advUploadedFiles.map((file, index) => `
+        <div class="file-item">
+            <span class="icon">📄</span>
+            <span class="name">${file.name}</span>
+            <span class="size">${formatSize(file.size)}</span>
+            <span class="remove" onclick="removeAdvFile(${index})">✕</span>
+        </div>
+    `).join('');
+}
+
+window.removeAdvFile = function (index) {
+    advUploadedFiles.splice(index, 1);
+    renderAdvFileList();
+    updateOcrButton();
+};
+
+function updateOcrButton() {
+    if (btnRunOcr) {
+        btnRunOcr.disabled = advUploadedFiles.length === 0;
+    }
+}
 
 function getSelectedJsonFiles() {
+    if (!jsonCheckboxList) return [];
     const checkboxes = jsonCheckboxList.querySelectorAll('input[type="checkbox"]:checked');
     return Array.from(checkboxes).map(cb => cb.value);
 }
 
-function updateTemplateButton() {
+window.updateLlmButton = function () {
+    if (!btnRunLlm) return;
+
     const selectedFiles = getSelectedJsonFiles();
-    const hasTemplate = templateSelect.value !== '';
-    btnTemplate.disabled = selectedFiles.length === 0 || !hasTemplate;
-}
+    btnRunLlm.disabled = selectedFiles.length === 0;
 
-btnTemplate.addEventListener('click', async () => {
-    const selectedFiles = getSelectedJsonFiles();
-    const templateFilename = templateSelect.value;
+    if (selectedJsonInfo) {
+        selectedJsonInfo.textContent = `Wybrano: ${selectedFiles.length} plików JSON`;
+    }
+};
 
-    if (selectedFiles.length === 0 || !templateFilename) return;
+// === OCR PROCESSING ===
+if (btnRunOcr) {
+    btnRunOcr.addEventListener('click', async () => {
+        if (advUploadedFiles.length === 0) return;
 
-    btnTemplate.disabled = true;
-    btnTemplate.classList.add('loading');
-    btnTemplateIcon.innerHTML = '<span class="spinner">⏳</span>';
-    btnTemplateText.textContent = 'Przetwarzanie...';
-    templateProgressBar.classList.remove('hidden');
-    templateStatusText.classList.remove('hidden');
-    templateStatusText.textContent = 'Wysyłanie do AI...';
-    templateProgressFill.style.width = '20%';
-    extractedDataCard.classList.add('hidden');
+        btnRunOcr.disabled = true;
+        btnRunOcr.classList.add('loading');
+        if (btnOcrIcon) btnOcrIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnOcrText) btnOcrText.textContent = 'Przetwarzanie...';
+        if (ocrProgressBar) ocrProgressBar.classList.remove('hidden');
+        if (ocrStatusText) {
+            ocrStatusText.classList.remove('hidden');
+            ocrStatusText.textContent = '📷 Skanowanie dokumentów...';
+        }
+        if (ocrProgressFill) ocrProgressFill.style.width = '10%';
 
-    try {
-        templateStatusText.textContent = 'Ekstrakcja danych...';
-        templateProgressFill.style.width = '50%';
-
-        const response = await fetch('/api/process_template', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                files: selectedFiles,
-                fields: currentTemplateFields
-            })
+        const formData = new FormData();
+        advUploadedFiles.forEach(file => {
+            formData.append('files', file);
         });
 
-        templateProgressFill.style.width = '90%';
-        const data = await response.json();
-        templateProgressFill.style.width = '100%';
+        try {
+            if (ocrStatusText) ocrStatusText.textContent = '📷 Przetwarzanie OCR...';
+            if (ocrProgressFill) ocrProgressFill.style.width = '50%';
 
-        if (data.success) {
-            templateStatusText.textContent = '✅ Ekstrakcja zakończona!';
+            const response = await fetch('/api/process_ocr', {
+                method: 'POST',
+                body: formData
+            });
 
-            // Show extracted data
-            extractedDataCard.classList.remove('hidden');
-            extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
+            if (ocrProgressFill) ocrProgressFill.style.width = '90%';
+            const data = await response.json();
+            if (ocrProgressFill) ocrProgressFill.style.width = '100%';
 
-            // Fill template inputs
-            if (templateIframe && templateIframe.contentDocument) {
-                const doc = templateIframe.contentDocument;
-                // Pola do pominięcia (uzupełniane automatycznie przez skrypt szablonu)
-                const skipFields = ['dokument_miejscowosc_data'];
+            if (data.success) {
+                if (ocrStatusText) ocrStatusText.textContent = `✅ Przetworzono ${data.processed.length} plików. JSON zapisany.`;
 
-                for (const [fieldName, value] of Object.entries(data.fields)) {
-                    // Pomijaj pola, które są uzupełniane automatycznie
-                    if (skipFields.includes(fieldName)) continue;
+                // Wyczyść pliki i przełącz na JSON
+                advUploadedFiles = [];
+                renderAdvFileList();
 
-                    // Znajdź WSZYSTKIE pola o danej nazwie (nie tylko pierwsze)
-                    const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
-                    inputs.forEach(input => {
-                        if (input && value) {
+                // Automatycznie przełącz na tryb JSON i odśwież listę
+                setTimeout(() => {
+                    if (btnSourceJson) btnSourceJson.click();
+                }, 1000);
+            } else {
+                if (ocrStatusText) ocrStatusText.textContent = `❌ ${data.error}`;
+            }
+
+        } catch (error) {
+            if (ocrStatusText) ocrStatusText.textContent = `❌ ${error.message}`;
+        } finally {
+            btnRunOcr.classList.remove('loading');
+            if (btnOcrIcon) btnOcrIcon.textContent = '📷';
+            if (btnOcrText) btnOcrText.textContent = 'Uruchom OCR';
+            updateOcrButton();
+
+            setTimeout(() => {
+                if (ocrProgressBar) ocrProgressBar.classList.add('hidden');
+            }, 3000);
+        }
+    });
+}
+
+// === LLM PROCESSING ===
+if (btnRunLlm) {
+    btnRunLlm.addEventListener('click', async () => {
+        const selectedFiles = getSelectedJsonFiles();
+        if (selectedFiles.length === 0) return;
+
+        btnRunLlm.disabled = true;
+        btnRunLlm.classList.add('loading');
+        if (btnLlmIcon) btnLlmIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnLlmText) btnLlmText.textContent = 'Przetwarzanie...';
+        if (llmProgressBar) llmProgressBar.classList.remove('hidden');
+        if (llmStatusText) {
+            llmStatusText.classList.remove('hidden');
+            llmStatusText.textContent = '🤖 Wysyłanie do AI...';
+        }
+        if (llmProgressFill) llmProgressFill.style.width = '20%';
+        if (extractedDataCard) extractedDataCard.classList.add('hidden');
+
+        try {
+            if (llmStatusText) llmStatusText.textContent = '🤖 Ekstrakcja danych...';
+            if (llmProgressFill) llmProgressFill.style.width = '50%';
+
+            const response = await fetch('/api/process_template', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    files: selectedFiles,
+                    fields: currentTemplateFields
+                })
+            });
+
+            if (llmProgressFill) llmProgressFill.style.width = '90%';
+            const data = await response.json();
+            if (llmProgressFill) llmProgressFill.style.width = '100%';
+
+            if (data.success) {
+                if (llmStatusText) llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
+
+                if (extractedDataCard) extractedDataCard.classList.remove('hidden');
+                if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
+
+                // Show save button only for wezwanie
+                if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
+                    advSaveWezwanieSection.classList.remove('hidden');
+                }
+
+                // Fill template
+                if (templateIframe && templateIframe.contentDocument) {
+                    const doc = templateIframe.contentDocument;
+                    const skipFields = ['dokument_miejscowosc_data', 'meta_miejscowosc_data_dokumentu'];
+
+                    for (let [fieldName, value] of Object.entries(data.fields)) {
+                        if (skipFields.includes(fieldName) || !value) continue;
+
+                        // Dla platnosc_data_odsetek - przesuń datę o 1 dzień
+                        if (fieldName === 'platnosc_data_odsetek') {
+                            value = addOneDay(value);
+                        }
+
+                        const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                        inputs.forEach(input => {
                             input.value = value;
                             input.style.background = '#e8f5e9';
-                        }
-                    });
+                        });
+                    }
                 }
+
+            } else {
+                if (llmStatusText) llmStatusText.textContent = `❌ ${data.error}`;
             }
-        } else {
-            templateStatusText.textContent = `❌ ${data.error}`;
+
+        } catch (error) {
+            if (llmStatusText) llmStatusText.textContent = `❌ ${error.message}`;
+        } finally {
+            btnRunLlm.classList.remove('loading');
+            if (btnLlmIcon) btnLlmIcon.textContent = '🤖';
+            if (btnLlmText) btnLlmText.textContent = 'Wypełnij szablon AI';
+            updateLlmButton();
+
+            setTimeout(() => {
+                if (llmProgressBar) llmProgressBar.classList.add('hidden');
+            }, 2000);
+        }
+    });
+}
+
+// === KRS UPLOAD ZONE ===
+
+if (krsPowodUploadZone) {
+    krsPowodUploadZone.addEventListener('click', () => advKrsPowodFile.click());
+
+    krsPowodUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        krsPowodUploadZone.classList.add('dragover');
+    });
+
+    krsPowodUploadZone.addEventListener('dragleave', () => {
+        krsPowodUploadZone.classList.remove('dragover');
+    });
+
+    krsPowodUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        krsPowodUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleKrsPowodFile(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+if (advKrsPowodFile) {
+    advKrsPowodFile.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleKrsPowodFile(e.target.files[0]);
+        }
+    });
+}
+
+function handleKrsPowodFile(file) {
+    if (advKrsPowodUploadStatus) {
+        advKrsPowodUploadStatus.classList.remove('hidden');
+        advKrsPowodUploadStatus.textContent = `✅ Plik KRS załadowany: ${file.name}`;
+    }
+    if (advKrsPowodManualFields) advKrsPowodManualFields.classList.add('hidden');
+    if (advBtnKrsPowodManual) advBtnKrsPowodManual.classList.remove('active');
+}
+
+if (advBtnKrsPowodManual) {
+    advBtnKrsPowodManual.addEventListener('click', () => {
+        if (advKrsPowodManualFields) advKrsPowodManualFields.classList.toggle('hidden');
+        advBtnKrsPowodManual.classList.toggle('active');
+        if (advKrsPowodUploadStatus) advKrsPowodUploadStatus.classList.add('hidden');
+    });
+}
+
+
+// === TEMPLATE SELECTION - WORKFLOW BRANCHING ===
+
+if (templateSelect) {
+    templateSelect.addEventListener('change', async function () {
+        const filename = this.value;
+
+        // Hide all step sections
+        if (advStepSource) advStepSource.classList.add('hidden');
+        if (advStepLlm) advStepLlm.classList.add('hidden');
+        if (advStepPozewExtra) advStepPozewExtra.classList.add('hidden');
+        if (advDividerStep2) advDividerStep2.classList.add('hidden');
+        if (advDividerStep3) advDividerStep3.classList.add('hidden');
+        if (advSaveWezwanieSection) advSaveWezwanieSection.classList.add('hidden');
+
+        if (!filename) {
+            advWorkflowType = null;
+            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: var(--text-muted);">Wybierz szablon aby zobaczyć podgląd</div>';
+            currentTemplateFields = [];
+            return;
         }
 
-    } catch (error) {
-        templateStatusText.textContent = `❌ ${error.message}`;
-    } finally {
-        btnTemplate.classList.remove('loading');
-        btnTemplateIcon.textContent = '🤖';
-        btnTemplateText.textContent = 'Wypełnij szablon AI';
-        updateTemplateButton();
+        // Show workflow sections
+        if (advDividerStep2) advDividerStep2.classList.remove('hidden');
+        if (advStepSource) advStepSource.classList.remove('hidden');
+        if (advDividerStep3) advDividerStep3.classList.remove('hidden');
+        if (advStepLlm) advStepLlm.classList.remove('hidden');
 
-        setTimeout(() => {
-            templateProgressBar.classList.add('hidden');
-        }, 2000);
-    }
-});
+        if (filename.includes('wezwanie')) {
+            advWorkflowType = 'wezwanie';
+        } else if (filename.includes('pozew')) {
+            advWorkflowType = 'pozew';
+            if (advStepPozewExtra) advStepPozewExtra.classList.remove('hidden');
+        }
+
+
+        // Load template preview
+        try {
+            const response = await fetch(`/api/template/${filename}`);
+            const data = await response.json();
+
+            currentTemplateFields = data.fields;
+
+            if (templatePreview) {
+                templatePreview.innerHTML = '';
+                templateIframe = document.createElement('iframe');
+                templateIframe.style.width = '100%';
+                templateIframe.style.height = '850px';
+                templateIframe.style.border = 'none';
+                templateIframe.id = 'advDocumentIframe';
+                templatePreview.appendChild(templateIframe);
+
+                templateIframe.contentDocument.open();
+                templateIframe.contentDocument.write(data.content);
+
+                const style = templateIframe.contentDocument.createElement('style');
+                style.textContent = `
+                    body::-webkit-scrollbar { width: 8px; }
+                    body::-webkit-scrollbar-track { background: #f1f1f1; }
+                    body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+                    body::-webkit-scrollbar-thumb:hover { background: #555; }
+                    body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
+                `;
+                templateIframe.contentDocument.head.appendChild(style);
+                templateIframe.contentDocument.close();
+            }
+
+            const btnPrint = document.getElementById('btnPrintTemplate');
+            if (btnPrint) {
+                btnPrint.disabled = false;
+                btnPrint.onclick = function () {
+                    if (templateIframe && templateIframe.contentWindow) {
+                        templateIframe.contentWindow.focus();
+                        templateIframe.contentWindow.print();
+                    }
+                };
+            }
+
+        } catch (e) {
+            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
+        }
+    });
+}
+
+// === SAVE WEZWANIE (ADVANCED) ===
+if (advBtnSaveWezwanie) {
+    advBtnSaveWezwanie.addEventListener('click', async () => {
+
+        const iframe = document.getElementById('advDocumentIframe');
+        if (!iframe) {
+            alert('Brak dokumentu do zapisania!');
+            return;
+        }
+
+        const doc = iframe.contentDocument;
+        const fields = {};
+
+        doc.querySelectorAll('input[name]').forEach(input => {
+            fields[input.name] = input.value;
+        });
+
+        try {
+            const response = await fetch('/api/wezwania/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`✅ Wezwanie zapisane!\nID: ${result.id}`);
+                advSaveWezwanieSection.innerHTML = `
+                    <p style="margin: 0; color: #2e7d32; font-weight: 500;">
+                        ✅ Wezwanie zapisane (ID: ${result.id})
+                    </p>`;
+            } else {
+                alert(`❌ Błąd: ${result.error}`);
+            }
+        } catch (e) {
+            alert(`❌ Błąd zapisu: ${e.message}`);
+        }
+    });
+}
+
 
 // ==================== TABS ====================
 document.querySelectorAll('.tab-btn').forEach(btn => {

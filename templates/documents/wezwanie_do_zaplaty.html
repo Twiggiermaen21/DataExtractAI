@@ -82,7 +82,6 @@
             margin-top: 40px;
         }
 
-        /* Responsywność dla ekranu 300px i więcej */
         @media (min-width: 600px) {
             body {
                 padding: 40px;
@@ -107,7 +106,6 @@
             body {
                 background: white;
                 padding: 2.5cm !important;
-                /* Marginesy dokumentu */
             }
 
             .container {
@@ -124,7 +122,6 @@
                 padding: 0 !important;
             }
 
-            /* Ukryj placeholdery przy druku (opcjonalne, ale inputy usually mają wartości) */
             ::placeholder {
                 color: transparent;
             }
@@ -143,11 +140,11 @@
         <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
             <div class="section">
                 <strong>Wierzyciel:</strong><br>
-                <input type="text" name="wierzyciel_nazwa_pelna" placeholder="Orlen Spółka Akcyjna"
+                <input type="text" name="wierzyciel_sprzedajacy_nazwa_pelna" placeholder="Orlen Spółka Akcyjna"
                     style="width: 250px;"><br>
-                <input type="text" name="wierzyciel_adres_pelny,ulica,miasto" placeholder="Ul. Chemików 7, 09-411 Płock"
-                    style="width: 250px;"><br>
-                NIP: <input type="text" name="wierzyciel_nip" placeholder="09876545">
+                <input type="text" name="wierzyciel_sprzedajacy_adres, ulica,miasto"
+                    placeholder="Ul. Chemików 7, 09-411 Płock" style="width: 250px;"><br>
+                NIP: <input type="text" name="wierzyciel_sprzedajacy_nip" placeholder="09876545">
             </div>
 
             <div class="section" style="font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px;">
@@ -165,10 +162,11 @@
             </div>
             <div class="right-align">
                 <strong>Dłużnik:</strong><br>
-                <input type="text" name="dluznik_nazwa_pelna" placeholder="CD Projekt S.A." style="width: 250px;"><br>
-                <input type="text" name="dluznik_adres_pelny" placeholder="ul. Jagiellońska 74, Warszawa"
+                <input type="text" name="dluznik_nabywca_nazwa_pelna" placeholder="CD Projekt S.A."
                     style="width: 250px;"><br>
-                NIP: <input type="text" name="dluznik_nip" placeholder="0000006865">
+                <input type="text" name="dluznik_nabywca_adres_pelny" placeholder="ul. Jagiellońska 74, Warszawa"
+                    style="width: 250px;"><br>
+                NIP: <input type="text" name="dluznik_nabywca_nip" placeholder="0000006865">
             </div>
         </div>
 
@@ -176,14 +174,14 @@
 
         <div class="content-text section">
             Działając w imieniu
-            <input type="text" name="wierzyciel_nazwa_tresc" placeholder="Orlen S.A." class="inline-input"
+            <input type="text" name="wierzyciel_sprzedajacy_nazwa_pelna" placeholder="Orlen S.A." class="inline-input"
                 style="width: 130px;">
             z siedzibą w
-            <input type="text" name="wierzyciel_miasto_siedziba" placeholder="Płocku" class="inline-input"
+            <input type="text" name="wierzyciel_sprzedajacy_miasto_siedziba" placeholder="Płocku" class="inline-input"
                 style="width: 100px;">,
-            <input type="text" name="wierzyciel_adres_pelny_tresc" placeholder="09-411 Płock, ul. Chemików 7"
-                class="inline-input" style="width: 200px;">
-            NIP: <input type="text" name="wierzyciel_nip_tresc" placeholder="0987654" class="inline-input"
+            <input type="text" name="wierzyciel_sprzedajacy_adres_pelny,ulica,miasto"
+                placeholder="09-411 Płock, ul. Chemików 7" class="inline-input" style="width: 200px;">
+            NIP: <input type="text" name="wierzyciel_sprzedajacy_nip" placeholder="0987654" class="inline-input"
                 style="width: 80px;">,
 
             na podstawie pełnomocnictwa, w związku z fakturą nr
@@ -222,39 +220,25 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // 1. Znajdź pole input
             const inputField = document.querySelector('input[name="dokument_miejscowosc_data"]');
-
-            // 2. Pobierz aktualną datę
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const year = now.getFullYear();
             const currentDate = `${day}.${month}.${year} r.`;
 
-            // Ustaw wartość początkową
             inputField.value = `..., ${currentDate}`;
 
-            // 3. Pobierz lokalizację
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async function (position) {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
-
                     try {
-                        // ZMIANA: Używamy API BigDataCloud, które nie blokuje (nie zwraca błędu 403)
                         const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pl`;
-
                         const response = await fetch(url);
                         const data = await response.json();
-
-                        // To API zwraca dane w innej strukturze:
-                        // city = miasto, locality = miejscowość/gmina
                         const city = data.city || data.locality || data.principalSubdivision || "Miejscowość";
-
-                        // 4. Aktualizujemy pole input
                         inputField.value = `${city}, ${currentDate}`;
-
                     } catch (error) {
                         console.error("Błąd pobierania miasta:", error);
                         inputField.value = `${currentDate}`;
@@ -274,27 +258,21 @@
             if (interestInput) {
                 interestInput.addEventListener('change', function () {
                     let val = this.value.trim();
-                    // Basic cleanup if user enters 'r.' or typical suffixes
                     val = val.replace(/r\.?$/i, '').trim();
 
-                    // Expected format: DD.MM.YYYY
                     const parts = val.split('.');
                     if (parts.length === 3) {
                         const d = parseInt(parts[0], 10);
-                        const m = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                        const m = parseInt(parts[1], 10) - 1;
                         const y = parseInt(parts[2], 10);
 
                         if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
                             const date = new Date(y, m, d);
-                            // Check if date is valid (e.g. not 32.01.2025)
                             if (date.getFullYear() === y && date.getMonth() === m && date.getDate() === d) {
-                                // Add 1 day
                                 date.setDate(date.getDate() + 1);
-
                                 const newDay = String(date.getDate()).padStart(2, '0');
                                 const newMonth = String(date.getMonth() + 1).padStart(2, '0');
                                 const newYear = date.getFullYear();
-
                                 this.value = `${newDay}.${newMonth}.${newYear}`;
                             }
                         }
