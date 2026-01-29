@@ -471,10 +471,18 @@ if (btnRunLlm) {
         if (extractedDataCard) extractedDataCard.classList.add('hidden');
 
         try {
-            if (llmStatusText) llmStatusText.textContent = '🤖 Ekstrakcja danych...';
+            // Dla wielu plików w wezwaniu - przetwarzaj każdy osobno
+            const isMultipleInvoices = selectedFiles.length > 1 && advWorkflowType === 'wezwanie';
+            const endpoint = isMultipleInvoices ? '/api/process_multiple_invoices' : '/api/process_template';
+
+            if (isMultipleInvoices) {
+                if (llmStatusText) llmStatusText.textContent = `🤖 Przetwarzanie ${selectedFiles.length} faktur osobno...`;
+            } else {
+                if (llmStatusText) llmStatusText.textContent = '🤖 Ekstrakcja danych...';
+            }
             if (llmProgressFill) llmProgressFill.style.width = '50%';
 
-            const response = await fetch('/api/process_template', {
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -488,35 +496,134 @@ if (btnRunLlm) {
             if (llmProgressFill) llmProgressFill.style.width = '100%';
 
             if (data.success) {
-                if (llmStatusText) llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
+                if (isMultipleInvoices) {
+                    // Obsługa wielu faktur
+                    if (llmStatusText) llmStatusText.textContent = `✅ Przetworzono ${data.invoices?.length || 0} faktur! Zapisano do: ${data.output_folder}`;
 
-                if (extractedDataCard) extractedDataCard.classList.remove('hidden');
-                if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
+                    if (extractedDataCard) extractedDataCard.classList.remove('hidden');
+                    if (extractedDataContent) {
+                        extractedDataContent.textContent = JSON.stringify({
+                            invoices: data.invoices,
+                            total_amount: data.total_amount,
+                            common_data: data.common_data
+                        }, null, 2);
+                    }
+
+                    // Wypełnij szablon danymi wspólnymi + pierwszą fakturą
+                    if (templateIframe && templateIframe.contentDocument) {
+                        const doc = templateIframe.contentDocument;
+                        const skipFields = ['Wpisz_aktualne_miasto_uzytkownika_oraz_dzisiejsza_date_w_formacie_Miejscowosc_Data'];
+
+                        // Wypełnij wspólne dane (wierzyciel, dłużnik)
+                        for (let [fieldName, value] of Object.entries(data.common_data || {})) {
+                            if (skipFields.includes(fieldName) || !value) continue;
+                            const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                            inputs.forEach(input => {
+                                input.value = value;
+                                input.style.background = '#e8f5e9';
+                            });
+                        }
+
+                        // Wypełnij dane z faktur
+                        if (data.invoices && data.invoices.length > 0) {
+                            // Połącz numery wszystkich faktur i wstaw do WSZYSTKICH pól numeru
+                            const allNumers = data.invoices.map(i => i.numer).filter(n => n).join(', ');
+                            const numerInputs = doc.querySelectorAll('input[name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"]');
+                            numerInputs.forEach(input => {
+                                input.value = allNumers;
+                                input.style.background = '#e8f5e9';
+                            });
+
+                            // Funkcja do parsowania daty w formacie DD.MM.YYYY
+                            function parsePolishDate(dateStr) {
+                                if (!dateStr) return null;
+                                const parts = dateStr.replace(/r\.?$/i, '').trim().split('.');
+                                if (parts.length === 3) {
+                                    const d = parseInt(parts[0], 10);
+                                    const m = parseInt(parts[1], 10) - 1;
+                                    const y = parseInt(parts[2], 10);
+                                    if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+                                        return new Date(y, m, d);
+                                    }
+                                }
+                                return null;
+                            }
+
+                            // Znajdź najpóźniejszą datę wystawienia
+                            let latestDataDate = null;
+                            let latestDataStr = '';
+                            data.invoices.forEach(inv => {
+                                const parsed = parsePolishDate(inv.data);
+                                if (parsed && (!latestDataDate || parsed > latestDataDate)) {
+                                    latestDataDate = parsed;
+                                    latestDataStr = inv.data;
+                                }
+                            });
+
+                            // Znajdź najpóźniejszy termin płatności
+                            let latestTerminDate = null;
+                            let latestTerminStr = '';
+                            data.invoices.forEach(inv => {
+                                const parsed = parsePolishDate(inv.termin);
+                                if (parsed && (!latestTerminDate || parsed > latestTerminDate)) {
+                                    latestTerminDate = parsed;
+                                    latestTerminStr = inv.termin;
+                                }
+                            });
+
+                            const dataInput = doc.querySelector('input[name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy"]');
+                            const terminInput = doc.querySelector('input[name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"]');
+
+                            if (dataInput && latestDataStr) {
+                                dataInput.value = latestDataStr;
+                                dataInput.style.background = '#e8f5e9';
+                            }
+                            if (terminInput && latestTerminStr) {
+                                terminInput.value = addOneDay(latestTerminStr);
+                                terminInput.style.background = '#e8f5e9';
+                            }
+                        }
+
+                        // Wstaw łączną kwotę
+                        const kwotaInput = doc.querySelector('input[name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta"]');
+                        if (kwotaInput && data.total_amount) {
+                            kwotaInput.value = data.total_amount + ' zł';
+                            kwotaInput.style.background = '#fff3e0';
+                        }
+                    }
+
+                } else {
+                    // Standardowa obsługa
+                    if (llmStatusText) llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
+
+                    if (extractedDataCard) extractedDataCard.classList.remove('hidden');
+                    if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
+
+                    // Fill template
+                    if (templateIframe && templateIframe.contentDocument) {
+                        const doc = templateIframe.contentDocument;
+                        const skipFields = ['Wpisz_aktualne_miasto_uzytkownika_oraz_dzisiejsza_date_w_formacie_Miejscowosc_Data'];
+
+                        for (let [fieldName, value] of Object.entries(data.fields)) {
+                            if (skipFields.includes(fieldName) || !value) continue;
+
+                            // Dla terminu płatności - przesuń datę o 1 dzień
+                            if (fieldName === 'Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki') {
+                                value = addOneDay(value);
+                            }
+
+                            const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                            inputs.forEach(input => {
+                                input.value = value;
+                                input.style.background = '#e8f5e9';
+                            });
+                        }
+                    }
+                }
 
                 // Show save button only for wezwanie
                 if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
                     advSaveWezwanieSection.classList.remove('hidden');
-                }
-
-                // Fill template
-                if (templateIframe && templateIframe.contentDocument) {
-                    const doc = templateIframe.contentDocument;
-                    const skipFields = ['dokument_miejscowosc_data', 'meta_miejscowosc_data_dokumentu'];
-
-                    for (let [fieldName, value] of Object.entries(data.fields)) {
-                        if (skipFields.includes(fieldName) || !value) continue;
-
-                        // Dla platnosc_data_odsetek - przesuń datę o 1 dzień
-                        if (fieldName === 'platnosc_data_odsetek') {
-                            value = addOneDay(value);
-                        }
-
-                        const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
-                        inputs.forEach(input => {
-                            input.value = value;
-                            input.style.background = '#e8f5e9';
-                        });
-                    }
                 }
 
             } else {
@@ -537,6 +644,7 @@ if (btnRunLlm) {
         }
     });
 }
+
 
 // === KRS UPLOAD ZONE ===
 

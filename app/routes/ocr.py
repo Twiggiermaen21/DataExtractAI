@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 
 from app.services.ocr_service import get_pipeline, unload_pipeline
-# from app.services.image_enhancer import enhance_image_for_ocr
+from app.services.image_enhancer import enhance_image_for_ocr
 
 ocr_bp = Blueprint('ocr', __name__)
 
@@ -49,31 +49,36 @@ def process_ocr():
             file.save(original_path)
             print(f"📁 Przetwarzanie: {filename}")
             
-            # Poprawa obrazu (skipping as requested)
+            # Poprawa obrazu (dla plików graficznych)
             path_to_process = original_path
-            # file_ext = os.path.splitext(filename)[1].lower()
+            file_ext = os.path.splitext(filename)[1].lower()
             
-            # if file_ext == '.pdf':
-            #     print(f"  📄 Plik PDF - pomijam ulepszanie obrazu")
-            # else:
-            #     try:
-            #         # temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
-            #         # path_to_process = temp_enhanced_path
-            #         # print(f"  ✨ Obraz ulepszony")
-            #         pass
-            #     except Exception as e:
-            #         print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
+            if file_ext == '.pdf':
+                print(f"  📄 Plik PDF - pomijam ulepszanie obrazu")
+            elif file_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp']:
+                try:
+                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=1.5)
+                    path_to_process = temp_enhanced_path
+                except Exception as e:
+                    print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
+                    # Kontynuuj z oryginalnym obrazem
             
             # OCR
             print(f"  🔍 Uruchamiam OCR...")
             ocr_output = pipeline.predict(path_to_process)
             
             # Zapis wyników do JSON
-            # Zapis wyników do JSON
             for res in ocr_output:
                 if hasattr(res, 'save_to_json'):
                     res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                     print(f"  💾 Zapisano JSON")
+            
+            # Usuń tymczasowy ulepszony obraz
+            if temp_enhanced_path and os.path.exists(temp_enhanced_path):
+                try:
+                    os.remove(temp_enhanced_path)
+                except:
+                    pass
             
             processed_files.append(filename)
             print(f"  ✅ Sukces!")
@@ -166,31 +171,39 @@ def quick_process():
         
         filename = file.filename
         original_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        temp_enhanced_path = None
         
         try:
             file.save(original_path)
             print(f"📁 [Quick] Przetwarzanie: {filename}")
             
-            # Poprawa obrazu (skipping as requested)
+            # Poprawa obrazu (dla plików graficznych)
             path_to_process = original_path
+            file_ext = os.path.splitext(filename)[1].lower()
             
-            # if file_ext != '.pdf':
-            #     try:
-            #         temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=2)
-            #         path_to_process = temp_enhanced_path
-            #     except Exception:
-            #         pass
+            if file_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp']:
+                try:
+                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=1.5)
+                    path_to_process = temp_enhanced_path
+                except Exception as e:
+                    print(f"  ⚠️ Nie udało się ulepszyć obrazu: {e}")
             
             # OCR
             ocr_output = pipeline.predict(path_to_process)
             
-            # Zapis wyników do JSON
             # Zapis wyników do JSON
             for res in ocr_output:
                 if hasattr(res, 'save_to_json'):
                     saved_path = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                     if saved_path:
                         processed_jsons.append(saved_path)
+            
+            # Usuń tymczasowy ulepszony obraz
+            if temp_enhanced_path and os.path.exists(temp_enhanced_path):
+                try:
+                    os.remove(temp_enhanced_path)
+                except:
+                    pass
             
             print(f"✅ [Quick] OCR zakończone: {filename}")
             

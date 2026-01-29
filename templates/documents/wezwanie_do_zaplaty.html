@@ -58,7 +58,6 @@
             padding: 0 2px;
             font-weight: 600;
             width: 300px;
-            /* Zwiększona szerokość domyślna */
         }
 
         .title {
@@ -133,18 +132,23 @@
 
     <div class="container">
         <div class="right-align section">
-            <input type="text" name="dokument_miejscowosc_data" placeholder="Tychy, 13.01.2026 r."
-                style="width: 180px;">
+            <input type="text" id="miejscowosc_data" placeholder="Tychy, 13.01.2026 r." style="width: 180px;">
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
             <div class="section">
                 <strong>Wierzyciel:</strong><br>
-                <input type="text" name="wierzyciel_sprzedajacy_nazwa_pelna" placeholder="Orlen Spółka Akcyjna"
-                    style="width: 250px;"><br>
-                <input type="text" name="wierzyciel_sprzedajacy_tylko_adres_ulica_miasto_kod_pocztowy"
+                <input type="text"
+                    name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna"
+                    placeholder="Orlen Spółka Akcyjna" style="width: 250px;"><br>
+
+                <input type="text"
+                    name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto"
                     placeholder="Ul. Chemików 7, 09-411 Płock" style="width: 250px;"><br>
-                NIP: <input type="text" name="wierzyciel_sprzedajacy_nip" placeholder="09876545">
+
+                NIP: <input type="text"
+                    name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
+                    placeholder="09876545">
             </div>
 
             <div class="section" style="font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px;">
@@ -158,15 +162,20 @@
         <div class="flex-group" style="background: #fafafa; padding: 10px; border-radius: 4px;">
             <div>
                 <strong>Dot. Faktury nr:</strong><br>
-                <input type="text" name="faktura_numer_referencyjny" placeholder="000000" style="width: 120px;">
+                <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
+                    placeholder="000000" style="width: 120px;">
             </div>
             <div class="right-align">
                 <strong>Dłużnik:</strong><br>
-                <input type="text" name="dluznik_nabywca_nazwa_pelna" placeholder="CD Projekt S.A."
-                    style="width: 250px;"><br>
-                <input type="text" name="dluznik_nabywca_adres_pelny" placeholder="ul. Jagiellońska 74, Warszawa"
-                    style="width: 250px;"><br>
-                NIP: <input type="text" name="dluznik_nabywca_nip" placeholder="0000006865">
+                <input type="text"
+                    name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge"
+                    placeholder="CD Projekt S.A." style="width: 250px;"><br>
+
+                <input type="text" name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto"
+                    placeholder="ul. Jagiellońska 74, Warszawa" style="width: 250px;"><br>
+
+                NIP: <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany"
+                    placeholder="0000006865">
             </div>
         </div>
 
@@ -174,34 +183,42 @@
 
         <div class="content-text section">
             Działając w imieniu
-            <input type="text" name="wierzyciel_sprzedajacy_nazwa_pelna" placeholder="Orlen S.A." class="inline-input"
-                style="width: 130px;">
+            <input type="text"
+                name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna"
+                placeholder="Orlen S.A." class="inline-input" style="width: 130px;">
             z siedzibą w
-            <input type="text" name="wierzyciel_sprzedajacy_miasto_siedziba" placeholder="Płocku" class="inline-input"
-                style="width: 100px;">,
-            <input type="text" name="wierzyciel_sprzedajacy_adres_ulica" placeholder="09-411 Płock, ul. Chemików 7"
-                class="inline-input" style="width: 200px;">
-            NIP: <input type="text" name="wierzyciel_sprzedajacy_nip" placeholder="0987654" class="inline-input"
-                style="width: 80px;">,
+            <input type="text" name="Wydobadz_tylko_nazwe_miasta_z_adresu_siedziby_sprzedawcy_wierzyciela"
+                placeholder="Płocku" class="inline-input" style="width: 100px;">,
+            <input type="text"
+                name="Znajdz_na_fakturze_pelny_adres_siedziby_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto"
+                placeholder="09-411 Płock, ul. Chemików 7" class="inline-input" style="width: 200px;">
+            NIP:
+            <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
+                placeholder="0987654" class="inline-input" style="width: 80px;">,
 
             na podstawie pełnomocnictwa, w związku z fakturą nr
-            <input type="text" name="faktura_numer_referencyjny" placeholder="000000" class="inline-input"
-                style="width: 60px;">
-            z dnia <input type="text" name="faktura_data_wystawienia" placeholder="30.01.2011" class="inline-input"
-                style="width: 90px;">
+            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
+                placeholder="000000" style="width: 120px;">
+
+            z dnia
+            <input type="text" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy"
+                placeholder="30.01.2011" class="inline-input" style="width: 90px;">
             wzywam do zapłaty kwoty
-            <input type="text" name="platnosc_kwota_glowna" placeholder="123 zł" class="inline-input"
-                style="width: 80px;">
+            <input type="text"
+                name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta"
+                placeholder="123 zł" class="inline-input" style="width: 80px;">
             wraz z odsetkami od dnia
-            <input type="text" name="termin_platnosci_data_platnosci" placeholder="15.12.2022" class="inline-input"
-                style="width: 90px;">.
+            <input type="text" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"
+                placeholder="15.12.2022" class="inline-input" style="width: 90px;">.
         </div>
 
         <div class="section">
             <strong>Numer rachunku do wpłaty:</strong><br>
-            <input type="text" name="bank_numer_konta" placeholder="00 0000 0000 0000 0000 0000 0000"
-                class="full-width"><br>
-            <input type="text" name="bank_nazwa_banku" placeholder="ING BANK ŚLĄSKI S.A." class="full-width">
+            <input type="text"
+                name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury"
+                placeholder="00 0000 0000 0000 0000 0000 0000" class="full-width"><br>
+            <input type="text" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta"
+                placeholder="ING BANK ŚLĄSKI S.A." class="full-width">
         </div>
 
         <div class="right-align footer">
@@ -213,14 +230,16 @@
             style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
             <strong>Załączniki:</strong><br>
             1. Pełnomocnictwo<br>
-            2. Faktura nr <input type="text" name="faktura_numer_referencyjny" placeholder="000000" class="inline-input"
-                style="width: 60px;">
+            2. Faktura nr
+            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
+                placeholder="000000" style="width: 120px;">
         </div>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const inputField = document.querySelector('input[name="dokument_miejscowosc_data"]');
+            const inputField = document.querySelector('#miejscowosc_data');
+
             const now = new Date();
             const day = String(now.getDate()).padStart(2, '0');
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -254,7 +273,8 @@
     </script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const interestInput = document.querySelector('input[name="platnosc_data_odsetek"]');
+            const interestInput = document.querySelector('input[name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"]');
+
             if (interestInput) {
                 interestInput.addEventListener('change', function () {
                     let val = this.value.trim();
@@ -270,9 +290,11 @@
                             const date = new Date(y, m, d);
                             if (date.getFullYear() === y && date.getMonth() === m && date.getDate() === d) {
                                 date.setDate(date.getDate() + 1);
+
                                 const newDay = String(date.getDate()).padStart(2, '0');
                                 const newMonth = String(date.getMonth() + 1).padStart(2, '0');
                                 const newYear = date.getFullYear();
+
                                 this.value = `${newDay}.${newMonth}.${newYear}`;
                             }
                         }

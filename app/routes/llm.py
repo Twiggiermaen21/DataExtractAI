@@ -129,3 +129,122 @@ def process_template():
         return jsonify({'success': False, 'error': result['error']}), 500
     
     return jsonify(result)
+
+
+@llm_bp.route('/api/process_multiple_invoices', methods=['POST'])
+def process_multiple_invoices():
+    """
+    Przetwarza wiele plików JSON - każdy osobno przez LLM.
+    Zapisuje wyniki do output/wezwania_faktury/
+    Oczekuje: { "files": ["plik1.json", "plik2.json"], "fields": ["pole1", "pole2"] }
+    """
+    import json
+    from datetime import datetime
+    
+    data = request.get_json()
+    
+    if not data or 'files' not in data or not data['files']:
+        return jsonify({'success': False, 'error': 'Brak plików'}), 400
+    
+    if 'fields' not in data or not data['fields']:
+        return jsonify({'success': False, 'error': 'Brak pól do ekstrakcji'}), 400
+    
+    files = data['files']
+    fields = data['fields']
+    
+    # Folder na wyniki
+    output_dir = os.path.join(current_app.config['OUTPUT_FOLDER'], 'wezwania_faktury')
+    os.makedirs(output_dir, exist_ok=True)
+    
+    results = []
+    all_invoices = []
+    common_data = {}
+    
+    for filename in files:
+        json_path = os.path.join(current_app.config['OUTPUT_FOLDER'], filename)
+        if not os.path.exists(json_path):
+            continue
+        
+        print(f"📄 Przetwarzanie faktury: {filename}")
+        
+        # Przetwórz każdy plik osobno
+        result = extract_template_fields([json_path], fields)
+        
+        if result.get('success'):
+            invoice_data = result.get('fields', {})
+            
+            # Zapisz wynik do osobnego pliku
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            base_name = os.path.splitext(filename)[0]
+            output_filename = f"faktura_{base_name}_{timestamp}.json"
+            output_path = os.path.join(output_dir, output_filename)
+            
+            with open(output_path, 'w', encoding='utf-8') as f:
+                json.dump({
+                    'source_file': filename,
+                    'extracted_data': invoice_data
+                }, f, ensure_ascii=False, indent=2)
+            
+            print(f"💾 Zapisano: {output_filename}")
+            
+            # Funkcja pomocnicza do elastycznego wyszukiwania klucza
+            def find_field(data, partial_key):
+                """Znajdź pole po częściowym dopasowaniu nazwy klucza"""
+                for key, value in data.items():
+                    if partial_key.lower() in key.lower():
+                        return value
+                return ''
+            
+            # Zbierz dane faktury - elastyczne wyszukiwanie
+            # Szukaj kwoty pod różnymi wariantami (LLM może użyć różnych odmian: kwota/kwote/kwoty)
+            kwota_val = find_field(invoice_data, 'kwote_do_zaplaty')
+            if not kwota_val:
+                kwota_val = find_field(invoice_data, 'kwota_do_zaplaty')
+            if not kwota_val:
+                kwota_val = find_field(invoice_data, 'kwoty_do_zaplaty')
+            
+            invoice_info = {
+                'source': filename,
+                'numer': find_field(invoice_data, 'numer_faktury'),
+                'data': find_field(invoice_data, 'date_wystawienia'),
+                'kwota': kwota_val,
+                'termin': find_field(invoice_data, 'terminu_platnosci')
+            }
+            all_invoices.append(invoice_info)
+            
+            # Zapisz wspólne dane (wierzyciel, dłużnik) z pierwszej faktury
+            if not common_data:
+                common_data = {k: v for k, v in invoice_data.items() 
+                              if not k.startswith('faktura_') and not k.startswith('platnosc_')}
+            
+            results.append({
+                'file': filename,
+                'output': output_filename,
+                'success': True
+            })
+        else:
+            results.append({
+                'file': filename,
+                'success': False,
+                'error': result.get('error', 'Nieznany błąd')
+            })
+    
+    # Oblicz sumę kwot
+    total = 0
+    for inv in all_invoices:
+        try:
+            kwota_str = str(inv.get('kwota', '0')).replace(',', '.').replace(' ', '')
+            kwota_str = ''.join(c for c in kwota_str if c.isdigit() or c == '.')
+            total += float(kwota_str) if kwota_str else 0
+        except:
+            pass
+    
+    return jsonify({
+        'success': True,
+        'results': results,
+        'invoices': all_invoices,
+        'common_data': common_data,
+        'total_amount': f"{total:.2f}",
+        'output_folder': 'wezwania_faktury'
+    })
+
