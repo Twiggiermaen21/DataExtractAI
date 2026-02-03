@@ -12,108 +12,108 @@
 
         <hr class="divider-light hidden" id="advDividerStep2">
 
-        <!-- KROK 2: Źródło danych (OCR lub JSON) -->
-        <div class="step-section hidden" id="advStepSource">
-            <label class="step-label">📷 Krok 2: Źródło danych</label>
+        <!-- KROK 2: Upload + OCR -->
+        <div class="step-section hidden" id="advStepUpload">
+            <label class="step-label">📷 Krok 2: Wgraj zdjęcie i uzupełnij</label>
 
-            <div class="source-tabs" style="margin: 12px 0;">
-                <button class="btn source-tab active" id="btnSourceOcr" type="button">
-                    📷 Skanuj zdjęcia (OCR)
-                </button>
-                <button class="btn source-tab" id="btnSourceJson" type="button">
-                    📁 Wybierz z zapisanych JSON
-                </button>
+            <div class="upload-zone" id="advUploadZone" style="padding: 24px 16px; margin-top: 12px;">
+                <div class="upload-icon" style="font-size: 1.8rem;">📄</div>
+                <div class="upload-text">Przeciągnij zdjęcia faktur lub kliknij</div>
+                <div class="upload-hint">JPG, PNG, PDF, Word • Wiele plików naraz</div>
             </div>
+            <input type="file" id="advFileInput" multiple accept="image/*,.pdf,.docx,.doc" style="display:none;">
+            <div class="file-list" id="advFileList"></div>
 
-            <!-- Opcja A: OCR -->
-            <div id="ocrSection">
-                <div class="upload-zone" id="advUploadZone" style="padding: 24px 16px;">
-                    <div class="upload-icon" style="font-size: 1.8rem;">📄</div>
-                    <div class="upload-text">Przeciągnij zdjęcia faktur lub kliknij</div>
-                    <div class="upload-hint">JPG, PNG, PDF • Wiele plików naraz</div>
-                </div>
-                <input type="file" id="advFileInput" multiple accept="image/*,.pdf" style="display:none;">
-                <div class="file-list" id="advFileList"></div>
-
-                <button class="btn" id="btnRunOcr" disabled style="margin-top: 12px;">
-                    <span id="btnOcrIcon">📷</span>
-                    <span id="btnOcrText">Uruchom OCR</span>
-                </button>
-
-                <div class="progress-bar hidden" id="ocrProgressBar">
-                    <div class="fill" id="ocrProgressFill" style="width: 0%"></div>
-                </div>
-                <div class="status-text hidden" id="ocrStatusText"></div>
-            </div>
-
-            <!-- Opcja B: Wybór z JSON -->
-            <div id="jsonSection" class="hidden">
-                <div class="inline-group" style="margin-bottom: 12px;">
-                    <span style="font-size: 0.9em; color: var(--text-muted);">Wybierz pliki JSON z wynikami OCR:</span>
-                    <button class="btn btn-sm" id="refreshJsonList">🔄 Odśwież</button>
-                </div>
-                <div class="checkbox-list" id="jsonCheckboxList">
-                    <div style="color: var(--text-muted); padding: 16px; text-align: center;">Ładowanie...</div>
-                </div>
-            </div>
-        </div>
-
-        <hr class="divider-light hidden" id="advDividerStep3">
-
-        <!-- KROK 3: LLM - wypełnienie szablonu -->
-        <div class="step-section hidden" id="advStepLlm">
-            <label class="step-label">🤖 Krok 3: Wypełnij szablon przez AI</label>
-            <p class="hint-text" id="selectedJsonInfo">Wybrano: 0 plików JSON</p>
-
-            <button class="btn btn-green" id="btnRunLlm" disabled style="margin-top: 12px;">
-                <span id="btnLlmIcon">🤖</span>
-                <span id="btnLlmText">Wypełnij szablon AI</span>
+            <button class="btn btn-green" id="btnOcrFill" disabled style="margin-top: 12px;">
+                <span id="btnOcrFillIcon">🚀</span>
+                <span id="btnOcrFillText">OCR + Uzupełnij szablon</span>
             </button>
 
-            <div class="progress-bar hidden" id="llmProgressBar">
-                <div class="fill" id="llmProgressFill" style="width: 0%"></div>
+            <div class="progress-bar hidden" id="ocrFillProgressBar">
+                <div class="fill" id="ocrFillProgressFill" style="width: 0%"></div>
             </div>
-            <div class="status-text hidden" id="llmStatusText"></div>
+            <div class="status-text hidden" id="ocrFillStatusText"></div>
+        </div>
+
+        <!-- Źródło dla Pozwu - przełącznik -->
+        <div class="step-section hidden" id="advStepSourcePozew">
+            <label class="step-label">📋 Krok 2: Źródło danych dla pozwu</label>
+
+            <!-- Toggle switch -->
+            <div class="source-toggle" style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="btn btn-sm active" id="btnPozewSourceSaved" type="button">
+                    📁 Zapisane wezwania
+                </button>
+                <button class="btn btn-sm" id="btnPozewSourceUpload" type="button">
+                    📄 Wgraj plik (OCR)
+                </button>
+            </div>
+
+            <!-- Opcja 1: Zapisane wezwania -->
+            <div id="pozewSavedSection" style="margin-top: 16px;">
+                <div class="checkbox-list" id="advWezwaniaList">
+                    <div style="color: var(--text-muted); padding: 16px; text-align: center;">
+                        Ładowanie listy wezwań...
+                    </div>
+                </div>
+                <button class="btn btn-sm" id="advRefreshWezwaniaList" style="margin-top: 8px;">
+                    🔄 Odśwież listę
+                </button>
+            </div>
+
+            <!-- Opcja 2: Upload pliku -->
+            <div id="pozewUploadSection" class="hidden" style="margin-top: 16px;">
+                <div class="upload-zone" id="pozewUploadZone" style="padding: 24px 16px;">
+                    <div class="upload-icon" style="font-size: 1.8rem;">📄</div>
+                    <div class="upload-text">Przeciągnij wezwanie do zapłaty</div>
+                    <div class="upload-hint">JPG, PNG, PDF, Word</div>
+                </div>
+                <input type="file" id="pozewFileInput" multiple accept="image/*,.pdf,.docx,.doc" style="display:none;">
+                <div class="file-list" id="pozewFileList"></div>
+
+                <button class="btn btn-green" id="btnPozewOcr" disabled style="margin-top: 12px;">
+                    <span id="btnPozewOcrIcon">🚀</span>
+                    <span id="btnPozewOcrText">OCR wezwania</span>
+                </button>
+
+                <div class="progress-bar hidden" id="pozewOcrProgressBar">
+                    <div class="fill" id="pozewOcrProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="status-text hidden" id="pozewOcrStatusText"></div>
+            </div>
         </div>
 
         <!-- Dodatkowe dane dla Pozwu -->
         <div class="step-section hidden" id="advStepPozewExtra">
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <label class="step-label">🏢 Dane KRS Powoda</label>
-            <p class="hint-text">Wgraj plik PDF lub zdjęcie odpisu z KRS</p>
-
-            <div class="upload-zone" id="krsPowodUploadZone" style="padding: 20px 16px; margin-top: 8px;">
-                <div class="upload-icon" style="font-size: 1.5rem;">📄</div>
-                <div class="upload-text">Przeciągnij plik KRS powoda lub kliknij</div>
-                <div class="upload-hint">PDF, JPG, PNG</div>
+            <label class="step-label">🏢 KRS Powoda (wierzyciel)</label>
+            <div class="upload-zone upload-zone-sm" id="krsPowodUploadZone" style="padding: 16px; margin-top: 8px;">
+                <div class="upload-icon" style="font-size: 1.2rem;">📄</div>
+                <div class="upload-text" style="font-size: 0.9em;">Przeciągnij plik KRS powoda lub kliknij</div>
             </div>
             <input type="file" id="advKrsPowodFile" accept=".pdf,image/*" style="display:none;">
-            <div id="advKrsPowodUploadStatus" class="hidden"
-                style="margin-top: 8px; padding: 10px; background: #e8f5e9; border-radius: 4px;">
-                ✅ Plik KRS załadowany
-            </div>
-
-            <div style="text-align: center; margin: 10px 0; color: var(--text-muted);">lub</div>
-
-            <button class="btn btn-sm" id="advBtnKrsPowodManual" type="button" style="margin-bottom: 8px;">
-                ✏️ Wpisz dane ręcznie
-            </button>
-
-            <div id="advKrsPowodManualFields" class="hidden" style="margin-top: 12px;">
-                <input type="text" name="adv_powod_nazwa_pelna" placeholder="Pełna nazwa firmy" class="full-width"
-                    style="margin-bottom: 8px;">
-                <input type="text" name="adv_powod_adres_pelny" placeholder="Adres siedziby" class="full-width"
-                    style="margin-bottom: 8px;">
-                <input type="text" name="adv_powod_numer_krs" placeholder="Numer KRS" style="width: 150px;">
-            </div>
 
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <label class="step-label">👤 Dane Pozwanego</label>
-            <p class="hint-text">Format: Nazwa firmy + ulica i numer + kod pocztowy i miasto</p>
-            <input type="text" name="adv_pozwany_oznaczenie_pelne" class="full-width"
-                placeholder="CD Projekt Spółka akcyjna ul. Jagiellońska 43, 00-100 Warszawa" style="margin-top: 8px;">
+            <label class="step-label">👤 KRS Pozwanego (dłużnik)</label>
+            <div class="upload-zone upload-zone-sm" id="krsPozwanyUploadZone" style="padding: 16px; margin-top: 8px;">
+                <div class="upload-icon" style="font-size: 1.2rem;">📄</div>
+                <div class="upload-text" style="font-size: 0.9em;">Przeciągnij plik KRS pozwanego lub kliknij</div>
+            </div>
+            <input type="file" id="advKrsPozwanyFile" accept=".pdf,image/*" style="display:none;">
+
+            <hr class="divider-light" style="margin: 20px 0;">
+
+            <button class="btn btn-purple" id="btnProcessPozew" style="margin-top: 12px;">
+                <span id="btnProcessPozewIcon">⚖️</span>
+                <span id="btnProcessPozewText">Przetwórz i wypełnij pozew</span>
+            </button>
+
+            <div class="progress-bar hidden" id="pozewProgressBar">
+                <div class="fill" id="pozewProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="status-text hidden" id="pozewStatusText"></div>
         </div>
     </div>
 
@@ -180,21 +180,6 @@
         font-size: 0.85rem !important;
     }
 
-    .source-tabs {
-        display: flex;
-        gap: 10px;
-    }
-
-    .source-tab {
-        flex: 1;
-        text-align: center;
-    }
-
-    .source-tab.active {
-        background: var(--accent-purple);
-        color: white;
-    }
-
     .checkbox-list {
         max-height: 200px;
         overflow-y: auto;
@@ -221,11 +206,5 @@
     .checkbox-item input[type="checkbox"] {
         width: 18px;
         height: 18px;
-    }
-
-    .inline-group {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
     }
 </style>

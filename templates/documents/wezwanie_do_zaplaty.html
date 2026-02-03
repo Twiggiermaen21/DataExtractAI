@@ -165,17 +165,24 @@
                 <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
                     placeholder="000000" style="width: 120px;">
             </div>
-            <div class="right-align">
-                <strong>Dłużnik:</strong><br>
-                <input type="text"
-                    name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge"
-                    placeholder="CD Projekt S.A." style="width: 250px;"><br>
+            <div class="right-align" style="margin-left: auto;">
+                <div style="display: inline-block; text-align: left;">
+                    <strong>Dłużnik:</strong><br>
+                    <input type="text"
+                        name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge"
+                        placeholder="CD Projekt S.A." style="width: 280px; margin-bottom: 4px; display: block;">
 
-                <input type="text" name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto"
-                    placeholder="ul. Jagiellońska 74, Warszawa" style="width: 250px;"><br>
+                    <input type="text"
+                        name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto"
+                        placeholder="ul. Jagiellońska 74, Warszawa"
+                        style="width: 280px; margin-bottom: 4px; display: block;">
 
-                NIP: <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany"
-                    placeholder="0000006865">
+                    <div style="display: flex; align-items: center;">
+                        <span style="width: 35px;">NIP:</span>
+                        <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany"
+                            placeholder="0000006865" style="width: 245px;">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -186,11 +193,9 @@
             <input type="text"
                 name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna"
                 placeholder="Orlen S.A." class="inline-input" style="width: 130px;">
-            z siedzibą w
-            <input type="text" name="Wydobadz_tylko_nazwe_miasta_z_adresu_siedziby_sprzedawcy_wierzyciela"
-                placeholder="Płocku" class="inline-input" style="width: 100px;">,
+            z siedzibą
             <input type="text"
-                name="Znajdz_na_fakturze_pelny_adres_siedziby_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto"
+                name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto"
                 placeholder="09-411 Płock, ul. Chemików 7" class="inline-input" style="width: 200px;">
             NIP:
             <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
@@ -223,7 +228,7 @@
 
         <div class="right-align footer">
             <strong>r. pr. Jan Kowalski</strong><br>
-            <span style="font-size: 0.8em; color: #666;">podpis wygenerowany systemowo</span>
+
         </div>
 
         <div class="section"

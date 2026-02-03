@@ -1,8 +1,3 @@
-"""
-Serwis do zarządzania wezwaniami do zapłaty.
-Zapisuje i pobiera wezwania z folderu output/wezwania/.
-"""
-
 import os
 import json
 import uuid
@@ -18,20 +13,14 @@ def get_wezwania_dir():
 
 
 def save_wezwanie(data: dict) -> dict:
-    """
-    Zapisuje wezwanie do zapłaty.
-    
-    Args:
-        data: Słownik z danymi wezwania (pola formularza)
-        
-    Returns:
-        Słownik z id i ścieżką do zapisanego pliku
-    """
+   
     wezwanie_id = str(uuid.uuid4())[:8]
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Pobierz dane dłużnika do nazwy pliku
-    dluznik = data.get('dluznik_nazwa', 'nieznany')
+    # Pobierz dane dłużnika do nazwy pliku (próbuj różne klucze)
+    dluznik = (data.get('Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge') 
+               or data.get('dluznik_nazwa') 
+               or 'nieznany')
     dluznik_clean = "".join(c for c in dluznik if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
     
     filename = f"wezwanie_{timestamp}_{dluznik_clean}_{wezwanie_id}.json"
@@ -56,12 +45,7 @@ def save_wezwanie(data: dict) -> dict:
 
 
 def get_all_wezwania() -> list:
-    """
-    Zwraca listę wszystkich zapisanych wezwań.
-    
-    Returns:
-        Lista słowników z podstawowymi informacjami o wezwaniach
-    """
+   
     wezwania_dir = get_wezwania_dir()
     wezwania = []
     
@@ -93,15 +77,7 @@ def get_all_wezwania() -> list:
 
 
 def get_wezwanie(wezwanie_id: str) -> dict:
-    """
-    Pobiera szczegóły wezwania po ID.
-    
-    Args:
-        wezwanie_id: ID wezwania
-        
-    Returns:
-        Słownik z pełnymi danymi wezwania lub None
-    """
+   
     wezwania_dir = get_wezwania_dir()
     
     for filename in os.listdir(wezwania_dir):
@@ -118,15 +94,7 @@ def get_wezwanie(wezwanie_id: str) -> dict:
 
 
 def get_wezwania_by_ids(ids: list) -> list:
-    """
-    Pobiera wiele wezwań po liście ID.
-    
-    Args:
-        ids: Lista ID wezwań
-        
-    Returns:
-        Lista słowników z danymi wezwań
-    """
+
     wezwania = []
     for wezwanie_id in ids:
         wezwanie = get_wezwanie(wezwanie_id)
@@ -136,15 +104,7 @@ def get_wezwania_by_ids(ids: list) -> list:
 
 
 def calculate_summary(wezwania: list) -> dict:
-    """
-    Oblicza podsumowanie z wielu wezwań (suma kwot, lista faktur).
-    
-    Args:
-        wezwania: Lista wezwań
-        
-    Returns:
-        Słownik z podsumowaniem
-    """
+   
     total_amount = 0.0
     invoices = []
     

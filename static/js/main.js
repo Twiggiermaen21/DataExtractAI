@@ -198,10 +198,13 @@ const advBtnSaveWezwanie = document.getElementById('advBtnSaveWezwanie');
 
 // Kroki workflow
 const advStepSource = document.getElementById('advStepSource');
+const advStepSourcePozew = document.getElementById('advStepSourcePozew');
 const advStepLlm = document.getElementById('advStepLlm');
 const advStepPozewExtra = document.getElementById('advStepPozewExtra');
 const advDividerStep2 = document.getElementById('advDividerStep2');
 const advDividerStep3 = document.getElementById('advDividerStep3');
+const advWezwaniaList = document.getElementById('advWezwaniaList');
+const advRefreshWezwaniaList = document.getElementById('advRefreshWezwaniaList');
 
 // Źródło danych - OCR vs JSON
 const btnSourceOcr = document.getElementById('btnSourceOcr');
@@ -230,13 +233,6 @@ const llmProgressBar = document.getElementById('llmProgressBar');
 const llmProgressFill = document.getElementById('llmProgressFill');
 const llmStatusText = document.getElementById('llmStatusText');
 const selectedJsonInfo = document.getElementById('selectedJsonInfo');
-
-// KRS elements
-const advBtnKrsPowodManual = document.getElementById('advBtnKrsPowodManual');
-const advKrsPowodFile = document.getElementById('advKrsPowodFile');
-const advKrsPowodManualFields = document.getElementById('advKrsPowodManualFields');
-const advKrsPowodUploadStatus = document.getElementById('advKrsPowodUploadStatus');
-const krsPowodUploadZone = document.getElementById('krsPowodUploadZone');
 
 let currentTemplateFields = [];
 let templateIframe = null;
@@ -279,6 +275,56 @@ async function loadJsonFiles() {
     } catch (e) {
         console.error('Error loading JSON files:', e);
     }
+}
+
+// Zmienna do przechowywania wybranych wezwań w trybie zaawansowanym
+let selectedAdvWezwania = [];
+
+// Funkcja ładowania listy wezwań dla pozwu w trybie zaawansowanym
+async function loadAdvWezwaniaList() {
+    if (!advWezwaniaList) return;
+    try {
+        const response = await fetch('/api/wezwania');
+        const wezwania = await response.json();
+
+        if (wezwania.length === 0) {
+            advWezwaniaList.innerHTML = `
+                <div style="color: var(--text-muted); padding: 16px; text-align: center;">
+                    Brak zapisanych wezwań. Najpierw wygeneruj Wezwanie do Zapłaty.
+                </div>`;
+        } else {
+            advWezwaniaList.innerHTML = wezwania.map(w => `
+                <div class="checkbox-item">
+                    <input type="checkbox" id="advWez_${w.id}" value="${w.id}" 
+                        onchange="toggleAdvWezwanieSelection('${w.id}')">
+                    <label for="advWez_${w.id}">
+                        <strong>${w.dluznik_nazwa}</strong><br>
+                        <span style="font-size: 0.85em; color: #666;">
+                            Faktura: ${w.faktura_numer} | ${w.kwota} | ${new Date(w.created_at).toLocaleDateString('pl-PL')}
+                        </span>
+                    </label>
+                </div>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('Error loading wezwania:', e);
+        advWezwaniaList.innerHTML = '<div style="color: red; padding: 16px;">Błąd ładowania wezwań</div>';
+    }
+}
+
+// Obsługa wyboru wezwań w trybie zaawansowanym
+window.toggleAdvWezwanieSelection = function (id) {
+    const index = selectedAdvWezwania.indexOf(id);
+    if (index > -1) {
+        selectedAdvWezwania.splice(index, 1);
+    } else {
+        selectedAdvWezwania.push(id);
+    }
+};
+
+// Przycisk odświeżania listy wezwań
+if (advRefreshWezwaniaList) {
+    advRefreshWezwaniaList.addEventListener('click', loadAdvWezwaniaList);
 }
 
 loadTemplates();
@@ -366,90 +412,212 @@ window.removeAdvFile = function (index) {
 };
 
 function updateOcrButton() {
-    if (btnRunOcr) {
-        btnRunOcr.disabled = advUploadedFiles.length === 0;
+    const btnOcrFill = document.getElementById('btnOcrFill');
+    if (btnOcrFill) {
+        btnOcrFill.disabled = advUploadedFiles.length === 0;
     }
 }
 
-function getSelectedJsonFiles() {
-    if (!jsonCheckboxList) return [];
-    const checkboxes = jsonCheckboxList.querySelectorAll('input[type="checkbox"]:checked');
-    return Array.from(checkboxes).map(cb => cb.value);
-}
-
-window.updateLlmButton = function () {
-    if (!btnRunLlm) return;
-
-    const selectedFiles = getSelectedJsonFiles();
-    btnRunLlm.disabled = selectedFiles.length === 0;
-
-    if (selectedJsonInfo) {
-        selectedJsonInfo.textContent = `Wybrano: ${selectedFiles.length} plików JSON`;
-    }
-};
-
-// === OCR PROCESSING ===
-if (btnRunOcr) {
-    btnRunOcr.addEventListener('click', async () => {
+// === OCR + FILL PROCESSING ===
+const btnOcrFill = document.getElementById('btnOcrFill');
+if (btnOcrFill) {
+    btnOcrFill.addEventListener('click', async () => {
         if (advUploadedFiles.length === 0) return;
 
-        btnRunOcr.disabled = true;
-        btnRunOcr.classList.add('loading');
-        if (btnOcrIcon) btnOcrIcon.innerHTML = '<span class="spinner">⏳</span>';
-        if (btnOcrText) btnOcrText.textContent = 'Przetwarzanie...';
-        if (ocrProgressBar) ocrProgressBar.classList.remove('hidden');
-        if (ocrStatusText) {
-            ocrStatusText.classList.remove('hidden');
-            ocrStatusText.textContent = '📷 Skanowanie dokumentów...';
+        const btnOcrFillIcon = document.getElementById('btnOcrFillIcon');
+        const btnOcrFillText = document.getElementById('btnOcrFillText');
+        const ocrFillProgressBar = document.getElementById('ocrFillProgressBar');
+        const ocrFillProgressFill = document.getElementById('ocrFillProgressFill');
+        const ocrFillStatusText = document.getElementById('ocrFillStatusText');
+
+        btnOcrFill.disabled = true;
+        btnOcrFill.classList.add('loading');
+        if (btnOcrFillIcon) btnOcrFillIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnOcrFillText) btnOcrFillText.textContent = 'Przetwarzanie...';
+        if (ocrFillProgressBar) ocrFillProgressBar.classList.remove('hidden');
+        if (ocrFillStatusText) {
+            ocrFillStatusText.classList.remove('hidden');
+            ocrFillStatusText.textContent = `📷 Przetwarzanie ${advUploadedFiles.length} dokumentów...`;
         }
-        if (ocrProgressFill) ocrProgressFill.style.width = '10%';
+        if (ocrFillProgressFill) ocrFillProgressFill.style.width = '10%';
 
         const formData = new FormData();
-        advUploadedFiles.forEach(file => {
-            formData.append('files', file);
-        });
+        advUploadedFiles.forEach(file => formData.append('files', file));
+
+        const templateName = templateSelect ? templateSelect.value : '';
+        if (templateName) formData.append('template', templateName);
 
         try {
-            if (ocrStatusText) ocrStatusText.textContent = '📷 Przetwarzanie OCR...';
-            if (ocrProgressFill) ocrProgressFill.style.width = '50%';
+            if (ocrFillStatusText) ocrFillStatusText.textContent = '🤖 OCR + Analiza AI...';
+            if (ocrFillProgressFill) ocrFillProgressFill.style.width = '30%';
 
             const response = await fetch('/api/process_ocr', {
                 method: 'POST',
                 body: formData
             });
 
-            if (ocrProgressFill) ocrProgressFill.style.width = '90%';
+            if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
             const data = await response.json();
-            if (ocrProgressFill) ocrProgressFill.style.width = '100%';
 
-            if (data.success) {
-                if (ocrStatusText) ocrStatusText.textContent = `✅ Przetworzono ${data.processed.length} plików. JSON zapisany.`;
+            if (data.success && data.documents && data.documents.length > 0) {
+                if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Przetworzono ${data.documents.length} dokumentów!`;
+                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
-                // Wyczyść pliki i przełącz na JSON
+                // Agreguj dane z wielu dokumentów
+                const invoiceNumbers = [];
+                const invoiceDates = [];
+                let totalAmount = 0;
+                let latestPaymentDate = null;
+                let latestPaymentDateStr = '';
+                const mergedFields = {};
+
+                // Pola kwoty i numeru faktury
+                const amountFieldPattern = /kwot/i;
+                const invoiceNumPattern = /numer_faktury/i;
+                const paymentDatePattern = /terminu_platnosci|date_terminu/i;
+                const invoiceDatePattern = /date_wystawienia/i;
+
+                data.documents.forEach(doc => {
+                    const fields = doc.fields || {};
+
+                    for (let [key, value] of Object.entries(fields)) {
+                        if (!value) continue;
+
+                        // Zbierz numery faktur
+                        if (invoiceNumPattern.test(key)) {
+                            if (!invoiceNumbers.includes(value)) {
+                                invoiceNumbers.push(value);
+                            }
+                        }
+                        // Zbierz kwoty i sumuj
+                        else if (amountFieldPattern.test(key)) {
+                            const numStr = String(value).replace(/[^\d,.]/g, '').replace(',', '.');
+                            const num = parseFloat(numStr);
+                            if (!isNaN(num)) totalAmount += num;
+                        }
+                        // Zbierz daty wystawienia
+                        else if (invoiceDatePattern.test(key)) {
+                            if (!invoiceDates.includes(value)) {
+                                invoiceDates.push(value);
+                            }
+                        }
+                        // Znajdź najpóźniejszy termin płatności
+                        else if (paymentDatePattern.test(key)) {
+                            const parsed = parsePolishDate(value);
+                            if (parsed && (!latestPaymentDate || parsed > latestPaymentDate)) {
+                                latestPaymentDate = parsed;
+                                latestPaymentDateStr = value;
+                            }
+                        }
+                        // Inne pola - weź z pierwszego dokumentu
+                        else if (!mergedFields[key]) {
+                            mergedFields[key] = value;
+                        }
+                    }
+                });
+
+                // Wypełnij szablon
+                if (templateIframe && templateIframe.contentDocument) {
+                    const doc = templateIframe.contentDocument;
+
+                    // Wypełnij pozostałe pola z pierwszego dokumentu
+                    for (let [fieldName, value] of Object.entries(mergedFields)) {
+                        if (!value) continue;
+                        const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                        inputs.forEach(input => {
+                            input.value = value;
+                            input.style.background = '#e8f5e9';
+                        });
+                    }
+
+                    // Wstaw połączone numery faktur
+                    const invoiceInputs = doc.querySelectorAll('input[name*="numer_faktury"]');
+                    invoiceInputs.forEach(input => {
+                        input.value = invoiceNumbers.join(', ');
+                        input.style.background = '#e3f2fd';
+                    });
+
+                    // Wstaw połączone daty wystawienia
+                    const dateInputs = doc.querySelectorAll('input[name*="date_wystawienia"]');
+                    dateInputs.forEach(input => {
+                        input.value = invoiceDates.join(', ');
+                        input.style.background = '#e8f5e9';
+                    });
+
+                    // Wstaw sumę kwot
+                    const amountInputs = doc.querySelectorAll('input[name*="kwot"]');
+                    amountInputs.forEach(input => {
+                        input.value = totalAmount.toFixed(2) + ' zł';
+                        input.style.background = '#fff3e0';
+                    });
+
+                    // Wstaw termin płatności +1 dzień (odsetki od następnego dnia)
+                    if (latestPaymentDateStr) {
+                        const nextDay = addOneDay(latestPaymentDateStr);
+                        const paymentInputs = doc.querySelectorAll('input[name*="terminu_platnosci"], input[name*="date_terminu"]');
+                        paymentInputs.forEach(input => {
+                            input.value = nextDay;
+                            input.style.background = '#fce4ec';
+                        });
+                    }
+
+                    // Pokaż sekcję zapisywania dla wezwania
+                    if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
+                        advSaveWezwanieSection.classList.remove('hidden');
+                    }
+                }
+
+                // Pokaż wyekstrahowane dane
+                if (extractedDataCard && extractedDataContent) {
+                    extractedDataCard.classList.remove('hidden');
+                    extractedDataContent.textContent = JSON.stringify({
+                        dokumenty: data.documents.length,
+                        numery_faktur: invoiceNumbers,
+                        suma_kwot: totalAmount.toFixed(2) + ' zł',
+                        termin_odsetek: latestPaymentDateStr ? addOneDay(latestPaymentDateStr) : null,
+                        wszystkie_dane: data.documents
+                    }, null, 2);
+                }
+
+                // Wyczyść pliki
                 advUploadedFiles = [];
                 renderAdvFileList();
 
-                // Automatycznie przełącz na tryb JSON i odśwież listę
-                setTimeout(() => {
-                    if (btnSourceJson) btnSourceJson.click();
-                }, 1000);
+            } else if (data.success) {
+                if (ocrFillStatusText) ocrFillStatusText.textContent = '⚠️ Brak danych do ekstrakcji';
             } else {
-                if (ocrStatusText) ocrStatusText.textContent = `❌ ${data.error}`;
+                if (ocrFillStatusText) ocrFillStatusText.textContent = `❌ ${data.error}`;
             }
 
         } catch (error) {
-            if (ocrStatusText) ocrStatusText.textContent = `❌ ${error.message}`;
+            if (ocrFillStatusText) ocrFillStatusText.textContent = `❌ ${error.message}`;
         } finally {
-            btnRunOcr.classList.remove('loading');
-            if (btnOcrIcon) btnOcrIcon.textContent = '📷';
-            if (btnOcrText) btnOcrText.textContent = 'Uruchom OCR';
+            btnOcrFill.classList.remove('loading');
+            if (btnOcrFillIcon) btnOcrFillIcon.textContent = '🚀';
+            if (btnOcrFillText) btnOcrFillText.textContent = 'OCR + Uzupełnij szablon';
             updateOcrButton();
 
             setTimeout(() => {
-                if (ocrProgressBar) ocrProgressBar.classList.add('hidden');
+                if (ocrFillProgressBar) ocrFillProgressBar.classList.add('hidden');
             }, 3000);
         }
     });
+}
+
+// Funkcja do parsowania polskiej daty DD.MM.YYYY
+function parsePolishDate(dateStr) {
+    if (!dateStr) return null;
+    const clean = String(dateStr).replace(/r\.?$/i, '').trim();
+    const parts = clean.split('.');
+    if (parts.length === 3) {
+        const d = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        const y = parseInt(parts[2], 10);
+        if (!isNaN(d) && !isNaN(m) && !isNaN(y)) {
+            return new Date(y, m, d);
+        }
+    }
+    return null;
 }
 
 // === LLM PROCESSING ===
@@ -534,6 +702,9 @@ if (btnRunLlm) {
                                 input.style.background = '#e8f5e9';
                             });
 
+                            // Połącz daty wystawienia wszystkich faktur po przecinku
+                            const allDates = data.invoices.map(i => i.data).filter(d => d).join(', ');
+
                             // Funkcja do parsowania daty w formacie DD.MM.YYYY
                             function parsePolishDate(dateStr) {
                                 if (!dateStr) return null;
@@ -549,18 +720,7 @@ if (btnRunLlm) {
                                 return null;
                             }
 
-                            // Znajdź najpóźniejszą datę wystawienia
-                            let latestDataDate = null;
-                            let latestDataStr = '';
-                            data.invoices.forEach(inv => {
-                                const parsed = parsePolishDate(inv.data);
-                                if (parsed && (!latestDataDate || parsed > latestDataDate)) {
-                                    latestDataDate = parsed;
-                                    latestDataStr = inv.data;
-                                }
-                            });
-
-                            // Znajdź najpóźniejszy termin płatności
+                            // Znajdź najpóźniejszy termin płatności (od niego liczymy odsetki)
                             let latestTerminDate = null;
                             let latestTerminStr = '';
                             data.invoices.forEach(inv => {
@@ -574,8 +734,8 @@ if (btnRunLlm) {
                             const dataInput = doc.querySelector('input[name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy"]');
                             const terminInput = doc.querySelector('input[name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"]');
 
-                            if (dataInput && latestDataStr) {
-                                dataInput.value = latestDataStr;
+                            if (dataInput && allDates) {
+                                dataInput.value = allDates;
                                 dataInput.style.background = '#e8f5e9';
                             }
                             if (terminInput && latestTerminStr) {
@@ -604,15 +764,46 @@ if (btnRunLlm) {
                         const doc = templateIframe.contentDocument;
                         const skipFields = ['Wpisz_aktualne_miasto_uzytkownika_oraz_dzisiejsza_date_w_formacie_Miejscowosc_Data'];
 
+                        // Funkcja do elastycznego znajdowania inputa - obsługuje warianty nazw od LLM
+                        function findMatchingInputs(doc, fieldName) {
+                            // Najpierw spróbuj dokładnego dopasowania
+                            let inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                            if (inputs.length > 0) return inputs;
+
+                            // Jeśli nie znaleziono, szukaj podobnych nazw
+                            const allInputs = doc.querySelectorAll('input[name]');
+                            const matchingInputs = [];
+
+                            // Warianty do próby: zamień końcówki gramatyczne
+                            const variants = [
+                                fieldName,
+                                fieldName.replace('wezwania', 'wezwanie'),
+                                fieldName.replace('wezwanie', 'wezwania'),
+                                fieldName.replace('kwote', 'kwota'),
+                                fieldName.replace('kwota', 'kwote'),
+                                fieldName.replace('nazwe', 'nazwa'),
+                                fieldName.replace('nazwa', 'nazwe')
+                            ];
+
+                            allInputs.forEach(input => {
+                                const inputName = input.getAttribute('name');
+                                if (variants.includes(inputName)) {
+                                    matchingInputs.push(input);
+                                }
+                            });
+
+                            return matchingInputs;
+                        }
+
                         for (let [fieldName, value] of Object.entries(data.fields)) {
                             if (skipFields.includes(fieldName) || !value) continue;
 
                             // Dla terminu płatności - przesuń datę o 1 dzień
-                            if (fieldName === 'Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki') {
+                            if (fieldName.includes('terminu_platnosci') || fieldName.includes('date_terminu')) {
                                 value = addOneDay(value);
                             }
 
-                            const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                            const inputs = findMatchingInputs(doc, fieldName);
                             inputs.forEach(input => {
                                 input.value = value;
                                 input.style.background = '#e8f5e9';
@@ -646,54 +837,6 @@ if (btnRunLlm) {
 }
 
 
-// === KRS UPLOAD ZONE ===
-
-if (krsPowodUploadZone) {
-    krsPowodUploadZone.addEventListener('click', () => advKrsPowodFile.click());
-
-    krsPowodUploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        krsPowodUploadZone.classList.add('dragover');
-    });
-
-    krsPowodUploadZone.addEventListener('dragleave', () => {
-        krsPowodUploadZone.classList.remove('dragover');
-    });
-
-    krsPowodUploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        krsPowodUploadZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            handleKrsPowodFile(e.dataTransfer.files[0]);
-        }
-    });
-}
-
-if (advKrsPowodFile) {
-    advKrsPowodFile.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleKrsPowodFile(e.target.files[0]);
-        }
-    });
-}
-
-function handleKrsPowodFile(file) {
-    if (advKrsPowodUploadStatus) {
-        advKrsPowodUploadStatus.classList.remove('hidden');
-        advKrsPowodUploadStatus.textContent = `✅ Plik KRS załadowany: ${file.name}`;
-    }
-    if (advKrsPowodManualFields) advKrsPowodManualFields.classList.add('hidden');
-    if (advBtnKrsPowodManual) advBtnKrsPowodManual.classList.remove('active');
-}
-
-if (advBtnKrsPowodManual) {
-    advBtnKrsPowodManual.addEventListener('click', () => {
-        if (advKrsPowodManualFields) advKrsPowodManualFields.classList.toggle('hidden');
-        advBtnKrsPowodManual.classList.toggle('active');
-        if (advKrsPowodUploadStatus) advKrsPowodUploadStatus.classList.add('hidden');
-    });
-}
-
 
 // === TEMPLATE SELECTION - WORKFLOW BRANCHING ===
 
@@ -703,6 +846,7 @@ if (templateSelect) {
 
         // Hide all step sections
         if (advStepSource) advStepSource.classList.add('hidden');
+        if (advStepSourcePozew) advStepSourcePozew.classList.add('hidden');
         if (advStepLlm) advStepLlm.classList.add('hidden');
         if (advStepPozewExtra) advStepPozewExtra.classList.add('hidden');
         if (advDividerStep2) advDividerStep2.classList.add('hidden');
@@ -716,17 +860,21 @@ if (templateSelect) {
             return;
         }
 
-        // Show workflow sections
+        // Show workflow sections based on template type
         if (advDividerStep2) advDividerStep2.classList.remove('hidden');
-        if (advStepSource) advStepSource.classList.remove('hidden');
-        if (advDividerStep3) advDividerStep3.classList.remove('hidden');
-        if (advStepLlm) advStepLlm.classList.remove('hidden');
 
         if (filename.includes('wezwanie')) {
             advWorkflowType = 'wezwanie';
+            // Dla wezwania - pokaż sekcję upload
+            const advStepUpload = document.getElementById('advStepUpload');
+            if (advStepUpload) advStepUpload.classList.remove('hidden');
         } else if (filename.includes('pozew')) {
             advWorkflowType = 'pozew';
+            // Dla pozwu - pokaż sekcję z wezwaniami
+            if (advStepSourcePozew) advStepSourcePozew.classList.remove('hidden');
             if (advStepPozewExtra) advStepPozewExtra.classList.remove('hidden');
+            // Załaduj listę wezwań
+            loadAdvWezwaniaList();
         }
 
 
@@ -819,7 +967,129 @@ if (advBtnSaveWezwanie) {
     });
 }
 
+// === POZEW SOURCE TOGGLE ===
+const btnPozewSourceSaved = document.getElementById('btnPozewSourceSaved');
+const btnPozewSourceUpload = document.getElementById('btnPozewSourceUpload');
+const pozewSavedSection = document.getElementById('pozewSavedSection');
+const pozewUploadSection = document.getElementById('pozewUploadSection');
+const pozewUploadZone = document.getElementById('pozewUploadZone');
+const pozewFileInput = document.getElementById('pozewFileInput');
+const pozewFileList = document.getElementById('pozewFileList');
+const btnPozewOcr = document.getElementById('btnPozewOcr');
 
+let pozewUploadedFiles = [];
+
+if (btnPozewSourceSaved) {
+    btnPozewSourceSaved.addEventListener('click', () => {
+        btnPozewSourceSaved.classList.add('active');
+        btnPozewSourceUpload.classList.remove('active');
+        if (pozewSavedSection) pozewSavedSection.classList.remove('hidden');
+        if (pozewUploadSection) pozewUploadSection.classList.add('hidden');
+    });
+}
+
+if (btnPozewSourceUpload) {
+    btnPozewSourceUpload.addEventListener('click', () => {
+        btnPozewSourceUpload.classList.add('active');
+        btnPozewSourceSaved.classList.remove('active');
+        if (pozewUploadSection) pozewUploadSection.classList.remove('hidden');
+        if (pozewSavedSection) pozewSavedSection.classList.add('hidden');
+    });
+}
+
+// Pozew upload zone
+if (pozewUploadZone) {
+    pozewUploadZone.addEventListener('click', () => pozewFileInput?.click());
+    pozewUploadZone.addEventListener('dragover', e => { e.preventDefault(); pozewUploadZone.classList.add('dragover'); });
+    pozewUploadZone.addEventListener('dragleave', () => pozewUploadZone.classList.remove('dragover'));
+    pozewUploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        pozewUploadZone.classList.remove('dragover');
+        handlePozewFiles(e.dataTransfer.files);
+    });
+}
+
+if (pozewFileInput) {
+    pozewFileInput.addEventListener('change', e => handlePozewFiles(e.target.files));
+}
+
+function handlePozewFiles(files) {
+    pozewUploadedFiles = [...pozewUploadedFiles, ...Array.from(files)];
+    renderPozewFileList();
+    updatePozewOcrButton();
+}
+
+function renderPozewFileList() {
+    if (!pozewFileList) return;
+    pozewFileList.innerHTML = pozewUploadedFiles.map((f, i) => `
+        <div class="file-item">
+            <span class="file-name">${f.name}</span>
+            <button class="file-remove" onclick="removePozewFile(${i})">✕</button>
+        </div>
+    `).join('');
+}
+
+window.removePozewFile = function (index) {
+    pozewUploadedFiles.splice(index, 1);
+    renderPozewFileList();
+    updatePozewOcrButton();
+};
+
+function updatePozewOcrButton() {
+    if (btnPozewOcr) btnPozewOcr.disabled = pozewUploadedFiles.length === 0;
+}
+
+// Pozew OCR processing
+if (btnPozewOcr) {
+    btnPozewOcr.addEventListener('click', async () => {
+        if (pozewUploadedFiles.length === 0) return;
+
+        const btnIcon = document.getElementById('btnPozewOcrIcon');
+        const btnText = document.getElementById('btnPozewOcrText');
+        const progressBar = document.getElementById('pozewOcrProgressBar');
+        const progressFill = document.getElementById('pozewOcrProgressFill');
+        const statusText = document.getElementById('pozewOcrStatusText');
+
+        btnPozewOcr.disabled = true;
+        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnText) btnText.textContent = 'Przetwarzanie...';
+        if (progressBar) progressBar.classList.remove('hidden');
+        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = '📷 OCR wezwania...'; }
+        if (progressFill) progressFill.style.width = '20%';
+
+        const formData = new FormData();
+        pozewUploadedFiles.forEach(f => formData.append('files', f));
+        formData.append('template', 'wezwanie_do_zaplaty.html');
+
+        try {
+            const response = await fetch('/api/process_ocr', { method: 'POST', body: formData });
+            if (progressFill) progressFill.style.width = '80%';
+            const data = await response.json();
+
+            if (data.success && data.documents?.length > 0) {
+                if (statusText) statusText.textContent = '✅ Dane z wezwania pobrane!';
+                if (progressFill) progressFill.style.width = '100%';
+
+                // Pokaż dane
+                if (extractedDataCard) extractedDataCard.classList.remove('hidden');
+                if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.documents, null, 2);
+
+                // Wyczyść
+                pozewUploadedFiles = [];
+                renderPozewFileList();
+            } else {
+                if (statusText) statusText.textContent = '⚠️ Brak danych';
+            }
+        } catch (e) {
+            if (statusText) statusText.textContent = `❌ ${e.message}`;
+        } finally {
+            if (btnIcon) btnIcon.textContent = '🚀';
+            if (btnText) btnText.textContent = 'OCR wezwania';
+            updatePozewOcrButton();
+            setTimeout(() => progressBar?.classList.add('hidden'), 3000);
+        }
+    });
+}
 // ==================== TABS ====================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -867,7 +1137,6 @@ const krsPowodUploadStatus = document.getElementById('krsPowodUploadStatus');
 let quickFiles = [];
 let selectedWezwania = [];
 let currentWorkflowType = null; // 'wezwanie' or 'pozew'
-let krsPowodFileData = null;
 
 // Load templates for quick OCR
 async function loadQuickTemplates() {
@@ -1315,5 +1584,187 @@ if (btnPrintPdf) {
 
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
+    });
+}
+
+// ==================== POZEW - KRS UPLOADS ====================
+
+const krsPowodUploadZone = document.getElementById('krsPowodUploadZone');
+const advKrsPowodFile = document.getElementById('advKrsPowodFile');
+const advKrsPowodUploadStatus = document.getElementById('advKrsPowodUploadStatus');
+const krsPozwanyUploadZone = document.getElementById('krsPozwanyUploadZone');
+const advKrsPozwanyFile = document.getElementById('advKrsPozwanyFile');
+const advKrsPozwanyUploadStatus = document.getElementById('advKrsPozwanyUploadStatus');
+const btnProcessPozew = document.getElementById('btnProcessPozew');
+const pozewProgressBar = document.getElementById('pozewProgressBar');
+const pozewProgressFill = document.getElementById('pozewProgressFill');
+const pozewStatusText = document.getElementById('pozewStatusText');
+
+let krsPowodFileData = null;
+let krsPozwanyFileData = null;
+
+// KRS Powoda upload
+if (krsPowodUploadZone && advKrsPowodFile) {
+    krsPowodUploadZone.addEventListener('click', () => advKrsPowodFile.click());
+    krsPowodUploadZone.addEventListener('dragover', (e) => { e.preventDefault(); krsPowodUploadZone.classList.add('dragover'); });
+    krsPowodUploadZone.addEventListener('dragleave', () => krsPowodUploadZone.classList.remove('dragover'));
+    krsPowodUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        krsPowodUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            advKrsPowodFile.files = e.dataTransfer.files;
+            handleKrsPowodFile(e.dataTransfer.files[0]);
+        }
+    });
+    advKrsPowodFile.addEventListener('change', () => {
+        if (advKrsPowodFile.files.length > 0) {
+            handleKrsPowodFile(advKrsPowodFile.files[0]);
+        }
+    });
+}
+
+function handleKrsPowodFile(file) {
+    krsPowodFileData = file;
+    if (advKrsPowodUploadStatus) {
+        advKrsPowodUploadStatus.classList.remove('hidden');
+        advKrsPowodUploadStatus.innerHTML = `✅ KRS Powoda: ${file.name}`;
+    }
+}
+
+// KRS Pozwanego upload
+if (krsPozwanyUploadZone && advKrsPozwanyFile) {
+    krsPozwanyUploadZone.addEventListener('click', () => advKrsPozwanyFile.click());
+    krsPozwanyUploadZone.addEventListener('dragover', (e) => { e.preventDefault(); krsPozwanyUploadZone.classList.add('dragover'); });
+    krsPozwanyUploadZone.addEventListener('dragleave', () => krsPozwanyUploadZone.classList.remove('dragover'));
+    krsPozwanyUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        krsPozwanyUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            advKrsPozwanyFile.files = e.dataTransfer.files;
+            handleKrsPozwanyFile(e.dataTransfer.files[0]);
+        }
+    });
+    advKrsPozwanyFile.addEventListener('change', () => {
+        if (advKrsPozwanyFile.files.length > 0) {
+            handleKrsPozwanyFile(advKrsPozwanyFile.files[0]);
+        }
+    });
+}
+
+function handleKrsPozwanyFile(file) {
+    krsPozwanyFileData = file;
+    if (advKrsPozwanyUploadStatus) {
+        advKrsPozwanyUploadStatus.classList.remove('hidden');
+        advKrsPozwanyUploadStatus.innerHTML = `✅ KRS Pozwanego: ${file.name}`;
+    }
+}
+
+// ==================== POZEW - PRZETWARZANIE ====================
+
+if (btnProcessPozew) {
+    btnProcessPozew.addEventListener('click', async () => {
+        // Sprawdź czy wybrano wezwania
+        if (selectedAdvWezwania.length === 0) {
+            alert('Wybierz co najmniej jedno wezwanie do zapłaty!');
+            return;
+        }
+
+        btnProcessPozew.disabled = true;
+        const btnIcon = document.getElementById('btnProcessPozewIcon');
+        const btnText = document.getElementById('btnProcessPozewText');
+        if (btnIcon) btnIcon.textContent = '⏳';
+        if (btnText) btnText.textContent = 'Przetwarzanie...';
+        if (pozewProgressBar) pozewProgressBar.classList.remove('hidden');
+        if (pozewStatusText) pozewStatusText.classList.remove('hidden');
+
+        try {
+            let progress = 0;
+            const updateProgress = (val, text) => {
+                progress = val;
+                if (pozewProgressFill) pozewProgressFill.style.width = `${val}%`;
+                if (pozewStatusText) pozewStatusText.textContent = text;
+            };
+
+            updateProgress(10, '📂 Pobieranie danych z wezwań...');
+
+            // 1. Pobierz dane z wybranych wezwań
+            const summaryResponse = await fetch('/api/wezwania/summary', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selectedAdvWezwania })
+            });
+            const summaryData = await summaryResponse.json();
+
+            updateProgress(30, '🔄 Przetwarzanie KRS powoda przez OCR...');
+
+            // 2. Przetwórz KRS powoda (jeśli wgrany)
+            let krsPowodData = {};
+            if (krsPowodFileData) {
+                const formData = new FormData();
+                formData.append('file', krsPowodFileData);
+                const ocrRes = await fetch('/api/ocr', { method: 'POST', body: formData });
+                const ocrResult = await ocrRes.json();
+                if (ocrResult.success) {
+                    // TODO: Przetwórz OCR przez LLM dla KRS
+                    krsPowodData = { filename: ocrResult.filename };
+                }
+            }
+
+            updateProgress(50, '🔄 Przetwarzanie KRS pozwanego przez OCR...');
+
+            // 3. Przetwórz KRS pozwanego (jeśli wgrany)
+            let krsPozwanyData = {};
+            if (krsPozwanyFileData) {
+                const formData = new FormData();
+                formData.append('file', krsPozwanyFileData);
+                const ocrRes = await fetch('/api/ocr', { method: 'POST', body: formData });
+                const ocrResult = await ocrRes.json();
+                if (ocrResult.success) {
+                    // TODO: Przetwórz OCR przez LLM dla KRS
+                    krsPozwanyData = { filename: ocrResult.filename };
+                }
+            }
+
+            updateProgress(70, '📝 Wypełnianie szablonu pozwu...');
+
+            // 4. Wypełnij szablon pozwu danymi
+            if (templateIframe && templateIframe.contentDocument) {
+                const doc = templateIframe.contentDocument;
+
+                // Wypełnij danymi z wezwań
+                if (summaryData.wezwania && summaryData.wezwania.length > 0) {
+                    const w = summaryData.wezwania[0]; // Użyj pierwszego wezwania jako głównego źródła
+
+                    // Dane pozwanego (dłużnika) z wezwania
+                    fillInput(doc, 'pozwany_nazwa_pelna', w.fields?.dluznik_nazwa || w.dluznik_nazwa || '');
+                    fillInput(doc, 'pozwany_adres_pelny', w.fields?.dluznik_adres || w.dluznik_adres || '');
+                    fillInput(doc, 'pozwany_numer_krs', ''); // KRS z OCR lub pusty
+
+                    // Dane powoda (wierzyciela)
+                    fillInput(doc, 'powod_nazwa_pelna', w.fields?.wierzyciel_nazwa || '');
+                    fillInput(doc, 'powod_adres_pelny', w.fields?.wierzyciel_adres || '');
+
+                    // Kwota
+                    fillInput(doc, 'wartosc_przedmiotu_sporu', summaryData.total_amount_formatted || '');
+                }
+            }
+
+            updateProgress(100, '✅ Pozew wypełniony!');
+
+        } catch (error) {
+            if (pozewStatusText) pozewStatusText.textContent = `❌ Błąd: ${error.message}`;
+        } finally {
+            btnProcessPozew.disabled = false;
+            if (btnIcon) btnIcon.textContent = '⚖️';
+            if (btnText) btnText.textContent = 'Przetwórz i wypełnij pozew';
+        }
+    });
+}
+
+function fillInput(doc, name, value) {
+    const inputs = doc.querySelectorAll(`input[name="${name}"]`);
+    inputs.forEach(input => {
+        input.value = value;
+        input.style.background = '#e8f5e9';
     });
 }
