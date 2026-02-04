@@ -1090,6 +1090,205 @@ if (btnPozewOcr) {
         }
     });
 }
+
+// === KRS UPLOAD FOR POZEW ===
+const krsUploadZone = document.getElementById('krsUploadZone');
+const krsFileInput = document.getElementById('krsFileInput');
+const krsFileList = document.getElementById('krsFileList');
+const btnGeneratePozew = document.getElementById('btnGeneratePozew');
+
+let krsUploadedFiles = [];
+
+if (krsUploadZone) {
+    krsUploadZone.addEventListener('click', () => krsFileInput?.click());
+    krsUploadZone.addEventListener('dragover', e => { e.preventDefault(); krsUploadZone.classList.add('dragover'); });
+    krsUploadZone.addEventListener('dragleave', () => krsUploadZone.classList.remove('dragover'));
+    krsUploadZone.addEventListener('drop', e => {
+        e.preventDefault();
+        krsUploadZone.classList.remove('dragover');
+        handleKrsFiles(e.dataTransfer.files);
+    });
+}
+
+if (krsFileInput) {
+    krsFileInput.addEventListener('change', e => handleKrsFiles(e.target.files));
+}
+
+function handleKrsFiles(files) {
+    krsUploadedFiles = [...krsUploadedFiles, ...Array.from(files)];
+    renderKrsFileList();
+    updateGeneratePozewButton();
+}
+
+function renderKrsFileList() {
+    if (!krsFileList) return;
+    krsFileList.innerHTML = krsUploadedFiles.map((f, i) => `
+        <div class="file-item">
+            <span class="file-name">${f.name}</span>
+            <button class="file-remove" onclick="removeKrsFile(${i})">✕</button>
+        </div>
+    `).join('');
+}
+
+window.removeKrsFile = function (index) {
+    krsUploadedFiles.splice(index, 1);
+    renderKrsFileList();
+    updateGeneratePozewButton();
+};
+
+function updateGeneratePozewButton() {
+    if (btnGeneratePozew) {
+        // Musi mieć KRS i źródło wezwania (zapisane lub upload)
+        const hasKrs = krsUploadedFiles.length > 0;
+        const hasSavedWezwania = document.querySelectorAll('#advWezwaniaList input:checked').length > 0;
+        const hasUploadWezwania = pozewUploadedFiles.length > 0;
+        btnGeneratePozew.disabled = !hasKrs || (!hasSavedWezwania && !hasUploadWezwania);
+    }
+}
+
+// Update na zmiany checkboxów wezwań
+document.addEventListener('change', e => {
+    if (e.target.closest('#advWezwaniaList')) updateGeneratePozewButton();
+});
+
+// === GENERATE POZEW - FULL WORKFLOW ===
+if (btnGeneratePozew) {
+    btnGeneratePozew.addEventListener('click', async () => {
+        const btnIcon = document.getElementById('btnGeneratePozewIcon');
+        const btnText = document.getElementById('btnGeneratePozewText');
+        const progressBar = document.getElementById('pozewProgressBar');
+        const progressFill = document.getElementById('pozewProgressFill');
+        const statusText = document.getElementById('pozewStatusText');
+
+        btnGeneratePozew.disabled = true;
+        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnText) btnText.textContent = 'Generowanie...';
+        if (progressBar) progressBar.classList.remove('hidden');
+        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = '🔄 Rozpoczynam...'; }
+        if (progressFill) progressFill.style.width = '5%';
+
+        try {
+            let wezwanieData = null;
+
+            // KROK 1: Pobierz dane wezwania
+            const usingSaved = !document.getElementById('pozewUploadSection')?.classList.contains('hidden') === false;
+
+            if (pozewUploadedFiles.length > 0) {
+                // OCR wezwania z pliku
+                if (statusText) statusText.textContent = '📷 OCR wezwania do zapłaty...';
+                if (progressFill) progressFill.style.width = '15%';
+
+                const wezForm = new FormData();
+                pozewUploadedFiles.forEach(f => wezForm.append('files', f));
+                wezForm.append('template', 'wezwanie_do_zaplaty.html');
+
+                const wezResp = await fetch('/api/process_ocr', { method: 'POST', body: wezForm });
+                const wezData = await wezResp.json();
+
+                if (wezData.success && wezData.documents?.length > 0) {
+                    wezwanieData = wezData.documents[0].fields;
+                }
+            } else {
+                // Z zapisanych wezwań
+                const selectedIds = Array.from(document.querySelectorAll('#advWezwaniaList input:checked')).map(cb => cb.value);
+                if (selectedIds.length > 0) {
+                    if (statusText) statusText.textContent = '📋 Ładowanie zapisanego wezwania...';
+                    const resp = await fetch(`/api/wezwania/${selectedIds[0]}`);
+                    const data = await resp.json();
+                    wezwanieData = data.fields || {};
+                }
+            }
+
+            if (progressFill) progressFill.style.width = '30%';
+
+            // KROK 2: OCR plików KRS
+            if (statusText) statusText.textContent = '🏢 OCR dokumentów KRS...';
+            if (progressFill) progressFill.style.width = '45%';
+
+            const krsForm = new FormData();
+            krsUploadedFiles.forEach(f => krsForm.append('files', f));
+            // Dla KRS używamy domyślnych pól
+
+            const krsResp = await fetch('/api/process_ocr', { method: 'POST', body: krsForm });
+            const krsData = await krsResp.json();
+
+            let krsExtracted = [];
+            if (krsData.success && krsData.documents) {
+                krsExtracted = krsData.documents.map(d => d.fields);
+            }
+
+            if (progressFill) progressFill.style.width = '70%';
+
+            // KROK 3: Wyślij wszystkie dane do analizy LLM
+            if (statusText) statusText.textContent = '🤖 Analiza AI - mapowanie na pola pozwu...';
+
+            const allData = {
+                wezwanie: wezwanieData,
+                krs: krsExtracted
+            };
+
+            // Pokaż surowe dane
+            if (extractedDataCard) extractedDataCard.classList.remove('hidden');
+            if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(allData, null, 2);
+
+            if (progressFill) progressFill.style.width = '80%';
+
+            // Wywołaj drugi LLM do analizy i mapowania
+            const analyzeResp = await fetch('/api/analyze_pozew', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(allData)
+            });
+            const analyzeData = await analyzeResp.json();
+
+            if (progressFill) progressFill.style.width = '95%';
+
+            // KROK 4: Wypełnij szablon Pozew
+            if (statusText) statusText.textContent = '📝 Wypełnianie szablonu pozwu...';
+
+            if (templateIframe && templateIframe.contentDocument && analyzeData.success && analyzeData.fields) {
+                const doc = templateIframe.contentDocument;
+                const pozewFields = analyzeData.fields;
+
+                // Wypełnij pola z analizy LLM
+                for (let [fieldName, value] of Object.entries(pozewFields)) {
+                    if (!value) continue;
+                    const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                    inputs.forEach(inp => {
+                        inp.value = value;
+                        inp.style.background = '#e8f5e9';
+                    });
+                }
+
+                // Dodaj do extracted data
+                if (extractedDataContent) {
+                    extractedDataContent.textContent = JSON.stringify({
+                        raw_data: allData,
+                        mapped_fields: pozewFields
+                    }, null, 2);
+                }
+            }
+
+            if (progressFill) progressFill.style.width = '100%';
+            if (statusText) statusText.textContent = '✅ Pozew wygenerowany!';
+
+            // Wyczyść pliki
+            krsUploadedFiles = [];
+            pozewUploadedFiles = [];
+            renderKrsFileList();
+            renderPozewFileList();
+
+        } catch (e) {
+            if (statusText) statusText.textContent = `❌ ${e.message}`;
+        } finally {
+            if (btnIcon) btnIcon.textContent = '⚖️';
+            if (btnText) btnText.textContent = 'Generuj Pozew';
+            updateGeneratePozewButton();
+            setTimeout(() => progressBar?.classList.add('hidden'), 3000);
+        }
+    });
+}
+
 // ==================== TABS ====================
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {

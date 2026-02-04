@@ -64,17 +64,55 @@ class GemmaOCRService:
         doc = DocxDocument(path)
         return "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
     
+    def _extract_text_from_pdf(self, path):
+        """Wyciąga tekst z pliku PDF."""
+        try:
+            import fitz  # PyMuPDF
+            doc = fitz.open(path)
+            text = ""
+            for page in doc:
+                text += page.get_text()
+            doc.close()
+            return text.strip()
+        except ImportError:
+            raise Exception("PyMuPDF (fitz) nie jest zainstalowane. Uruchom: pip install pymupdf")
+    
     def predict(self, file_path):
         """Wysyła plik do API i zwraca wynik."""
         print(f"📤 Przetwarzanie: {os.path.basename(file_path)}")
         
         ext = os.path.splitext(file_path)[1].lower()
         
-        # Dla plików DOCX - wyciągnij tekst
+        # Dla plików tekstowych (DOCX, PDF) - wyciągnij tekst
+        text_content = None
+        is_scanned_pdf = False
+        
         if ext in ['.docx', '.doc']:
             print("📄 Wykryto dokument Word - ekstrakcja tekstu...")
             text_content = self._extract_text_from_docx(file_path)
-            
+        elif ext == '.pdf':
+            print("📄 Wykryto PDF - ekstrakcja tekstu...")
+            text_content = self._extract_text_from_pdf(file_path)
+            if not text_content or len(text_content) < 50:
+                print("⚠️ PDF skanowany (brak tekstu) - konwersja na obraz...")
+                is_scanned_pdf = True
+                # Konwertuj pierwszą stronę PDF na obraz
+                try:
+                    import fitz
+                    doc = fitz.open(file_path)
+                    page = doc[0]
+                    pix = page.get_pixmap(dpi=150)
+                    img_path = file_path + ".png"
+                    pix.save(img_path)
+                    doc.close()
+                    file_path = img_path  # Użyj obrazu zamiast PDF
+                    ext = '.png'
+                except Exception as e:
+                    raise Exception(f"Nie można skonwertować PDF na obraz: {e}")
+                text_content = None  # Wymuś ścieżkę obrazu
+        
+        if text_content and len(text_content) >= 50:
+            # Dla dokumentów tekstowych
             payload = {
                 "model": self.model,
                 "messages": [

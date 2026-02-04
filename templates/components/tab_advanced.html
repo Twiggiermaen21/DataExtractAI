@@ -83,32 +83,28 @@
             </div>
         </div>
 
-        <!-- Dodatkowe dane dla Pozwu -->
+        <!-- Krok 3: KRS + Generuj Pozew -->
         <div class="step-section hidden" id="advStepPozewExtra">
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <label class="step-label">🏢 KRS Powoda (wierzyciel)</label>
-            <div class="upload-zone upload-zone-sm" id="krsPowodUploadZone" style="padding: 16px; margin-top: 8px;">
-                <div class="upload-icon" style="font-size: 1.2rem;">📄</div>
-                <div class="upload-text" style="font-size: 0.9em;">Przeciągnij plik KRS powoda lub kliknij</div>
+            <label class="step-label">📋 Krok 3: Wgraj pliki KRS (powód i pozwany)</label>
+            <div class="upload-zone" id="krsUploadZone" style="padding: 24px 16px; margin-top: 12px;">
+                <div class="upload-icon" style="font-size: 1.8rem;">🏢</div>
+                <div class="upload-text">Przeciągnij pliki KRS (powoda i pozwanego)</div>
+                <div class="upload-hint">JPG, PNG, PDF, Word • 2 pliki</div>
             </div>
-            <input type="file" id="advKrsPowodFile" accept=".pdf,image/*" style="display:none;">
+            <input type="file" id="krsFileInput" multiple accept="image/*,.pdf,.docx,.doc" style="display:none;">
+            <div class="file-list" id="krsFileList"></div>
 
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <label class="step-label">👤 KRS Pozwanego (dłużnik)</label>
-            <div class="upload-zone upload-zone-sm" id="krsPozwanyUploadZone" style="padding: 16px; margin-top: 8px;">
-                <div class="upload-icon" style="font-size: 1.2rem;">📄</div>
-                <div class="upload-text" style="font-size: 0.9em;">Przeciągnij plik KRS pozwanego lub kliknij</div>
-            </div>
-            <input type="file" id="advKrsPozwanyFile" accept=".pdf,image/*" style="display:none;">
-
-            <hr class="divider-light" style="margin: 20px 0;">
-
-            <button class="btn btn-purple" id="btnProcessPozew" style="margin-top: 12px;">
-                <span id="btnProcessPozewIcon">⚖️</span>
-                <span id="btnProcessPozewText">Przetwórz i wypełnij pozew</span>
+            <button class="btn btn-purple btn-lg" id="btnGeneratePozew" disabled style="width: 100%; padding: 16px;">
+                <span id="btnGeneratePozewIcon">⚖️</span>
+                <span id="btnGeneratePozewText">Generuj Pozew</span>
             </button>
+            <p class="hint-text" style="text-align: center; margin-top: 8px;">
+                System: OCR wezwania → OCR KRS → Dane → Wypełnienie szablonu
+            </p>
 
             <div class="progress-bar hidden" id="pozewProgressBar">
                 <div class="fill" id="pozewProgressFill" style="width: 0%"></div>

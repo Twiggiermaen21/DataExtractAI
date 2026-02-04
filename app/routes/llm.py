@@ -51,6 +51,91 @@ def get_ocr_results():
         return jsonify([])
 
 
+@llm_bp.route('/api/analyze_pozew', methods=['POST'])
+def analyze_pozew():
+    """
+    Analizuje dane z KRS i wezwania, mapuje je na pola Pozew.
+    Oczekuje: { "wezwanie": {...}, "krs": [...] }
+    """
+    import requests
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Brak danych'}), 400
+    
+    wezwanie = data.get('wezwanie', {})
+    krs_list = data.get('krs', [])
+    
+    # Przygotuj prompt dla LLM
+    prompt = f"""Przeanalizuj poniższe dane i wypełnij pola dla pozwu sądowego.
+
+DANE Z WEZWANIA DO ZAPŁATY:
+{wezwanie}
+
+DANE Z DOKUMENTÓW KRS:
+{krs_list}
+
+ZASADY MAPOWANIA:
+- POWÓD (wierzyciel) = Sprzedawca z wezwania (firma która wystawiła fakturę)
+- POZWANY (dłużnik) = Nabywca z wezwania (firma która ma zapłacić)
+- Dane KRS uzupełniają numery KRS dla powoda i pozwanego
+
+Zwróć TYLKO obiekt JSON z wypełnionymi polami:
+{{
+  "powod_nazwa_pelna": "pełna nazwa sprzedawcy/wierzyciela",
+  "powod_adres_pelny": "adres sprzedawcy",
+  "powod_numer_krs": "numer KRS sprzedawcy (jeśli znaleziony w KRS)",
+  "powod_siedziba_miasto": "miasto siedziby sprzedawcy",
+  "pozwany_nazwa_pelna": "pełna nazwa nabywcy/dłużnika",
+  "pozwany_adres_pelny": "adres nabywcy",
+  "pozwany_numer_krs": "numer KRS nabywcy (jeśli znaleziony w KRS)",
+  "platnosc_kwota_glowna": "kwota do zapłaty",
+  "roszczenie_kwota_glowna": "kwota roszczenia (ta sama co kwota główna)",
+  "roszczenie_odsetki_data_poczatkowa": "data od której liczyć odsetki (dzień po terminie płatności)",
+  "dowod_faktura_numer": "numer faktury",
+  "dowod_faktura_data_wystawienia": "data wystawienia faktury",
+  "uzasadnienie_faktura_data": "data faktury",
+  "uzasadnienie_termin_platnosci": "termin płatności"
+}}"""
+
+    try:
+        print(prompt)
+        response = requests.post(
+            "http://127.0.0.1:1234/v1/chat/completions",
+            json={
+                "model": "google/gemma-3-12b",
+                "messages": [
+                    {"role": "system", "content": "Jesteś asystentem prawnym. Analizujesz dokumenty i wypełniasz formularze pozwów."},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 2048,
+                "temperature": 0.1
+            },
+            timeout=300
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            output = result["choices"][0]["message"]["content"]
+            
+            # Parsuj JSON z odpowiedzi
+            import json
+            try:
+                clean = output.strip()
+                if clean.startswith("```"):
+                    lines = clean.split("\n")
+                    clean = "\n".join(lines[1:-1])
+                fields = json.loads(clean)
+                return jsonify({'success': True, 'fields': fields})
+            except:
+                return jsonify({'success': True, 'fields': {}, 'raw': output})
+        else:
+            return jsonify({'success': False, 'error': f'API błąd: {response.status_code}'}), 500
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @llm_bp.route('/api/templates')
 def get_templates():
     """Zwraca listę dostępnych szablonów dokumentów."""
