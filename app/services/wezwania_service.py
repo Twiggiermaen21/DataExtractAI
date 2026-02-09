@@ -15,15 +15,17 @@ def get_wezwania_dir():
 def save_wezwanie(data: dict) -> dict:
    
     wezwanie_id = str(uuid.uuid4())[:8]
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Pobierz dane dłużnika do nazwy pliku (próbuj różne klucze)
+    # Pobierz dane dłużnika (pozwanego) do nazwy pliku
     dluznik = (data.get('Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge') 
                or data.get('dluznik_nazwa') 
+               or data.get('dluznik_nazwa_pelna')
                or 'nieznany')
-    dluznik_clean = "".join(c for c in dluznik if c.isalnum() or c in (' ', '-', '_')).strip()[:30]
+    # Oczyść nazwę - zostaw tylko dozwolone znaki
+    dluznik_clean = "".join(c for c in dluznik if c.isalnum() or c in (' ', '-', '_')).strip()[:40]
+    dluznik_clean = dluznik_clean.replace(' ', '_')
     
-    filename = f"wezwanie_{timestamp}_{dluznik_clean}_{wezwanie_id}.json"
+    filename = f"wezwanie_do_zaplaty_{dluznik_clean}_{wezwanie_id}.json"
     
     wezwanie_data = {
         'id': wezwanie_id,
@@ -50,21 +52,47 @@ def get_all_wezwania() -> list:
     wezwania = []
     
     for filename in os.listdir(wezwania_dir):
-        if filename.endswith('.json') and filename.startswith('wezwanie_'):
+        if filename.endswith('.json') and filename.startswith('wezwanie_do_zaplaty_'):
             filepath = os.path.join(wezwania_dir, filename)
             try:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 
                 fields = data.get('fields', {})
+                
+                # Pobierz dane z długich nazw kluczy lub z uproszczonych
+                dluznik_nazwa = (
+                    fields.get('Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge')
+                    or fields.get('dluznik_nazwa_pelna')
+                    or fields.get('dluznik_nazwa')
+                    or 'Nieznany'
+                )
+                dluznik_adres = (
+                    fields.get('Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto')
+                    or fields.get('dluznik_adres_pelny')
+                    or fields.get('dluznik_adres')
+                    or ''
+                )
+                faktura_numer = (
+                    fields.get('Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty')
+                    or fields.get('faktura_numer_referencyjny')
+                    or ''
+                )
+                kwota = (
+                    fields.get('Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta')
+                    or fields.get('platnosc_kwota_glowna')
+                    or '0'
+                )
+                
                 wezwania.append({
                     'id': data.get('id'),
                     'filename': filename,
                     'created_at': data.get('created_at'),
-                    'dluznik_nazwa': fields.get('dluznik_nazwa_pelna', fields.get('dluznik_nazwa', 'Nieznany')),
-                    'dluznik_adres': fields.get('dluznik_adres_pelny', fields.get('dluznik_adres', '')),
-                    'kwota': fields.get('platnosc_kwota_glowna', '0'),
-                    'faktura_numer': fields.get('faktura_numer_referencyjny', '')
+                    'dluznik_nazwa': dluznik_nazwa,
+                    'dluznik_adres': dluznik_adres,
+                    'kwota': kwota,
+                    'faktura_numer': faktura_numer,
+                    'fields': fields  # Dodaj pełne fields dla pozwu
                 })
             except Exception as e:
                 print(f"Błąd odczytu {filename}: {e}")

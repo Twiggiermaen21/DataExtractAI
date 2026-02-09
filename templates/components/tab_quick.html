@@ -27,46 +27,32 @@
         <!-- KROK 2B: Pozew - wybór wezwań + KRS -->
         <div class="step-section hidden" id="stepPozew">
             <label style="font-size: 1.1em; font-weight: 600;">📋 Krok 2: Wybierz zapisane wezwania do zapłaty</label>
-            
+
             <div class="wezwania-list" id="wezwaniaList" style="margin-top: 12px;">
                 <div style="color: var(--text-muted); padding: 16px; text-align: center;">
                     Ładowanie listy wezwań...
                 </div>
             </div>
-            
+
             <button class="btn btn-sm" id="refreshWezwaniaList" style="margin-top: 8px;">
                 🔄 Odśwież listę
             </button>
 
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <!-- KRS Powoda -->
-            <label style="font-size: 1.1em; font-weight: 600;">🏢 Dane KRS Powoda (strona powodowa)</label>
-            <div class="krs-options" style="display: flex; gap: 10px; margin: 12px 0;">
-                <button class="btn btn-sm" id="btnKrsPowodUpload" type="button">📄 Upload PDF z KRS</button>
-                <button class="btn btn-sm" id="btnKrsPowodManual" type="button">✏️ Wpisz ręcznie</button>
+            <!-- Krok 3: KRS Pozwanego -->
+            <label style="font-size: 1.1em; font-weight: 600;">📄 Krok 3: Wgraj plik KRS pozwanego</label>
+            <div class="upload-zone" id="krsPozwanyUploadZone" style="padding: 24px 20px; margin-top: 12px;">
+                <div class="upload-icon" style="font-size: 1.5rem;">📄</div>
+                <div class="upload-text">Przeciągnij plik KRS lub kliknij</div>
+                <div class="upload-hint">PDF, JPG, PNG</div>
             </div>
-            <input type="file" id="krsPowodFile" accept=".pdf,image/*" style="display:none;">
-            
-            <div id="krsPowodManualFields" class="hidden" style="margin-top: 12px;">
-                <input type="text" name="powod_nazwa_pelna" placeholder="Pełna nazwa firmy" class="full-width" style="margin-bottom: 8px;">
-                <input type="text" name="powod_adres_pelny" placeholder="Adres siedziby" class="full-width" style="margin-bottom: 8px;">
-                <input type="text" name="powod_numer_krs" placeholder="Numer KRS" style="width: 150px;">
-            </div>
-            
-            <div id="krsPowodUploadStatus" class="hidden" style="margin-top: 12px; padding: 10px; background: #e8f5e9; border-radius: 4px;">
-                ✅ Plik KRS załadowany
-            </div>
+            <input type="file" id="krsPozwanyFile" accept=".pdf,image/*" style="display:none;">
 
-            <hr class="divider-light" style="margin: 20px 0;">
-
-            <!-- Dane Pozwanego (uproszczone) -->
-            <label style="font-size: 1.1em; font-weight: 600;">👤 Dane Pozwanego</label>
-            <p style="font-size: 0.85em; color: var(--text-muted); margin: 4px 0 12px;">
-                Format: Nazwa firmy + ulica i numer + kod pocztowy i miasto
-            </p>
-            <input type="text" name="pozwany_oznaczenie_pelne" class="full-width" 
-                placeholder="CD Projekt Spółka akcyjna ul. Jagiellońska 43, 00-100 Warszawa">
+            <div id="krsPozwanyUploadStatus" class="hidden"
+                style="margin-top: 12px; padding: 10px; background: #e8f5e9; border-radius: 4px;">
+                ✅ Plik KRS pozwanego załadowany
+            </div>
         </div>
 
         <!-- Przycisk akcji -->
@@ -84,16 +70,18 @@
     <!-- Quick Result Preview -->
     <div class="card hidden" id="quickResultCard">
         <div class="card-title"><span class="icon">📝</span> Wypełniony dokument</div>
-        
+
         <!-- Przycisk zapisywania (tylko dla Wezwania) -->
-        <div id="saveWezwanieSection" class="hidden" style="margin-bottom: 16px; padding: 12px; background: #fff3e0; border-radius: 4px;">
-            <p style="margin: 0 0 10px; font-weight: 500;">💾 Zapisz wezwanie do bazy (potrzebne do generowania Pozwu)</p>
+        <div id="saveWezwanieSection" class="hidden"
+            style="margin-bottom: 16px; padding: 12px; background: #fff3e0; border-radius: 4px;">
+            <p style="margin: 0 0 10px; font-weight: 500;">💾 Zapisz wezwanie do bazy (potrzebne do generowania Pozwu)
+            </p>
             <button class="btn btn-green" id="btnSaveWezwanie">
                 <span>💾</span>
                 <span>Zapisz wezwanie</span>
             </button>
         </div>
-        
+
         <div class="quick-preview" id="quickPreview">
             <div class="quick-status">Tutaj pojawi się wypełniony dokument</div>
         </div>
@@ -105,53 +93,64 @@
 </div>
 
 <style>
-.step-section {
-    margin-bottom: 20px;
-}
-.divider-light {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 16px 0;
-}
-.wezwania-list {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-.wezwanie-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 12px;
-    border-bottom: 1px solid #eee;
-    gap: 10px;
-}
-.wezwanie-item:last-child {
-    border-bottom: none;
-}
-.wezwanie-item:hover {
-    background: #f5f5f5;
-}
-.wezwanie-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-}
-.wezwanie-info {
-    flex: 1;
-}
-.wezwanie-dluznik {
-    font-weight: 600;
-}
-.wezwanie-details {
-    font-size: 0.85em;
-    color: #666;
-}
-.btn-sm {
-    padding: 6px 12px !important;
-    font-size: 0.85rem !important;
-}
-.krs-options .btn-sm.active {
-    background: var(--accent-purple);
-    color: white;
-}
+    .step-section {
+        margin-bottom: 20px;
+    }
+
+    .divider-light {
+        border: none;
+        border-top: 1px solid #eee;
+        margin: 16px 0;
+    }
+
+    .wezwania-list {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .wezwanie-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 12px;
+        border-bottom: 1px solid #eee;
+        gap: 10px;
+    }
+
+    .wezwanie-item:last-child {
+        border-bottom: none;
+    }
+
+    .wezwanie-item:hover {
+        background: #f5f5f5;
+    }
+
+    .wezwanie-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+    }
+
+    .wezwanie-info {
+        flex: 1;
+    }
+
+    .wezwanie-dluznik {
+        font-weight: 600;
+    }
+
+    .wezwanie-details {
+        font-size: 0.85em;
+        color: #666;
+    }
+
+    .btn-sm {
+        padding: 6px 12px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .krs-options .btn-sm.active {
+        background: var(--accent-purple);
+        color: white;
+    }
 </style>

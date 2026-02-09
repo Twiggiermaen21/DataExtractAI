@@ -43,7 +43,9 @@ class GemmaOCRService:
         try:
             with open(template_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            self.fields = list(set(re.findall(r'name=["\']([^"\']+)["\']', content)))
+            # Wyciągnij nazwy pól i odfiltruj błędne (np. JavaScript template literals)
+            all_fields = list(set(re.findall(r'name=["\']([^"\']+)["\']', content)))
+            self.fields = [f for f in all_fields if not f.startswith('$') and not '{' in f]
             print(f"📋 Pobrano {len(self.fields)} pól z szablonu")
         except Exception as e:
             print(f"⚠️ Błąd odczytu szablonu: {e}")
@@ -112,6 +114,11 @@ class GemmaOCRService:
                 text_content = None  # Wymuś ścieżkę obrazu
         
         if text_content and len(text_content) >= 50:
+            # Ogranicz tekst do 8000 znaków żeby nie przekroczyć kontekstu LLM
+            if len(text_content) > 8000:
+                print(f"⚠️ Tekst za długi ({len(text_content)} znaków), przycinanie do 8000...")
+                text_content = text_content[:8000]
+            
             # Dla dokumentów tekstowych
             payload = {
                 "model": self.model,

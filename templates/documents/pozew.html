@@ -213,26 +213,24 @@
             <input type="text" name="sad_adres_pelny" class="full-width">
         </div>
 
-        <div class="flex-group">
-            <div class="half-width">
-                <strong>Strona powodowa:</strong><br>
-                <input type="text" name="powod_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
-                <input type="text" name="powod_adres_pelny" class="full-width">
+        <div class="section">
+            <strong>Strona powodowa:</strong><br>
+            <input type="text" name="powod_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
+            <input type="text" name="powod_adres_pelny" class="full-width">
 
-                <div style="margin-top: 15px; padding-left: 10px; border-left: 2px solid #eee;">
-                    <em style="color: #555;">zastępowana przez:</em><br>
-                    <strong>r. pr. Adam Nowak</strong><br>
-                    <span style="display: block; margin-top: 4px;">Kancelaria Radcy Prawnego</span>
-                    <span style="display: block;">Ul. Poziomkowa 2/4, 43-100 Tychy</span>
-                </div>
+            <div style="margin-top: 15px; padding-left: 10px; border-left: 2px solid #eee;">
+                <em style="color: #555;">zastępowana przez:</em><br>
+                <strong>r. pr. Adam Nowak</strong><br>
+                <span style="display: block; margin-top: 4px;">Kancelaria Radcy Prawnego</span>
+                <span style="display: block;">Ul. Poziomkowa 2/4, 43-100 Tychy</span>
             </div>
+        </div>
 
-            <div class="half-width">
-                <strong>Strona pozwana:</strong><br>
-                <input type="text" name="pozwany_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
-                <input type="text" name="pozwany_adres_pelny" class="full-width"><br>
-                KRS: <input type="text" name="pozwany_numer_krs" style="width: 100px;">
-            </div>
+        <div class="section">
+            <strong>Strona pozwana:</strong><br>
+            <input type="text" name="pozwany_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
+            <input type="text" name="pozwany_adres_pelny" class="full-width"><br>
+            KRS: <input type="text" name="pozwany_numer_krs" style="width: 100px;">
         </div>
 
         <div class="section" style="background: #fafafa; padding: 15px; border-radius: 4px;">
@@ -251,7 +249,8 @@
             </div>
 
             <strong>Wartość przedmiotu sporu:</strong>
-            <input type="text" name="platnosc_kwota_glowna" style="width: 120px; font-weight: bold;"><br>
+            <input type="text" name="platnosc_kwota_glowna" id="wpsInput" style="width: 120px; font-weight: bold;">
+            zł<br>
 
             <strong>Opłata sądowa:</strong>
             <input type="text" id="courtFeeInput" style="width: 100px;" readonly><br>
@@ -422,26 +421,36 @@
 
                 sourceInputs.forEach(sourceInput => {
                     if (sourceInput && targetInput) {
+                        let lastValue = '';
+
                         const convertToWords = async function () {
-                            const amount = this.value;
-                            if (!amount) return;
+                            const amount = sourceInput.value;
+                            if (!amount || amount.trim() === '' || amount === lastValue) return;
+                            lastValue = amount;
 
                             try {
-                                // Wywołaj backend
-                                const safeAmount = amount.replace(' zł', '');
+                                // Wywołaj backend - usuń "zł", "z" i białe znaki za liczbą
+                                const safeAmount = amount.replace(/\s*z[łl]?$/i, '').replace(/[^\d,.\s]/g, '').trim();
+                                if (!safeAmount || isNaN(parseFloat(safeAmount.replace(',', '.')))) return;
+
                                 const response = await fetch(`/api/slownie/${encodeURIComponent(safeAmount)}`);
                                 const data = await response.json();
 
                                 if (data.slownie) {
                                     targetInput.value = data.slownie;
+                                    targetInput.style.background = '#e8f5e9';
                                 }
                             } catch (error) {
                                 console.error('Błąd konwersji kwoty:', error);
                             }
                         };
 
+                        // Eventy ręczne
                         sourceInput.addEventListener('change', convertToWords);
                         sourceInput.addEventListener('input', convertToWords);
+
+                        // Polling co 500ms dla programatycznych zmian
+                        setInterval(convertToWords, 500);
                     }
                 });
             });
@@ -488,7 +497,7 @@
                             // Dla uproszczenia: dodajemy do tego co jest w inpucie
 
                             const newVal = val + compensationPLN;
-                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',') + ' zł';
+                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',');
 
                             // Trigger change event to update words
                             mainAmountInput.dispatchEvent(new Event('change'));
@@ -506,7 +515,7 @@
 
                         if (compensationPLN > 0) {
                             const newVal = Math.max(0, val - compensationPLN);
-                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',') + ' zł';
+                            mainAmountInput.value = newVal.toFixed(2).replace('.', ',');
 
                             // Trigger change event to update words
                             mainAmountInput.dispatchEvent(new Event('change'));
@@ -555,7 +564,7 @@
 
                     // Zaokrąglij w górę do pełnej złotówki
                     let rounded = Math.ceil(val);
-                    this.value = rounded + ' zł';
+                    this.value = rounded;
 
                     // Wywołaj change event żeby zaktualizować słownie i opłatę
                     this.dispatchEvent(new Event('change'));
@@ -577,6 +586,9 @@
 
                 wpsInput.addEventListener('input', updateCourtFee);
                 wpsInput.addEventListener('change', updateCourtFee);
+
+                // Polling co 500ms dla programatycznych zmian
+                setInterval(updateCourtFee, 500);
 
                 // Oblicz na starcie
                 updateCourtFee();

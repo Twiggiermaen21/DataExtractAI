@@ -1433,32 +1433,45 @@ if (refreshWezwaniaList) {
     refreshWezwaniaList.addEventListener('click', loadWezwaniaList);
 }
 
-// === KRS HANDLING ===
-if (btnKrsPowodUpload) {
-    btnKrsPowodUpload.addEventListener('click', () => {
-        krsPowodFile.click();
-    });
-}
+// === KRS POZWANEGO UPLOAD ===
+const krsPozwanyUploadZone = document.getElementById('krsPozwanyUploadZone');
+const krsPozwanyFile = document.getElementById('krsPozwanyFile');
+const krsPozwanyUploadStatus = document.getElementById('krsPozwanyUploadStatus');
+let krsPozwanyFileData = null;
 
-if (btnKrsPowodManual) {
-    btnKrsPowodManual.addEventListener('click', () => {
-        krsPowodManualFields.classList.toggle('hidden');
-        btnKrsPowodManual.classList.toggle('active');
-        krsPowodUploadStatus.classList.add('hidden');
-        krsPowodFileData = null;
-    });
-}
+if (krsPozwanyUploadZone && krsPozwanyFile) {
+    krsPozwanyUploadZone.addEventListener('click', () => krsPozwanyFile.click());
 
-if (krsPowodFile) {
-    krsPowodFile.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            krsPowodFileData = e.target.files[0];
-            krsPowodUploadStatus.classList.remove('hidden');
-            krsPowodUploadStatus.textContent = `✅ Plik KRS załadowany: ${krsPowodFileData.name}`;
-            krsPowodManualFields.classList.add('hidden');
-            btnKrsPowodManual.classList.remove('active');
+    krsPozwanyUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        krsPozwanyUploadZone.classList.add('dragover');
+    });
+
+    krsPozwanyUploadZone.addEventListener('dragleave', () => {
+        krsPozwanyUploadZone.classList.remove('dragover');
+    });
+
+    krsPozwanyUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        krsPozwanyUploadZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            handleKrsPozwanyUpload(e.dataTransfer.files[0]);
         }
     });
+
+    krsPozwanyFile.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleKrsPozwanyUpload(e.target.files[0]);
+        }
+    });
+}
+
+function handleKrsPozwanyUpload(file) {
+    krsPozwanyFileData = file;
+    if (krsPozwanyUploadStatus) {
+        krsPozwanyUploadStatus.classList.remove('hidden');
+        krsPozwanyUploadStatus.textContent = `✅ Plik KRS załadowany: ${file.name}`;
+    }
 }
 
 // === UPLOAD ZONE EVENTS ===
@@ -1637,10 +1650,11 @@ async function processPozew() {
         quickStatusText.textContent = '📄 Ładowanie szablonu pozwu...';
         quickProgressFill.style.width = '70%';
 
-        // Prepare fields for pozew
+        // Prepare fields for pozew - usuń "zł" z kwoty
+        const cleanAmount = summaryData.summary.total_amount_formatted.replace(' zł', '').replace('zł', '');
         const fields = {
-            platnosc_kwota_glowna: summaryData.summary.total_amount_formatted,
-            roszczenie_kwota_glowna: summaryData.summary.total_amount_formatted,
+            platnosc_kwota_glowna: cleanAmount,
+            roszczenie_kwota_glowna: cleanAmount,
             powod_nazwa_pelna: krsPowod.nazwa,
             powod_adres_pelny: krsPowod.adres,
             powod_numer_krs: krsPowod.krs,
@@ -1653,6 +1667,15 @@ async function processPozew() {
             fields.dowod_faktura_numer = inv.numer;
             fields.dowod_faktura_data_wystawienia = inv.data;
             fields.roszczenie_odsetki_data_poczatkowa = inv.termin;
+        }
+
+        // Dodaj datę wezwania (created_at pierwszego wezwania)
+        if (summaryData.wezwania && summaryData.wezwania.length > 0) {
+            const w = summaryData.wezwania[0];
+            if (w.created_at) {
+                const wezwanieDate = new Date(w.created_at);
+                fields.wezwanie_data = wezwanieDate.toLocaleDateString('pl-PL');
+            }
         }
 
         quickProgressFill.style.width = '100%';
@@ -1723,6 +1746,9 @@ async function showFilledTemplate(templateFilename, fields, docType) {
             inputs.forEach(input => {
                 input.value = value;
                 input.style.background = '#e8f5e9';
+                // Wyzwól eventy żeby zaktualizować słownie i opłatę sądową
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
             });
         }
     }, 100);
@@ -1786,79 +1812,9 @@ if (btnPrintPdf) {
     });
 }
 
-// ==================== POZEW - KRS UPLOADS ====================
-
-const krsPowodUploadZone = document.getElementById('krsPowodUploadZone');
-const advKrsPowodFile = document.getElementById('advKrsPowodFile');
-const advKrsPowodUploadStatus = document.getElementById('advKrsPowodUploadStatus');
-const krsPozwanyUploadZone = document.getElementById('krsPozwanyUploadZone');
-const advKrsPozwanyFile = document.getElementById('advKrsPozwanyFile');
-const advKrsPozwanyUploadStatus = document.getElementById('advKrsPozwanyUploadStatus');
-const btnProcessPozew = document.getElementById('btnProcessPozew');
-const pozewProgressBar = document.getElementById('pozewProgressBar');
-const pozewProgressFill = document.getElementById('pozewProgressFill');
-const pozewStatusText = document.getElementById('pozewStatusText');
-
-let krsPowodFileData = null;
-let krsPozwanyFileData = null;
-
-// KRS Powoda upload
-if (krsPowodUploadZone && advKrsPowodFile) {
-    krsPowodUploadZone.addEventListener('click', () => advKrsPowodFile.click());
-    krsPowodUploadZone.addEventListener('dragover', (e) => { e.preventDefault(); krsPowodUploadZone.classList.add('dragover'); });
-    krsPowodUploadZone.addEventListener('dragleave', () => krsPowodUploadZone.classList.remove('dragover'));
-    krsPowodUploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        krsPowodUploadZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            advKrsPowodFile.files = e.dataTransfer.files;
-            handleKrsPowodFile(e.dataTransfer.files[0]);
-        }
-    });
-    advKrsPowodFile.addEventListener('change', () => {
-        if (advKrsPowodFile.files.length > 0) {
-            handleKrsPowodFile(advKrsPowodFile.files[0]);
-        }
-    });
-}
-
-function handleKrsPowodFile(file) {
-    krsPowodFileData = file;
-    if (advKrsPowodUploadStatus) {
-        advKrsPowodUploadStatus.classList.remove('hidden');
-        advKrsPowodUploadStatus.innerHTML = `✅ KRS Powoda: ${file.name}`;
-    }
-}
-
-// KRS Pozwanego upload
-if (krsPozwanyUploadZone && advKrsPozwanyFile) {
-    krsPozwanyUploadZone.addEventListener('click', () => advKrsPozwanyFile.click());
-    krsPozwanyUploadZone.addEventListener('dragover', (e) => { e.preventDefault(); krsPozwanyUploadZone.classList.add('dragover'); });
-    krsPozwanyUploadZone.addEventListener('dragleave', () => krsPozwanyUploadZone.classList.remove('dragover'));
-    krsPozwanyUploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        krsPozwanyUploadZone.classList.remove('dragover');
-        if (e.dataTransfer.files.length > 0) {
-            advKrsPozwanyFile.files = e.dataTransfer.files;
-            handleKrsPozwanyFile(e.dataTransfer.files[0]);
-        }
-    });
-    advKrsPozwanyFile.addEventListener('change', () => {
-        if (advKrsPozwanyFile.files.length > 0) {
-            handleKrsPozwanyFile(advKrsPozwanyFile.files[0]);
-        }
-    });
-}
-
-function handleKrsPozwanyFile(file) {
-    krsPozwanyFileData = file;
-    if (advKrsPozwanyUploadStatus) {
-        advKrsPozwanyUploadStatus.classList.remove('hidden');
-        advKrsPozwanyUploadStatus.innerHTML = `✅ KRS Pozwanego: ${file.name}`;
-    }
-}
-
 // ==================== POZEW - PRZETWARZANIE ====================
+
+const btnProcessPozew = document.getElementById('btnProcessPozew');
 
 if (btnProcessPozew) {
     btnProcessPozew.addEventListener('click', async () => {
@@ -1938,6 +1894,13 @@ if (btnProcessPozew) {
                     fillInput(doc, 'pozwany_nazwa_pelna', w.fields?.dluznik_nazwa || w.dluznik_nazwa || '');
                     fillInput(doc, 'pozwany_adres_pelny', w.fields?.dluznik_adres || w.dluznik_adres || '');
                     fillInput(doc, 'pozwany_numer_krs', ''); // KRS z OCR lub pusty
+
+                    // Data wezwania (z pola created_at)
+                    if (w.created_at) {
+                        const wezwanieDate = new Date(w.created_at);
+                        const formattedDate = wezwanieDate.toLocaleDateString('pl-PL');
+                        fillInput(doc, 'wezwanie_data', formattedDate);
+                    }
 
                     // Dane powoda (wierzyciela)
                     fillInput(doc, 'powod_nazwa_pelna', w.fields?.wierzyciel_nazwa || '');

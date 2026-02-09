@@ -12,28 +12,7 @@
 
         <hr class="divider-light hidden" id="advDividerStep2">
 
-        <!-- KROK 2: Upload + OCR -->
-        <div class="step-section hidden" id="advStepUpload">
-            <label class="step-label">📷 Krok 2: Wgraj zdjęcie i uzupełnij</label>
 
-            <div class="upload-zone" id="advUploadZone" style="padding: 24px 16px; margin-top: 12px;">
-                <div class="upload-icon" style="font-size: 1.8rem;">📄</div>
-                <div class="upload-text">Przeciągnij zdjęcia faktur lub kliknij</div>
-                <div class="upload-hint">JPG, PNG, PDF, Word • Wiele plików naraz</div>
-            </div>
-            <input type="file" id="advFileInput" multiple accept="image/*,.pdf,.docx,.doc" style="display:none;">
-            <div class="file-list" id="advFileList"></div>
-
-            <button class="btn btn-green" id="btnOcrFill" disabled style="margin-top: 12px;">
-                <span id="btnOcrFillIcon">🚀</span>
-                <span id="btnOcrFillText">OCR + Uzupełnij szablon</span>
-            </button>
-
-            <div class="progress-bar hidden" id="ocrFillProgressBar">
-                <div class="fill" id="ocrFillProgressFill" style="width: 0%"></div>
-            </div>
-            <div class="status-text hidden" id="ocrFillStatusText"></div>
-        </div>
 
         <!-- Źródło dla Pozwu - przełącznik -->
         <div class="step-section hidden" id="advStepSourcePozew">
@@ -87,13 +66,13 @@
         <div class="step-section hidden" id="advStepPozewExtra">
             <hr class="divider-light" style="margin: 20px 0;">
 
-            <label class="step-label">📋 Krok 3: Wgraj pliki KRS (powód i pozwany)</label>
+            <label class="step-label">📄 Krok 3: Wgraj plik KRS powoda</label>
             <div class="upload-zone" id="krsUploadZone" style="padding: 24px 16px; margin-top: 12px;">
                 <div class="upload-icon" style="font-size: 1.8rem;">🏢</div>
-                <div class="upload-text">Przeciągnij pliki KRS (powoda i pozwanego)</div>
-                <div class="upload-hint">JPG, PNG, PDF, Word • 2 pliki</div>
+                <div class="upload-text">Przeciągnij plik KRS powoda lub kliknij</div>
+                <div class="upload-hint">JPG, PNG, PDF</div>
             </div>
-            <input type="file" id="krsFileInput" multiple accept="image/*,.pdf,.docx,.doc" style="display:none;">
+            <input type="file" id="krsFileInput" accept="image/*,.pdf" style="display:none;">
             <div class="file-list" id="krsFileList"></div>
 
             <hr class="divider-light" style="margin: 20px 0;">
@@ -139,12 +118,6 @@
                 <span>Pobierz PDF / Drukuj</span>
             </button>
         </div>
-    </div>
-
-    <!-- Extracted Data -->
-    <div class="card hidden" id="extractedDataCard">
-        <div class="card-title"><span class="icon">📊</span> Wyekstrahowane dane</div>
-        <pre class="json-output" id="extractedDataContent"></pre>
     </div>
 </div>
 
