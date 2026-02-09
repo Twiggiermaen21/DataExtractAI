@@ -1180,7 +1180,7 @@ if (btnGeneratePozew) {
 
                 const wezForm = new FormData();
                 pozewUploadedFiles.forEach(f => wezForm.append('files', f));
-                wezForm.append('template', 'wezwanie_do_zaplaty.html');
+                wezForm.append('template', templateSelect.value);
 
                 const wezResp = await fetch('/api/process_ocr', { method: 'POST', body: wezForm });
                 const wezData = await wezResp.json();
@@ -1207,7 +1207,7 @@ if (btnGeneratePozew) {
 
             const krsForm = new FormData();
             krsUploadedFiles.forEach(f => krsForm.append('files', f));
-            // Dla KRS używamy domyślnych pól
+            krsForm.append('template', templateSelect.value);
 
             const krsResp = await fetch('/api/process_ocr', { method: 'POST', body: krsForm });
             const krsData = await krsResp.json();

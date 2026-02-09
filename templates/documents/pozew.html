@@ -203,47 +203,35 @@
 <body>
     <div class="container">
         <div class="right-align section">
-            <input type="text" name="meta_miejscowosc_data_dokumentu" placeholder="Szczecin, ..."
-                style="width: 200px; text-align: right;">
+            <input type="text" name="meta_miejscowosc_data_dokumentu" style="width: 200px; text-align: right;">
         </div>
 
         <div class="court-header section">
             <strong>Do <span id="sad_typ">Sądu Rejonowego</span></strong><br>
-            <input type="text" name="sad_nazwa_pelna" class="full-width"
-                placeholder="Szczecin-Centrum w Szczecinie"><br>
-            <input type="text" name="sad_wydzial_gospodarczy" class="full-width"
-                placeholder="X Wydział Gospodarczy"><br>
-            <input type="text" name="sad_adres_pelny" class="full-width"
-                placeholder="ul. Narutowicza 19, 70-231 Szczecin">
+            <input type="text" name="sad_nazwa_pelna" class="full-width"><br>
+            <input type="text" name="sad_wydzial_gospodarczy" class="full-width"><br>
+            <input type="text" name="sad_adres_pelny" class="full-width">
         </div>
 
         <div class="flex-group">
             <div class="half-width">
                 <strong>Strona powodowa:</strong><br>
-                <input type="text" name="powod_nazwa_pelna" class="full-width" placeholder="Orlen Spółka Akcyjna"
-                    style="font-weight: bold;"><br>
-                <input type="text" name="powod_adres_pelny" class="full-width"
-                    placeholder="Ul. Chemików 7, 09-411 Płock"><br>
-                KRS: <input type="text" name="powod_numer_krs" placeholder="0000754320" style="width: 100px;">
+                <input type="text" name="powod_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
+                <input type="text" name="powod_adres_pelny" class="full-width">
 
                 <div style="margin-top: 15px; padding-left: 10px; border-left: 2px solid #eee;">
-                    <em>zastępowana przez:</em><br>
-                    <strong>r. pr.</strong> <input type="text" name="pelnomocnik_imie_nazwisko"
-                        placeholder="Adama Nowaka" style="width: 150px;"><br>
-                    <input type="text" name="pelnomocnik_kancelaria_nazwa" class="full-width"
-                        placeholder="Kancelaria Radcy Prawnego"><br>
-                    <input type="text" name="pelnomocnik_adres_pelny" class="full-width"
-                        placeholder="Ul. Poziomkowa 2/4, 43-100 Tychy">
+                    <em style="color: #555;">zastępowana przez:</em><br>
+                    <strong>r. pr. Adam Nowak</strong><br>
+                    <span style="display: block; margin-top: 4px;">Kancelaria Radcy Prawnego</span>
+                    <span style="display: block;">Ul. Poziomkowa 2/4, 43-100 Tychy</span>
                 </div>
             </div>
 
             <div class="half-width">
                 <strong>Strona pozwana:</strong><br>
-                <input type="text" name="pozwany_nazwa_pelna" class="full-width" placeholder="CD Projekt Spółka Akcyjna"
-                    style="font-weight: bold;"><br>
-                <input type="text" name="pozwany_adres_pelny" class="full-width"
-                    placeholder="ul. Jagiellońska 74, 03-301 Warszawa"><br>
-                KRS: <input type="text" name="pozwany_numer_krs" placeholder="0000006865" style="width: 100px;">
+                <input type="text" name="pozwany_nazwa_pelna" class="full-width" style="font-weight: bold;"><br>
+                <input type="text" name="pozwany_adres_pelny" class="full-width"><br>
+                KRS: <input type="text" name="pozwany_numer_krs" style="width: 100px;">
             </div>
         </div>
 
@@ -263,14 +251,12 @@
             </div>
 
             <strong>Wartość przedmiotu sporu:</strong>
-            <input type="text" name="platnosc_kwota_glowna" placeholder="2 350,00"
-                style="width: 120px; font-weight: bold;"><br>
+            <input type="text" name="platnosc_kwota_glowna" style="width: 120px; font-weight: bold;"><br>
 
             <strong>Opłata sądowa:</strong>
-            <input type="text" id="courtFeeInput" placeholder="100 zł" style="width: 100px;" readonly><br>
+            <input type="text" id="courtFeeInput" style="width: 100px;" readonly><br>
             <span style="font-size: 0.85em; color: #666;">(słownie: <input type="text" name="finanse_wps_slownie"
-                    class="inline-input" placeholder="dwa tysiące trzysta pięćdziesiąt złotych 00/100"
-                    style="width: 300px; text-align: left;">)</span>
+                    class="inline-input" style="width: 300px; text-align: left;">)</span>
         </div>
 
         <div class="title">
@@ -280,24 +266,18 @@
 
         <div class="content-text">
             Działając w imieniu strony powodowej, tj. spółki pod firmą
-            <input type="text" name="powod_nazwa_krotka" class="inline-input" placeholder="Orlen Spółka Akcyjna"
-                style="width: 200px;">
-            z siedzibą w <input type="text" name="powod_siedziba_miasto" class="inline-input" placeholder="Płocku"
-                style="width: 100px;">
-            (wpisanej do rejestru przedsiębiorców KRS pod numerem <input type="text" name="powod_numer_krs"
-                class="inline-input" placeholder="0000754320" style="width: 90px;">),
+            <input type="text" name="powod_nazwa_pelna" class="inline-input" style="width: 200px;">
+            z siedzibą w <input type="text" name="powod_siedziba_miasto" class="inline-input" style="width: 100px;">,
             na podstawie pełnomocnictwa, które załączam, niniejszym wnoszę o:
         </div>
 
         <div class="content-text">
             1. orzeczenie nakazem zapłaty w postępowaniu upominawczym, że pozwana ma zapłacić powódce kwotę w wysokości:
-            <input type="text" name="roszczenie_kwota_glowna" class="inline-input" placeholder="2 350 zł"
+            <input type="text" name="roszczenie_kwota_glowna" class="inline-input"
                 style="width: 80px; font-weight: bold;">
-            (słownie: <input type="text" name="roszczenie_kwota_slownie" class="inline-input"
-                placeholder="dwa tysiące..." style="width: 150px;">)
+            (słownie: <input type="text" name="roszczenie_kwota_slownie" class="inline-input" style="width: 150px;">)
             wraz z odsetkami w wysokości ustawowej od dnia
-            <input type="text" name="roszczenie_odsetki_data_poczatkowa" class="inline-input"
-                placeholder="28 czerwca 2019 r." style="width: 140px;">
+            <input type="text" name="roszczenie_odsetki_data_poczatkowa" class="inline-input" style="width: 140px;">
             do dnia zapłaty,<br>
             2. zasądzenie od pozwanej na rzecz powódki kosztów procesu w tym kosztów zastępstwa procesowego według norm
             przepisanych.
@@ -319,12 +299,12 @@
         <div class="content-text">
             <strong>Wnoszę o przeprowadzenie dowodu z następujących dokumentów:</strong>
             <ul>
-                <li>Faktury VAT nr <input type="text" name="dowod_faktura_numer" class="inline-input" placeholder="1234"
+                <li>Faktury VAT nr <input type="text" name="dowod_faktura_numer" class="inline-input"
                         style="width: 60px;">
                     z dnia <input type="text" name="dowod_faktura_data_wystawienia" class="inline-input"
-                        placeholder="15.05.2025 r." style="width: 100px;">
+                        style="width: 100px;">
                     - celem wykazania faktu sprzedaży towarów na kwotę <input type="text" name="platnosc_kwota_glowna"
-                        class="inline-input" placeholder="2 350 zł" style="width: 70px;"> pozwanemu.</li>
+                        class="inline-input" style="width: 70px;"> pozwanemu.</li>
                 <li>Wezwanie do zapłaty wraz z potwierdzeniem odbioru - celem wykazania faktu podjęcia próby polubownego
                     rozwiązania sporu.</li>
             </ul>
@@ -335,26 +315,22 @@
         <div class="content-text">
             Powód w ramach prowadzonej przez siebie działalności gospodarczej, w związku ze stale prowadzoną z pozwaną
             współpracą, sprzedała pozwanej towary na kwotę
-            <input type="text" name="platnosc_kwota_glowna" class="inline-input" placeholder="2 350 zł"
-                style="width: 70px;">.
+            <input type="text" name="platnosc_kwota_glowna" class="inline-input" style="width: 70px;">.
             Z tytułu zaciągnięcia przez pozwanego zobowiązania powód wystawił fakturę VAT nr
-            <input type="text" name="dowod_faktura_numer" class="inline-input" placeholder="1234" style="width: 60px;">
-            z dnia <input type="text" name="uzasadnienie_faktura_data" class="inline-input" placeholder="15.05.2025 r."
-                style="width: 90px;">.<br>
+            <input type="text" name="dowod_faktura_numer" class="inline-input" style="width: 60px;">
+            z dnia <input type="text" name="uzasadnienie_faktura_data" class="inline-input" style="width: 90px;">.<br>
             <em>Dowód: faktura VAT załączona do pozwu.</em>
         </div>
 
         <div class="content-text">
             Termin płatności należności określony został na dzień
-            <input type="text" name="uzasadnienie_termin_platnosci" class="inline-input" placeholder="30.05.2025 r."
-                style="width: 90px;">
+            <input type="text" name="uzasadnienie_termin_platnosci" class="inline-input" style="width: 90px;">
             i wskazany był na fakturze VAT. Pomimo upływu terminu płatności - pozwany nie uiścił należności.
         </div>
 
         <div class="content-text">
             Wobec powyższego powód wezwał pozwanego do dobrowolnej spłaty zadłużenia pismem z dnia
-            <input type="text" name="uzasadnienie_wezwanie_data" class="inline-input" placeholder="......"
-                style="width: 90px;">,
+            <input type="text" name="wezwanie_data" class="inline-input" style="width: 90px;">,
             w którym jednocześnie poinformował pozwanego, iż niezastosowanie się do wyżej wymienionego wezwania
             skutkować będzie skierowaniem sprawy na drogę postępowania sądowego.
             Pomimo skierowania do pozwanej wezwania do zapłaty nie przyniosło to rezultatu i pozwany, do dnia wniesienia
@@ -380,8 +356,8 @@
 
         <div class="right-align footer">
             ................................................................<br>
-            <strong>r. pr.</strong> <input type="text" name="stopka_pelnomocnik_podpis" class="inline-input"
-                placeholder="Adam Nowak" style="width: 150px; text-align: center;">
+            <strong>r. pr.</strong>
+            Adam Nowak
         </div>
 
         <div class="section"
@@ -393,7 +369,7 @@
                 <li>Dowód uiszczenia opłaty skarbowej od pełnomocnictwa</li>
                 <li>Dowód uiszczenia opłaty sądowej od pozwu</li>
                 <li>Oryginał/Kopia Faktury VAT nr <input type="text" name="dowod_faktura_numer" class="inline-input"
-                        placeholder="1234" style="width: 50px;"></li>
+                        style="width: 50px;"></li>
                 <li>Wezwanie do zapłaty wraz z potwierdzeniem odbioru</li>
                 <li>Odpis KRS powoda</li>
             </ol>
@@ -441,28 +417,33 @@
             ];
 
             mapAmountToWords.forEach(pair => {
-                const sourceInput = document.querySelector(`input[name="${pair.source}"]`);
+                const sourceInputs = document.querySelectorAll(`input[name="${pair.source}"]`);
                 const targetInput = document.querySelector(`input[name="${pair.target}"]`);
 
-                if (sourceInput && targetInput) {
-                    sourceInput.addEventListener('change', async function () {
-                        const amount = this.value;
-                        if (!amount) return;
+                sourceInputs.forEach(sourceInput => {
+                    if (sourceInput && targetInput) {
+                        const convertToWords = async function () {
+                            const amount = this.value;
+                            if (!amount) return;
 
-                        try {
-                            // Wywołaj backend
-                            const safeAmount = amount.replace(' zł', '');
-                            const response = await fetch(`/api/slownie/${encodeURIComponent(safeAmount)}`);
-                            const data = await response.json();
+                            try {
+                                // Wywołaj backend
+                                const safeAmount = amount.replace(' zł', '');
+                                const response = await fetch(`/api/slownie/${encodeURIComponent(safeAmount)}`);
+                                const data = await response.json();
 
-                            if (data.slownie) {
-                                targetInput.value = data.slownie;
+                                if (data.slownie) {
+                                    targetInput.value = data.slownie;
+                                }
+                            } catch (error) {
+                                console.error('Błąd konwersji kwoty:', error);
                             }
-                        } catch (error) {
-                            console.error('Błąd konwersji kwoty:', error);
-                        }
-                    });
-                }
+                        };
+
+                        sourceInput.addEventListener('change', convertToWords);
+                        sourceInput.addEventListener('input', convertToWords);
+                    }
+                });
             });
 
             // === 40 EUR COMPENSATION LOGIC ===
@@ -566,6 +547,20 @@
             const wpsInput = document.querySelector('input[name="platnosc_kwota_glowna"]');
 
             if (courtFeeInput && wpsInput) {
+                // === ZAOKRĄGLANIE WPS DO PEŁNEJ LICZBY ===
+                wpsInput.addEventListener('blur', function () {
+                    let rawVal = this.value.replace(' zł', '').replace(/\s/g, '').replace(',', '.');
+                    let val = parseFloat(rawVal);
+                    if (isNaN(val) || val === 0) return;
+
+                    // Zaokrąglij w górę do pełnej złotówki
+                    let rounded = Math.ceil(val);
+                    this.value = rounded + ' zł';
+
+                    // Wywołaj change event żeby zaktualizować słownie i opłatę
+                    this.dispatchEvent(new Event('change'));
+                });
+
                 const updateCourtFee = () => {
                     let rawVal = wpsInput.value.replace(' zł', '').replace(/\s/g, '').replace(',', '.');
                     let val = parseFloat(rawVal);

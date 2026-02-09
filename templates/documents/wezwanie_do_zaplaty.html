@@ -132,7 +132,7 @@
 
     <div class="container">
         <div class="right-align section">
-            <input type="text" id="miejscowosc_data" placeholder="Tychy, 13.01.2026 r." style="width: 180px;">
+            <input type="text" id="miejscowosc_data" style="width: 180px;">
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
@@ -140,15 +140,14 @@
                 <strong>Wierzyciel:</strong><br>
                 <input type="text"
                     name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna"
-                    placeholder="Orlen Spółka Akcyjna" style="width: 250px;"><br>
+                    style="width: 250px;"><br>
 
                 <input type="text"
                     name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto"
-                    placeholder="Ul. Chemików 7, 09-411 Płock" style="width: 250px;"><br>
+                    style="width: 250px;"><br>
 
                 NIP: <input type="text"
-                    name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
-                    placeholder="09876545">
+                    name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji">
             </div>
 
             <div class="section" style="font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px;">
@@ -163,24 +162,23 @@
             <div>
                 <strong>Dot. Faktury nr:</strong><br>
                 <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                    placeholder="000000" style="width: 120px;">
+                    style="width: 120px;">
             </div>
             <div class="right-align" style="margin-left: auto;">
                 <div style="display: inline-block; text-align: left;">
                     <strong>Dłużnik:</strong><br>
                     <input type="text"
                         name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge"
-                        placeholder="CD Projekt S.A." style="width: 280px; margin-bottom: 4px; display: block;">
+                        style="width: 280px; margin-bottom: 4px; display: block;">
 
                     <input type="text"
                         name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto"
-                        placeholder="ul. Jagiellońska 74, Warszawa"
                         style="width: 280px; margin-bottom: 4px; display: block;">
 
                     <div style="display: flex; align-items: center;">
                         <span style="width: 35px;">NIP:</span>
                         <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany"
-                            placeholder="0000006865" style="width: 245px;">
+                            style="width: 245px;">
                     </div>
                 </div>
             </div>
@@ -192,38 +190,38 @@
             Działając w imieniu
             <input type="text"
                 name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna"
-                placeholder="Orlen S.A." class="inline-input" style="width: 130px;">
+                class="inline-input" style="width: 130px;">
             z siedzibą
             <input type="text"
                 name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto"
-                placeholder="09-411 Płock, ul. Chemików 7" class="inline-input" style="width: 200px;">
+                class="inline-input" style="width: 200px;">
             NIP:
             <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
-                placeholder="0987654" class="inline-input" style="width: 80px;">,
+                class="inline-input" style="width: 80px;">,
 
             na podstawie pełnomocnictwa, w związku z fakturą nr
             <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                placeholder="000000" style="width: 120px;">
+                style="width: 120px;">
 
             z dnia
             <input type="text" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy"
-                placeholder="30.01.2011" class="inline-input" style="width: 90px;">
+                class="inline-input" style="width: 90px;">
             wzywam do zapłaty kwoty
             <input type="text"
                 name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta"
-                placeholder="123 zł" class="inline-input" style="width: 80px;">
+                class="inline-input" style="width: 80px;">
             wraz z odsetkami od dnia
             <input type="text" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"
-                placeholder="15.12.2022" class="inline-input" style="width: 90px;">.
+                class="inline-input" style="width: 90px;">.
         </div>
 
         <div class="section">
             <strong>Numer rachunku do wpłaty:</strong><br>
             <input type="text"
                 name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury"
-                placeholder="00 0000 0000 0000 0000 0000 0000" class="full-width"><br>
+                class="full-width"><br>
             <input type="text" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta"
-                placeholder="ING BANK ŚLĄSKI S.A." class="full-width">
+                class="full-width">
         </div>
 
         <div class="right-align footer">
@@ -237,7 +235,7 @@
             1. Pełnomocnictwo<br>
             2. Faktura nr
             <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                placeholder="000000" style="width: 120px;">
+                style="width: 120px;">
         </div>
     </div>
 

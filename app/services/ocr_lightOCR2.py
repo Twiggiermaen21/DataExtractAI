@@ -146,6 +146,10 @@ class GemmaOCRService:
                 "temperature": 0.1
             }
         
+        # DEBUG: Wyświetl dane wysyłane do LLM
+        prompt_text = self._build_prompt(is_text=(text_content and len(text_content) >= 50))
+        print(f"📋 Pola używane w promptcie: {self.fields}")
+        print(f"📨 Prompt wysyłany do LLM:\n{prompt_text}")
         print(f"⏳ Oczekiwanie na odpowiedź...")
         
         response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=self.timeout)

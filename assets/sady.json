@@ -1,22 +1,26 @@
 {
-    "34-100 Wadowice": [
-        {
-            "wlasciwy_sad": "Sąd Rejonowy dla Krakowa-Śródmieścia w Krakowie, Wydział Gospodarczy, Kordylewskiego 11\n31-542 Kraków",
-            "typ_sadu": "rejonowy"
+    "rejonowy": {
+        "34-100 Wadowice": {
+            "sad_nazwa_pelna": "Sąd Rejonowy dla Krakowa-Śródmieścia w Krakowie",
+            "sad_wydzial_gospodarczy": "Wydział Gospodarczy",
+            "sad_adres_pelny": "ul. Kordylewskiego 11, 31-542 Kraków"
         },
-        {
-            "wlasciwy_sad": "Sąd Okręgowy w Krakowie, Wydział Gospodarczy, Przy Rondzie 7\n31-547 Kraków",
-            "typ_sadu": "okręgowy"
+        "03-301 Warszawa": {
+            "sad_nazwa_pelna": "Sąd Rejonowy dla m.st. Warszawy w Warszawie",
+            "sad_wydzial_gospodarczy": "Wydział Gospodarczy",
+            "sad_adres_pelny": "ul. Czerniakowska 100A, 00-454 Warszawa"
         }
-    ],
-    "03-301 Warszawa": [
-        {
-            "wlasciwy_sad": "Sąd Rejonowy dla m.st. Warszawy w Warszawie, Wydział Gospodarczy, Czerniakowska 100A\n00-454 Warszawa",
-            "typ_sadu": "rejonowy"
+    },
+    "okregowy": {
+        "34-100 Wadowice": {
+            "sad_nazwa_pelna": "Sąd Okręgowy w Krakowie",
+            "sad_wydzial_gospodarczy": "Wydział Gospodarczy",
+            "sad_adres_pelny": "ul. Przy Rondzie 7, 31-547 Kraków"
         },
-        {
-            "wlasciwy_sad": "Sąd Okręgowy w Warszawie, Wydział Gospodarczy, Czerniakowska 100\n00-454 Warszawa",
-            "typ_sadu": "okręgowy"
+        "03-301 Warszawa": {
+            "sad_nazwa_pelna": "Sąd Okręgowy w Warszawie",
+            "sad_wydzial_gospodarczy": "Wydział Gospodarczy",
+            "sad_adres_pelny": "ul. Czerniakowska 100, 00-454 Warszawa"
         }
-    ]
+    }
 }

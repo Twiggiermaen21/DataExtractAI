@@ -55,9 +55,11 @@ def get_ocr_results():
 def analyze_pozew():
     """
     Analizuje dane z KRS i wezwania, mapuje je na pola Pozew.
+    Automatycznie wyszukuje odpowiedni sąd na podstawie kodu pocztowego pozwanego.
     Oczekuje: { "wezwanie": {...}, "krs": [...] }
     """
     import requests
+    import json
     
     data = request.get_json()
     if not data:
@@ -79,6 +81,7 @@ ZASADY MAPOWANIA:
 - POWÓD (wierzyciel) = Sprzedawca z wezwania (firma która wystawiła fakturę)
 - POZWANY (dłużnik) = Nabywca z wezwania (firma która ma zapłacić)
 - Dane KRS uzupełniają numery KRS dla powoda i pozwanego
+- pozwany_kod_pocztowy_miasto = kod pocztowy i miasto z adresu pozwanego w formacie "XX-XXX Miasto" (np. "03-301 Warszawa")
 
 Zwróć TYLKO obiekt JSON z wypełnionymi polami:
 {{
@@ -88,6 +91,7 @@ Zwróć TYLKO obiekt JSON z wypełnionymi polami:
   "powod_siedziba_miasto": "miasto siedziby sprzedawcy",
   "pozwany_nazwa_pelna": "pełna nazwa nabywcy/dłużnika",
   "pozwany_adres_pelny": "adres nabywcy",
+  "pozwany_kod_pocztowy_miasto": "kod pocztowy i miasto pozwanego w formacie XX-XXX Miasto",
   "pozwany_numer_krs": "numer KRS nabywcy (jeśli znaleziony w KRS)",
   "platnosc_kwota_glowna": "kwota do zapłaty",
   "roszczenie_kwota_glowna": "kwota roszczenia (ta sama co kwota główna)",
@@ -119,13 +123,64 @@ Zwróć TYLKO obiekt JSON z wypełnionymi polami:
             output = result["choices"][0]["message"]["content"]
             
             # Parsuj JSON z odpowiedzi
-            import json
             try:
                 clean = output.strip()
                 if clean.startswith("```"):
                     lines = clean.split("\n")
                     clean = "\n".join(lines[1:-1])
                 fields = json.loads(clean)
+                
+                # === WYSZUKIWANIE SĄDU NA PODSTAWIE KODU POCZTOWEGO POZWANEGO ===
+                pozwany_kod_miasto = fields.get('pozwany_kod_pocztowy_miasto', '')
+                if pozwany_kod_miasto:
+                    # Wyodrębnij sam kod pocztowy (format XX-XXX)
+                    kod_match = re.search(r'\d{2}-\d{3}', pozwany_kod_miasto)
+                    kod_pocztowy = kod_match.group(0) if kod_match else pozwany_kod_miasto
+                    
+                    # Wczytaj plik sady.json
+                    sady_path = os.path.join(current_app.root_path, '..', 'assets', 'sady.json')
+                    try:
+                        with open(sady_path, 'r', encoding='utf-8') as f:
+                            sady_data = json.load(f)
+                        
+                        # Określ typ sądu na podstawie WPS (wartość przedmiotu sporu)
+                        # Domyślnie rejonowy, okręgowy gdy WPS > 100 000 zł
+                        wps = 0
+                        kwota_str = fields.get('platnosc_kwota_glowna', '0')
+                        if kwota_str:
+                            kwota_clean = str(kwota_str).replace(',', '.').replace(' ', '').replace('zł', '')
+                            kwota_clean = ''.join(c for c in kwota_clean if c.isdigit() or c == '.')
+                            try:
+                                wps = float(kwota_clean)
+                            except:
+                                wps = 0
+                        
+                        sad_typ = 'okregowy' if wps > 100000 else 'rejonowy'
+                        
+                        # Szukaj sądu dla danego kodu pocztowego
+                        # Najpierw próbuj dokładne dopasowanie, potem po samym kodzie
+                        sad_info = None
+                        if sad_typ in sady_data:
+                            # Dokładne dopasowanie
+                            if pozwany_kod_miasto in sady_data[sad_typ]:
+                                sad_info = sady_data[sad_typ][pozwany_kod_miasto]
+                            else:
+                                # Szukaj po kodzie pocztowym w kluczach
+                                for klucz, dane in sady_data[sad_typ].items():
+                                    if klucz.startswith(kod_pocztowy):
+                                        sad_info = dane
+                                        break
+                        
+                        if sad_info:
+                            fields['sad_nazwa_pelna'] = sad_info.get('sad_nazwa_pelna', '')
+                            fields['sad_wydzial_gospodarczy'] = sad_info.get('sad_wydzial_gospodarczy', '')
+                            fields['sad_adres_pelny'] = sad_info.get('sad_adres_pelny', '')
+                            print(f"✅ Znaleziono sąd dla {pozwany_kod_miasto} (kod: {kod_pocztowy}): {sad_info.get('sad_nazwa_pelna')}")
+                        else:
+                            print(f"⚠️ Nie znaleziono sądu dla kodu: {pozwany_kod_miasto} ({kod_pocztowy})")
+                    except Exception as e:
+                        print(f"❌ Błąd wczytywania sady.json: {e}")
+                
                 return jsonify({'success': True, 'fields': fields})
             except:
                 return jsonify({'success': True, 'fields': {}, 'raw': output})
