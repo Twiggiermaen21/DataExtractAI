@@ -55,7 +55,8 @@ def get_ocr_results():
 def analyze_pozew():
     """
     Analizuje dane z KRS i wezwania, mapuje je na pola Pozew.
-    Automatycznie wyszukuje odpowiedni sąd na podstawie kodu pocztowego pozwanego.
+    - Dane z wezwania -> mapowane bezposrednio (bez LLM)
+    - Dane z KRS -> krotkie zapytanie do LLM: znajdz numer KRS pozwanego
     Oczekuje: { "wezwanie": {...}, "krs": [...] }
     """
     import requests
@@ -68,129 +69,161 @@ def analyze_pozew():
     wezwanie = data.get('wezwanie', {})
     krs_list = data.get('krs', [])
     
-    # Przygotuj prompt dla LLM
-    prompt = f"""Przeanalizuj poniższe dane i wypełnij pola dla pozwu sądowego.
-
-DANE Z WEZWANIA DO ZAPŁATY:
-{wezwanie}
-
-DANE Z DOKUMENTÓW KRS:
-{krs_list}
-
-ZASADY MAPOWANIA:
-- POWÓD (wierzyciel) = Sprzedawca z wezwania (firma która wystawiła fakturę)
-- POZWANY (dłużnik) = Nabywca z wezwania (firma która ma zapłacić)
-- Dane KRS uzupełniają numery KRS dla powoda i pozwanego
-- pozwany_kod_pocztowy_miasto = kod pocztowy i miasto z adresu pozwanego w formacie "XX-XXX Miasto" (np. "03-301 Warszawa")
-
-Zwróć TYLKO obiekt JSON z wypełnionymi polami:
-{{
-  "powod_nazwa_pelna": "pełna nazwa sprzedawcy/wierzyciela",
-  "powod_adres_pelny": "adres sprzedawcy",
-  "powod_numer_krs": "numer KRS sprzedawcy (jeśli znaleziony w KRS)",
-  "powod_siedziba_miasto": "miasto siedziby sprzedawcy",
-  "pozwany_nazwa_pelna": "pełna nazwa nabywcy/dłużnika",
-  "pozwany_adres_pelny": "adres nabywcy",
-  "pozwany_kod_pocztowy_miasto": "kod pocztowy i miasto pozwanego w formacie XX-XXX Miasto",
-  "pozwany_numer_krs": "numer KRS nabywcy (jeśli znaleziony w KRS)",
-  "platnosc_kwota_glowna": "kwota do zapłaty",
-  "roszczenie_kwota_glowna": "kwota roszczenia (ta sama co kwota główna)",
-  "roszczenie_odsetki_data_poczatkowa": "data od której liczyć odsetki (dzień po terminie płatności)",
-  "dowod_faktura_numer": "numer faktury",
-  "dowod_faktura_data_wystawienia": "data wystawienia faktury",
-  "uzasadnienie_faktura_data": "data faktury",
-  "uzasadnienie_termin_platnosci": "termin płatności"
-}}"""
-
-    try:
-        print(prompt)
-        response = requests.post(
-            # "https://traditions-average-genetic-wages.trycloudflare.com/v1/chat/completions",
-             "http://127.0.0.1:1234/v1/chat/completions",
-            json={
-                "model": "google/gemma-3-12b",
-                # "model": "qwen/qwen3-vl-8b",
-                "messages": [
-                    {"role": "system", "content": "Jesteś asystentem prawnym. Analizujesz dokumenty i wypełniasz formularze pozwów."},
-                    {"role": "user", "content": prompt}
-                ],
-                "max_tokens": 2048,
-                "temperature": 0.1
-            },
-            timeout=300
-        )
+    # === KROK 1: Bezposrednie mapowanie pol z wezwania (bez LLM) ===
+    fields = {}
+    
+    # Powod (wierzyciel/sprzedawca)
+    fields['powod_nazwa_pelna'] = wezwanie.get('wierzyciel_nazwa', '')
+    fields['powod_adres_pelny'] = wezwanie.get('wierzyciel_adres', '')
+    
+    # Wyodrebnij miasto siedziby powoda z adresu
+    powod_adres = fields['powod_adres_pelny']
+    if powod_adres:
+        miasto_match = re.search(r'\d{2}-\d{3}\s+(.+)', powod_adres)
+        fields['powod_siedziba_miasto'] = miasto_match.group(1).strip() if miasto_match else ''
+    
+    # Pozwany (dluznik/nabywca)
+    fields['pozwany_nazwa_pelna'] = wezwanie.get('dluznik_nazwa', '')
+    fields['pozwany_adres_pelny'] = wezwanie.get('dluznik_adres', '')
+    
+    # Wyodrebnij kod pocztowy + miasto pozwanego
+    pozwany_adres = fields['pozwany_adres_pelny']
+    if pozwany_adres:
+        kod_miasto_match = re.search(r'(\d{2}-\d{3}\s+\S+(?:\s+\S+)?)', pozwany_adres)
+        if kod_miasto_match:
+            fields['pozwany_kod_pocztowy_miasto'] = kod_miasto_match.group(1).strip()
+    
+    # Kwoty i daty
+    fields['platnosc_kwota_glowna'] = wezwanie.get('kwota_do_zaplaty', '')
+    fields['roszczenie_kwota_glowna'] = wezwanie.get('kwota_do_zaplaty', '')
+    fields['dowod_faktura_numer'] = wezwanie.get('faktura_numer', '')
+    fields['dowod_faktura_data_wystawienia'] = wezwanie.get('faktura_data_wystawienia', '')
+    fields['uzasadnienie_faktura_data'] = wezwanie.get('faktura_data_wystawienia', '')
+    fields['uzasadnienie_termin_platnosci'] = wezwanie.get('termin_platnosci', '')
+    fields['roszczenie_odsetki_data_poczatkowa'] = wezwanie.get('termin_platnosci', '')
+    
+    print(f"\n{'='*60}")
+    print(f"📋 KROK 1: Zmapowane pola z wezwania (bez LLM):")
+    print(json.dumps(fields, indent=2, ensure_ascii=False))
+    print(f"{'='*60}")
+    
+    # === KROK 2: Zapytanie LLM o numer KRS pozwanego (krotki prompt) ===
+    pozwany_nazwa = fields.get('pozwany_nazwa_pelna', '')
+    
+    if krs_list and pozwany_nazwa:
+        krs_text = str(krs_list[0]) if krs_list else ''
+        original_len = len(krs_text)
         
-        if response.status_code == 200:
-            result = response.json()
-            output = result["choices"][0]["message"]["content"]
-            
-            # Parsuj JSON z odpowiedzi
-            try:
-                clean = output.strip()
-                if clean.startswith("```"):
-                    lines = clean.split("\n")
-                    clean = "\n".join(lines[1:-1])
-                fields = json.loads(clean)
-                
-                # === WYSZUKIWANIE SĄDU NA PODSTAWIE KODU POCZTOWEGO POZWANEGO ===
-                pozwany_kod_miasto = fields.get('pozwany_kod_pocztowy_miasto', '')
-                if pozwany_kod_miasto:
-                    # Wyodrębnij sam kod pocztowy (format XX-XXX)
-                    kod_match = re.search(r'\d{2}-\d{3}', pozwany_kod_miasto)
-                    kod_pocztowy = kod_match.group(0) if kod_match else pozwany_kod_miasto
-                    
-                    # Wczytaj plik sady.json
-                    sady_path = os.path.join(current_app.root_path, '..', 'assets', 'sady.json')
-                    try:
-                        with open(sady_path, 'r', encoding='utf-8') as f:
-                            sady_data = json.load(f)
-                        
-                        # Określ typ sądu na podstawie WPS (wartość przedmiotu sporu)
-                        # Domyślnie rejonowy, okręgowy gdy WPS > 100 000 zł
-                        wps = 0
-                        kwota_str = fields.get('platnosc_kwota_glowna', '0')
-                        if kwota_str:
-                            kwota_clean = str(kwota_str).replace(',', '.').replace(' ', '').replace('zł', '')
-                            kwota_clean = ''.join(c for c in kwota_clean if c.isdigit() or c == '.')
-                            try:
-                                wps = float(kwota_clean)
-                            except:
-                                wps = 0
-                        
-                        sad_typ = 'okregowy' if wps > 100000 else 'rejonowy'
-                        
-                        # Szukaj sądu dla danego kodu pocztowego
-                        # Najpierw próbuj dokładne dopasowanie, potem po samym kodzie
-                        sad_info = None
-                        if sad_typ in sady_data:
-                            # Dokładne dopasowanie
-                            if pozwany_kod_miasto in sady_data[sad_typ]:
-                                sad_info = sady_data[sad_typ][pozwany_kod_miasto]
-                            else:
-                                # Szukaj po kodzie pocztowym w kluczach
-                                for klucz, dane in sady_data[sad_typ].items():
-                                    if klucz.startswith(kod_pocztowy):
-                                        sad_info = dane
-                                        break
-                        
-                        if sad_info:
-                            fields['sad_nazwa_pelna'] = sad_info.get('sad_nazwa_pelna', '')
-                            fields['sad_wydzial_gospodarczy'] = sad_info.get('sad_wydzial_gospodarczy', '')
-                            fields['sad_adres_pelny'] = sad_info.get('sad_adres_pelny', '')
-                            print(f"✅ Znaleziono sąd dla {pozwany_kod_miasto} (kod: {kod_pocztowy}): {sad_info.get('sad_nazwa_pelna')}")
-                        else:
-                            print(f"⚠️ Nie znaleziono sądu dla kodu: {pozwany_kod_miasto} ({kod_pocztowy})")
-                    except Exception as e:
-                        print(f"❌ Błąd wczytywania sady.json: {e}")
-                
-                return jsonify({'success': True, 'fields': fields})
-            except:
-                return jsonify({'success': True, 'fields': {}, 'raw': output})
+        if original_len > 2000:
+            cut = original_len - 2000
+            krs_text = krs_text[:2000]
+            print(f"\n✂️  KRS: PRZYCIĘTO {cut} znaków (oryginał: {original_len} → po przycięciu: 2000 znaków)")
         else:
-            return jsonify({'success': False, 'error': f'API błąd: {response.status_code}'}), 500
+            print(f"\n✅ KRS: OK ({original_len} znaków, mieści się w limicie)")
+        
+        krs_prompt = f"""Z poniższego dokumentu KRS znajdź numer KRS dla firmy: "{pozwany_nazwa}"
+
+DOKUMENT KRS:
+{krs_text}
+
+Sprawdź czy nazwa firmy w dokumencie zgadza się z podaną nazwą.
+Odpowiedz TYLKO numerem KRS (same cyfry, np. "0000123456"). 
+Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "BRAK"."""
+
+        print(f"🔍 KROK 2: Szukam KRS dla pozwanego: {pozwany_nazwa}")
+        
+        try:
+            response = requests.post(
+                "http://127.0.0.1:1234/v1/chat/completions",
+                json={
+                    "model": "google/gemma-3-12b",
+                    "messages": [
+                        {"role": "system", "content": "Wyciągasz numery KRS z dokumentów. Odpowiadasz krótko - samym numerem KRS lub BRAK."},
+                        {"role": "user", "content": krs_prompt}
+                    ],
+                    "max_tokens": 50,
+                    "temperature": 0.1
+                },
+                timeout=120
+            )
             
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+            if response.status_code == 200:
+                result = response.json()
+                krs_answer = result["choices"][0]["message"]["content"].strip()
+                print(f"🏢 LLM odpowiedź KRS: {krs_answer}")
+                
+                # Wyciagnij sam numer (cyfry)
+                krs_match = re.search(r'\d{7,10}', krs_answer)
+                if krs_match and 'BRAK' not in krs_answer.upper():
+                    fields['pozwany_numer_krs'] = krs_match.group(0)
+                    print(f"✅ KRS pozwanego znaleziony: {fields['pozwany_numer_krs']}")
+                else:
+                    print(f"⚠️ Nie znaleziono KRS dla: {pozwany_nazwa}")
+            else:
+                error_text = response.text
+                print(f"❌ Błąd API KRS: {response.status_code}: {error_text}")
+                
+        except Exception as e:
+            print(f"❌ Błąd zapytania KRS: {e}")
+    else:
+        if not krs_list:
+            print("\n⚠️ Brak dokumentów KRS - pomijam wyszukiwanie numeru KRS")
+        if not pozwany_nazwa:
+            print("\n⚠️ Brak nazwy pozwanego - pomijam wyszukiwanie numeru KRS")
+    
+    # === KROK 3: Wyszukiwanie sadu na podstawie kodu pocztowego pozwanego ===
+    pozwany_kod_miasto = fields.get('pozwany_kod_pocztowy_miasto', '')
+    if pozwany_kod_miasto:
+        kod_match = re.search(r'\d{2}-\d{3}', pozwany_kod_miasto)
+        kod_pocztowy = kod_match.group(0) if kod_match else pozwany_kod_miasto
+        
+        sady_path = os.path.join(current_app.root_path, '..', 'assets', 'sady.json')
+        try:
+            with open(sady_path, 'r', encoding='utf-8') as f:
+                sady_data = json.load(f)
+            
+            # Typ sadu na podstawie WPS
+            wps = 0
+            kwota_str = fields.get('platnosc_kwota_glowna', '0')
+            if kwota_str:
+                kwota_clean = str(kwota_str).replace(',', '.').replace(' ', '').replace('zł', '')
+                kwota_clean = ''.join(c for c in kwota_clean if c.isdigit() or c == '.')
+                try:
+                    wps = float(kwota_clean)
+                except:
+                    wps = 0
+            
+            sad_typ = 'okregowy' if wps > 100000 else 'rejonowy'
+            
+            sad_info = None
+            if sad_typ in sady_data:
+                if pozwany_kod_miasto in sady_data[sad_typ]:
+                    sad_info = sady_data[sad_typ][pozwany_kod_miasto]
+                else:
+                    for klucz, dane in sady_data[sad_typ].items():
+                        if klucz.startswith(kod_pocztowy):
+                            sad_info = dane
+                            break
+            
+            if sad_info:
+                fields['sad_nazwa_pelna'] = sad_info.get('sad_nazwa_pelna', '')
+                fields['sad_wydzial_gospodarczy'] = sad_info.get('sad_wydzial_gospodarczy', '')
+                fields['sad_adres_pelny'] = sad_info.get('sad_adres_pelny', '')
+                print(f"\n✅ KROK 3: Znaleziono sąd dla {pozwany_kod_miasto}: {sad_info.get('sad_nazwa_pelna')}")
+            else:
+                print(f"\n⚠️ KROK 3: Nie znaleziono sądu dla kodu: {pozwany_kod_miasto}")
+        except Exception as e:
+            print(f"\n❌ Błąd wczytywania sady.json: {e}")
+    
+    # Usun puste pola
+    fields = {k: v for k, v in fields.items() if v}
+    
+    print(f"\n{'='*60}")
+    print(f"📝 FINALNE pola pozwu:")
+    print(json.dumps(fields, indent=2, ensure_ascii=False))
+    print(f"{'='*60}\n")
+    
+    return jsonify({'success': True, 'fields': fields})
 
 
 @llm_bp.route('/api/templates')
@@ -338,7 +371,6 @@ def process_multiple_invoices():
                 return ''
             
             # Zbierz dane faktury - elastyczne wyszukiwanie
-            # Szukaj kwoty pod różnymi wariantami (LLM może użyć różnych odmian: kwota/kwote/kwoty)
             kwota_val = find_field(invoice_data, 'kwote_do_zaplaty')
             if not kwota_val:
                 kwota_val = find_field(invoice_data, 'kwota_do_zaplaty')
@@ -389,4 +421,3 @@ def process_multiple_invoices():
         'total_amount': f"{total:.2f}",
         'output_folder': 'wezwania_faktury'
     })
-

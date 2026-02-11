@@ -1221,6 +1221,9 @@ if (btnGeneratePozew) {
                 krsExtracted = krsData.documents.map(d => d.fields);
             }
 
+            console.log('📄 KRS RAW response:', JSON.stringify(krsData, null, 2));
+            console.log('📄 KRS extracted fields:', JSON.stringify(krsExtracted, null, 2));
+
             if (progressFill) progressFill.style.width = '70%';
 
             // KROK 3: Wyślij wszystkie dane do analizy LLM
@@ -1230,6 +1233,8 @@ if (btnGeneratePozew) {
                 wezwanie: wezwanieData,
                 krs: krsExtracted
             };
+
+            console.log('📦 Dane wysłane do LLM (wezwanie + KRS):', JSON.stringify(allData, null, 2));
 
             // Pokaż surowe dane
             if (extractedDataCard) extractedDataCard.classList.remove('hidden');
@@ -1244,6 +1249,8 @@ if (btnGeneratePozew) {
                 body: JSON.stringify(allData)
             });
             const analyzeData = await analyzeResp.json();
+
+            console.log('🤖 LLM odpowiedź (zmapowane pola pozwu):', JSON.stringify(analyzeData, null, 2));
 
             if (progressFill) progressFill.style.width = '95%';
 

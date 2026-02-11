@@ -120,10 +120,10 @@ class GemmaOCRService:
                 text_content = None  # Wymuś ścieżkę obrazu
         
         if text_content and len(text_content) >= 50:
-            # Ogranicz tekst do 8000 znaków żeby nie przekroczyć kontekstu LLM
-            if len(text_content) > 8000:
-                print(f"⚠️ Tekst za długi ({len(text_content)} znaków), przycinanie do 8000...")
-                text_content = text_content[:8000]
+            # Ogranicz tekst żeby nie przekroczyć kontekstu LLM (4096 tokenów)
+            if len(text_content) > 3000:
+                print(f"✂️ Tekst za długi ({len(text_content)} znaków), przycinanie do 3000...")
+                text_content = text_content[:3000]
             
             # Dla dokumentów tekstowych
             payload = {
