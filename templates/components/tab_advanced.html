@@ -12,7 +12,27 @@
 
         <hr class="divider-light hidden" id="advDividerStep2">
 
+        <!-- KROK 2: Upload faktury (dla Wezwania do Zapłaty) -->
+        <div class="step-section hidden" id="advStepUpload">
+            <label class="step-label">📄 Krok 2: Wgraj zdjęcie faktury</label>
+            <div class="upload-zone" id="advUploadZone" style="padding: 32px 20px; margin-top: 12px;">
+                <div class="upload-icon" style="font-size: 2rem;">📄</div>
+                <div class="upload-text">Przeciągnij zdjęcie faktury lub kliknij</div>
+                <div class="upload-hint">JPG, PNG, PDF</div>
+            </div>
+            <input type="file" id="advFileInput" multiple accept="image/*,.pdf" style="display:none;">
+            <div class="file-list" id="advFileList"></div>
 
+            <button class="btn btn-purple" id="btnOcrFill" disabled style="margin-top: 12px;">
+                <span id="btnOcrFillIcon">🚀</span>
+                <span id="btnOcrFillText">OCR + Uzupełnij szablon</span>
+            </button>
+
+            <div class="progress-bar hidden" id="ocrFillProgressBar">
+                <div class="fill" id="ocrFillProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="status-text hidden" id="ocrFillStatusText"></div>
+        </div>
 
         <!-- Źródło dla Pozwu - przełącznik -->
         <div class="step-section hidden" id="advStepSourcePozew">
@@ -101,22 +121,21 @@
             </div>
         </div>
 
-        <!-- Przycisk zapisywania (tylko dla Wezwania) -->
-        <div id="advSaveWezwanieSection" class="hidden"
-            style="margin-top: 16px; padding: 12px; background: #fff3e0; border-radius: 4px;">
-            <p style="margin: 0 0 10px; font-weight: 500;">💾 Zapisz wezwanie do bazy (potrzebne do generowania Pozwu)
-            </p>
-            <button class="btn btn-green" id="advBtnSaveWezwanie">
-                <span>💾</span>
-                <span>Zapisz wezwanie</span>
-            </button>
-        </div>
-
-        <div style="margin-top: 16px; text-align: right;">
-            <button class="btn btn-green" id="btnPrintTemplate" style="width: auto; display: inline-flex;" disabled>
-                <span>🖨️</span>
-                <span>Pobierz PDF / Drukuj</span>
-            </button>
+        <!-- Action buttons row -->
+        <div class="document-actions" style="display: flex; gap: 12px; margin-top: 20px; align-items: stretch;">
+            <div id="advSaveWezwanieSection" class="hidden" style="flex: 1;">
+                <button class="btn btn-purple" id="advBtnSaveWezwanie" style="margin-top: 0; height: 100%;">
+                    <span>💾</span>
+                    <span>Zapisz wezwanie</span>
+                </button>
+            </div>
+            <div style="flex: 1;">
+                <button class="btn btn-green" id="btnPrintTemplate" style="margin-top: 0; width: 100%; height: 100%;"
+                    disabled>
+                    <span>🖨️</span>
+                    <span>Pobierz PDF / Drukuj</span>
+                </button>
+            </div>
         </div>
     </div>
 </div>

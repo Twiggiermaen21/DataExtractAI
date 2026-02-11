@@ -105,9 +105,11 @@ Zwróć TYLKO obiekt JSON z wypełnionymi polami:
     try:
         print(prompt)
         response = requests.post(
-            "http://127.0.0.1:1234/v1/chat/completions",
+            # "https://traditions-average-genetic-wages.trycloudflare.com/v1/chat/completions",
+             "http://127.0.0.1:1234/v1/chat/completions",
             json={
                 "model": "google/gemma-3-12b",
+                # "model": "qwen/qwen3-vl-8b",
                 "messages": [
                     {"role": "system", "content": "Jesteś asystentem prawnym. Analizujesz dokumenty i wypełniasz formularze pozwów."},
                     {"role": "user", "content": prompt}

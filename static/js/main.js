@@ -873,6 +873,8 @@ if (templateSelect) {
             // Dla pozwu - pokaż sekcję z wezwaniami
             if (advStepSourcePozew) advStepSourcePozew.classList.remove('hidden');
             if (advStepPozewExtra) advStepPozewExtra.classList.remove('hidden');
+            if (advStepPozewExtra) advStepUpload.classList.add('hidden');
+
             // Załaduj listę wezwań
             loadAdvWezwaniaList();
         }
@@ -1169,6 +1171,7 @@ if (btnGeneratePozew) {
 
         try {
             let wezwanieData = null;
+            let wezwanieCreatedAt = null;
 
             // KROK 1: Pobierz dane wezwania
             const usingSaved = !document.getElementById('pozewUploadSection')?.classList.contains('hidden') === false;
@@ -1196,6 +1199,7 @@ if (btnGeneratePozew) {
                     const resp = await fetch(`/api/wezwania/${selectedIds[0]}`);
                     const data = await resp.json();
                     wezwanieData = data.fields || {};
+                    wezwanieCreatedAt = data.created_at || null;
                 }
             }
 
@@ -1258,6 +1262,15 @@ if (btnGeneratePozew) {
                         inp.value = value;
                         inp.style.background = '#e8f5e9';
                     });
+                }
+
+                // Wypełnij datę wezwania z created_at pliku JSON
+                if (wezwanieCreatedAt) {
+                    const wezwanieDate = new Date(wezwanieCreatedAt);
+                    const dd = String(wezwanieDate.getDate()).padStart(2, '0');
+                    const mm = String(wezwanieDate.getMonth() + 1).padStart(2, '0');
+                    const yyyy = wezwanieDate.getFullYear();
+                    fillInput(doc, 'wezwanie_data', `${dd}.${mm}.${yyyy} r.`);
                 }
 
                 // Dodaj do extracted data
@@ -1674,7 +1687,10 @@ async function processPozew() {
             const w = summaryData.wezwania[0];
             if (w.created_at) {
                 const wezwanieDate = new Date(w.created_at);
-                fields.wezwanie_data = wezwanieDate.toLocaleDateString('pl-PL');
+                const dd = String(wezwanieDate.getDate()).padStart(2, '0');
+                const mm = String(wezwanieDate.getMonth() + 1).padStart(2, '0');
+                const yyyy = wezwanieDate.getFullYear();
+                fields.wezwanie_data = `${dd}.${mm}.${yyyy} r.`;
             }
         }
 
@@ -1898,8 +1914,10 @@ if (btnProcessPozew) {
                     // Data wezwania (z pola created_at)
                     if (w.created_at) {
                         const wezwanieDate = new Date(w.created_at);
-                        const formattedDate = wezwanieDate.toLocaleDateString('pl-PL');
-                        fillInput(doc, 'wezwanie_data', formattedDate);
+                        const dd = String(wezwanieDate.getDate()).padStart(2, '0');
+                        const mm = String(wezwanieDate.getMonth() + 1).padStart(2, '0');
+                        const yyyy = wezwanieDate.getFullYear();
+                        fillInput(doc, 'wezwanie_data', `${dd}.${mm}.${yyyy} r.`);
                     }
 
                     // Dane powoda (wierzyciela)

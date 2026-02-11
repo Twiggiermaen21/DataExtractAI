@@ -71,24 +71,25 @@
     <div class="card hidden" id="quickResultCard">
         <div class="card-title"><span class="icon">📝</span> Wypełniony dokument</div>
 
-        <!-- Przycisk zapisywania (tylko dla Wezwania) -->
-        <div id="saveWezwanieSection" class="hidden"
-            style="margin-bottom: 16px; padding: 12px; background: #fff3e0; border-radius: 4px;">
-            <p style="margin: 0 0 10px; font-weight: 500;">💾 Zapisz wezwanie do bazy (potrzebne do generowania Pozwu)
-            </p>
-            <button class="btn btn-green" id="btnSaveWezwanie">
-                <span>💾</span>
-                <span>Zapisz wezwanie</span>
-            </button>
-        </div>
-
         <div class="quick-preview" id="quickPreview">
             <div class="quick-status">Tutaj pojawi się wypełniony dokument</div>
         </div>
-        <button class="btn btn-green" id="btnPrintPdf" style="margin-top: 16px;">
-            <span>🖨️</span>
-            <span>Drukuj / Zapisz jako PDF</span>
-        </button>
+
+        <!-- Action buttons row -->
+        <div class="document-actions" style="display: flex; gap: 12px; margin-top: 20px; align-items: stretch;">
+            <div id="saveWezwanieSection" class="hidden" style="flex: 1;">
+                <button class="btn btn-purple" id="btnSaveWezwanie" style="margin-top: 0; height: 100%;">
+                    <span>💾</span>
+                    <span>Zapisz wezwanie</span>
+                </button>
+            </div>
+            <div style="flex: 1;">
+                <button class="btn btn-green" id="btnPrintPdf" style="margin-top: 0; height: 100%;">
+                    <span>🖨️</span>
+                    <span>Drukuj / Zapisz jako PDF</span>
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
