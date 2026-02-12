@@ -134,7 +134,9 @@ Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "B
         
         try:
             response = requests.post(
-                "http://127.0.0.1:1234/v1/chat/completions",
+                # "http://127.0.0.1:1234/v1/chat/completions",
+                "http://192.168.1.30:1234/v1/chat/completions",
+
                 json={
                     "model": "google/gemma-3-12b",
                     "messages": [

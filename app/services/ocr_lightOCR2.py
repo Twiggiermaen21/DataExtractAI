@@ -16,7 +16,8 @@ except ImportError:
 class GemmaOCRService:
     
     # def __init__(self, api_url="https://traditions-average-genetic-wages.trycloudflare.com/v1/chat/completions"):
-    def __init__(self, api_url="http://127.0.0.1:1234/v1/chat/completions"):
+    # def __init__(self, api_url="http://127.0.0.1:1234/v1/chat/completions"):
+    def __init__(self, api_url="http://192.168.1.30:1234/v1/chat/completions"):
 
         
         self.api_url = api_url
@@ -31,7 +32,8 @@ class GemmaOCRService:
     def _check_connection(self):
         try:
             # response = requests.get("https://traditions-average-genetic-wages.trycloudflare.com/v1/models", timeout=5)
-            response = requests.get("http://127.0.0.1:1234/v1/models", timeout=5)
+            # response = requests.get("http://127.0.0.1:1234/v1/models", timeout=5)
+            response = requests.get("http://192.168.1.30:1234/v1/models", timeout=5)
 
             if response.status_code == 200:
                 print("✅ Połączono z LM Studio!")

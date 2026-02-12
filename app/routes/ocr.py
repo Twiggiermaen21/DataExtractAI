@@ -11,6 +11,66 @@ ocr_bp = Blueprint('ocr', __name__)
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}
 
 
+@ocr_bp.route('/api/extract_pdf_text', methods=['POST'])
+def extract_pdf_text():
+    """Wyciąga surowy tekst z PDF/DOCX bez wysyłania do LLM. Używane dla KRS."""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'error': 'Brak pliku'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'Pusta nazwa pliku'}), 400
+    
+    filename = file.filename
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    
+    try:
+        file.save(filepath)
+        ext = os.path.splitext(filename)[1].lower()
+        text = ''
+        
+        if ext == '.pdf':
+            try:
+                import fitz
+                doc = fitz.open(filepath)
+                for page in doc:
+                    text += page.get_text()
+                doc.close()
+            except ImportError:
+                return jsonify({'success': False, 'error': 'PyMuPDF nie zainstalowane'}), 500
+        elif ext in ['.docx', '.doc']:
+            try:
+                from docx import Document as DocxDocument
+                doc = DocxDocument(filepath)
+                text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            except ImportError:
+                return jsonify({'success': False, 'error': 'python-docx nie zainstalowane'}), 500
+        else:
+            # Dla plików tekstowych
+            with open(filepath, 'r', encoding='utf-8') as f:
+                text = f.read()
+        
+        text = text.strip()
+        original_len = len(text)
+        
+        if original_len > 3000:
+            print(f"✂️ KRS tekst przycięty: {original_len} → 3000 znaków")
+            text = text[:3000]
+        
+        print(f"📄 Wyciągnięto tekst z {filename}: {len(text)} znaków")
+        
+        return jsonify({
+            'success': True,
+            'text': text,
+            'filename': filename,
+            'original_length': original_len,
+            'truncated': original_len > 3000
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @ocr_bp.route('/api/process_ocr', methods=['POST'])
 def process_ocr():
     """OCR - przetwarza pliki i zwraca wyekstrahowane dane."""

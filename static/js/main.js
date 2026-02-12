@@ -845,6 +845,8 @@ if (templateSelect) {
         const filename = this.value;
 
         // Hide all step sections
+        const advStepUpload = document.getElementById('advStepUpload');
+        const advPreviewCard = document.getElementById('advPreviewCard');
         if (advStepSource) advStepSource.classList.add('hidden');
         if (advStepSourcePozew) advStepSourcePozew.classList.add('hidden');
         if (advStepLlm) advStepLlm.classList.add('hidden');
@@ -852,6 +854,8 @@ if (templateSelect) {
         if (advDividerStep2) advDividerStep2.classList.add('hidden');
         if (advDividerStep3) advDividerStep3.classList.add('hidden');
         if (advSaveWezwanieSection) advSaveWezwanieSection.classList.add('hidden');
+        if (advStepUpload) advStepUpload.classList.add('hidden');
+        if (advPreviewCard) advPreviewCard.classList.add('hidden');
 
         if (!filename) {
             advWorkflowType = null;
@@ -862,18 +866,17 @@ if (templateSelect) {
 
         // Show workflow sections based on template type
         if (advDividerStep2) advDividerStep2.classList.remove('hidden');
+        if (advPreviewCard) advPreviewCard.classList.remove('hidden');
 
         if (filename.includes('wezwanie')) {
             advWorkflowType = 'wezwanie';
             // Dla wezwania - pokaż sekcję upload
-            const advStepUpload = document.getElementById('advStepUpload');
             if (advStepUpload) advStepUpload.classList.remove('hidden');
         } else if (filename.includes('pozew')) {
             advWorkflowType = 'pozew';
-            // Dla pozwu - pokaż sekcję z wezwaniami
+            // Dla pozwu - pokaż sekcję z wezwaniami, ukryj upload
             if (advStepSourcePozew) advStepSourcePozew.classList.remove('hidden');
             if (advStepPozewExtra) advStepPozewExtra.classList.remove('hidden');
-            if (advStepPozewExtra) advStepUpload.classList.add('hidden');
 
             // Załaduj listę wezwań
             loadAdvWezwaniaList();
@@ -1205,33 +1208,39 @@ if (btnGeneratePozew) {
 
             if (progressFill) progressFill.style.width = '30%';
 
-            // KROK 2: OCR plików KRS
-            if (statusText) statusText.textContent = '🏢 OCR dokumentów KRS...';
+            // KROK 2: Wyciągnij tekst z plików KRS (bez LLM - tylko ekstrakcja tekstu)
+            if (statusText) statusText.textContent = '📄 Ekstrakcja tekstu z KRS...';
             if (progressFill) progressFill.style.width = '45%';
 
-            const krsForm = new FormData();
-            krsUploadedFiles.forEach(f => krsForm.append('files', f));
-            krsForm.append('template', templateSelect.value);
+            let krsTexts = [];
+            for (const krsFile of krsUploadedFiles) {
+                const krsForm = new FormData();
+                krsForm.append('file', krsFile);
 
-            const krsResp = await fetch('/api/process_ocr', { method: 'POST', body: krsForm });
-            const krsData = await krsResp.json();
+                try {
+                    const krsResp = await fetch('/api/extract_pdf_text', { method: 'POST', body: krsForm });
+                    const krsData = await krsResp.json();
 
-            let krsExtracted = [];
-            if (krsData.success && krsData.documents) {
-                krsExtracted = krsData.documents.map(d => d.fields);
+                    if (krsData.success && krsData.text) {
+                        krsTexts.push(krsData.text);
+                        console.log(`📄 KRS ${krsData.filename}: ${krsData.text.length} znaków` +
+                            (krsData.truncated ? ` (przycięto z ${krsData.original_length})` : ''));
+                    } else {
+                        console.warn(`⚠️ Nie udało się wyciągnąć tekstu z: ${krsFile.name}`, krsData.error);
+                    }
+                } catch (e) {
+                    console.warn(`❌ Błąd ekstrakcji KRS: ${krsFile.name}`, e);
+                }
             }
-
-            console.log('📄 KRS RAW response:', JSON.stringify(krsData, null, 2));
-            console.log('📄 KRS extracted fields:', JSON.stringify(krsExtracted, null, 2));
 
             if (progressFill) progressFill.style.width = '70%';
 
-            // KROK 3: Wyślij wszystkie dane do analizy LLM
-            if (statusText) statusText.textContent = '🤖 Analiza AI - mapowanie na pola pozwu...';
+            // KROK 3: Wyślij dane do analizy (mapowanie wezwania + szukanie KRS)
+            if (statusText) statusText.textContent = '🔍 Szukanie numeru KRS pozwanego...';
 
             const allData = {
                 wezwanie: wezwanieData,
-                krs: krsExtracted
+                krs: krsTexts
             };
 
             console.log('📦 Dane wysłane do LLM (wezwanie + KRS):', JSON.stringify(allData, null, 2));
