@@ -1,0 +1,120 @@
+/* ==================== BASE / VARIABLES / RESET ==================== */
+
+:root {
+    --bg-primary: #0d0d12;
+    --bg-secondary: #12121a;
+    --bg-card: rgba(20, 20, 30, 0.6);
+    --bg-hover: rgba(30, 30, 45, 0.8);
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-glow: rgba(139, 92, 246, 0.3);
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.35);
+    --accent-blue: #6366f1;
+    --accent-green: #10b981;
+    --accent-purple: #a855f7;
+    --accent-orange: #f59e0b;
+    --radius-sm: 10px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: 0 0 40px rgba(139, 92, 246, 0.15);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #0d0d12 0%, #1a1a2e 50%, #16162a 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 60px 24px;
+}
+
+.container {
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 56px;
+    padding-top: 20px;
+}
+
+h1 {
+    font-size: 3.2rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    margin-bottom: 16px;
+    line-height: 1.1;
+    background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 400;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Section divider */
+.divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 32px 0;
+}
+
+/* Hidden */
+.hidden {
+    display: none !important;
+}
+
+/* Grid Layout */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Inline group */
+.inline-group {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.inline-group>* {
+    flex: 1;
+}
+
+.inline-group .btn {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 12px 20px;
+    margin-top: 0;
+}

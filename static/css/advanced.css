@@ -1,0 +1,88 @@
+/* ==================== ADVANCED TAB STYLES ==================== */
+
+/* Step sections */
+.step-section {
+    margin-bottom: 20px;
+}
+
+.step-label {
+    font-size: 1.1em;
+    font-weight: 600;
+    display: block;
+}
+
+.hint-text {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+.divider-light {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 16px 0;
+}
+
+/* Template Preview */
+.template-preview {
+    background: white;
+    border-radius: var(--radius-md);
+    margin-top: 16px;
+    overflow: hidden;
+}
+
+.template-preview iframe {
+    width: 100%;
+    height: 1150px;
+    /* A4 height approx */
+    border: none;
+}
+
+/* JSON Output */
+.json-output {
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.85rem;
+    color: var(--accent-green);
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar */
+.checkbox-list::-webkit-scrollbar,
+.template-preview::-webkit-scrollbar,
+.json-output::-webkit-scrollbar {
+    width: 8px;
+}
+
+.checkbox-list::-webkit-scrollbar-track,
+.template-preview::-webkit-scrollbar-track,
+.json-output::-webkit-scrollbar-track {
+    background: rgba(20, 20, 30, 0.4);
+    border-radius: 4px;
+}
+
+.checkbox-list::-webkit-scrollbar-thumb,
+.template-preview::-webkit-scrollbar-thumb,
+.json-output::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--accent-purple), var(--accent-blue));
+    border-radius: 4px;
+}
+
+.checkbox-list::-webkit-scrollbar-thumb:hover,
+.template-preview::-webkit-scrollbar-thumb:hover,
+.json-output::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #c084fc, #818cf8);
+}
+
+/* Firefox scrollbar */
+.checkbox-list,
+.template-preview,
+.json-output {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-purple) rgba(20, 20, 30, 0.4);
+}
