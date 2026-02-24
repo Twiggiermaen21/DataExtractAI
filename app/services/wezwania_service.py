@@ -15,7 +15,7 @@ def get_wezwania_dir():
 
 # Mapowanie długich nazw pól z szablonu na krótkie nazwy
 FIELD_NAME_MAP = {
-    'Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna': 'wierzyciel_nazwa',
+    'Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_czesto_na_gorze_faktury': 'wierzyciel_nazwa',
     'Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto': 'wierzyciel_adres',
     'Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto': 'wierzyciel_adres',
     'Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji': 'wierzyciel_nip',
