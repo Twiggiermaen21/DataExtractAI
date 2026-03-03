@@ -226,6 +226,19 @@ function updateAdvOcrButton() {
     if (btnOcrFill) {
         btnOcrFill.disabled = advUploadedFiles.length === 0;
     }
+
+    // Pokaż/ukryj checkbox "Generuj wiele wezwań" gdy >1 plik i workflow=wezwanie
+    const multiOption = document.getElementById('multiWezwanieOption');
+    if (multiOption) {
+        if (advUploadedFiles.length > 1 && advWorkflowType === 'wezwanie') {
+            multiOption.classList.remove('hidden');
+        } else {
+            multiOption.classList.add('hidden');
+            // Odznacz checkbox gdy schowany
+            const chk = document.getElementById('chkMultiWezwanie');
+            if (chk) chk.checked = false;
+        }
+    }
 }
 
 // === OCR + FILL PROCESSING ===
@@ -270,128 +283,141 @@ if (btnOcrFill) {
             const data = await response.json();
 
             if (data.success && data.documents && data.documents.length > 0) {
-                if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Przetworzono ${data.documents.length} dokumentów!`;
-                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
-                // Agreguj dane z wielu dokumentów
-                const invoiceNumbers = [];
-                const invoiceDates = [];
-                let totalAmount = 0;
-                let latestPaymentDate = null;
-                let latestPaymentDateStr = '';
-                const mergedFields = {};
+                // === TRYB: Generuj wiele wezwań (osobny PDF per faktura) ===
+                const chkMulti = document.getElementById('chkMultiWezwanie');
+                if (chkMulti && chkMulti.checked && data.documents.length > 1) {
+                    await handleMultiWezwanieGeneration(data.documents, ocrFillStatusText, ocrFillProgressFill);
 
-                // Pola kwoty i numeru faktury
-                const amountFieldPattern = /kwot/i;
-                const invoiceNumPattern = /numer_faktury/i;
-                const paymentDatePattern = /terminu_platnosci|date_terminu/i;
-                const invoiceDatePattern = /date_wystawienia/i;
+                    // Wyczyść pliki
+                    advUploadedFiles = [];
+                    renderAdvFileList();
+                    updateAdvOcrButton();
+                } else {
+                    // === TRYB NORMALNY: Agregacja danych ===
+                    if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Przetworzono ${data.documents.length} dokumentów!`;
+                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
-                data.documents.forEach(doc => {
-                    const fields = doc.fields || {};
+                    // Agreguj dane z wielu dokumentów
+                    const invoiceNumbers = [];
+                    const invoiceDates = [];
+                    let totalAmount = 0;
+                    let latestPaymentDate = null;
+                    let latestPaymentDateStr = '';
+                    const mergedFields = {};
 
-                    for (let [key, value] of Object.entries(fields)) {
-                        if (!value) continue;
+                    // Pola kwoty i numeru faktury
+                    const amountFieldPattern = /kwot/i;
+                    const invoiceNumPattern = /numer_faktury/i;
+                    const paymentDatePattern = /terminu_platnosci|date_terminu/i;
+                    const invoiceDatePattern = /date_wystawienia/i;
 
-                        // Zbierz numery faktur
-                        if (invoiceNumPattern.test(key)) {
-                            if (!invoiceNumbers.includes(value)) {
-                                invoiceNumbers.push(value);
+                    data.documents.forEach(doc => {
+                        const fields = doc.fields || {};
+
+                        for (let [key, value] of Object.entries(fields)) {
+                            if (!value) continue;
+
+                            // Zbierz numery faktur
+                            if (invoiceNumPattern.test(key)) {
+                                if (!invoiceNumbers.includes(value)) {
+                                    invoiceNumbers.push(value);
+                                }
+                            }
+                            // Zbierz kwoty i sumuj
+                            else if (amountFieldPattern.test(key)) {
+                                const numStr = String(value).replace(/[^\d,.]/g, '').replace(',', '.');
+                                const num = parseFloat(numStr);
+                                if (!isNaN(num)) totalAmount += num;
+                            }
+                            // Zbierz daty wystawienia
+                            else if (invoiceDatePattern.test(key)) {
+                                if (!invoiceDates.includes(value)) {
+                                    invoiceDates.push(value);
+                                }
+                            }
+                            // Znajdź najpóźniejszy termin płatności
+                            else if (paymentDatePattern.test(key)) {
+                                const parsed = parsePolishDate(value);
+                                if (parsed && (!latestPaymentDate || parsed > latestPaymentDate)) {
+                                    latestPaymentDate = parsed;
+                                    latestPaymentDateStr = value;
+                                }
+                            }
+                            // Inne pola - weź z pierwszego dokumentu
+                            else if (!mergedFields[key]) {
+                                mergedFields[key] = value;
                             }
                         }
-                        // Zbierz kwoty i sumuj
-                        else if (amountFieldPattern.test(key)) {
-                            const numStr = String(value).replace(/[^\d,.]/g, '').replace(',', '.');
-                            const num = parseFloat(numStr);
-                            if (!isNaN(num)) totalAmount += num;
-                        }
-                        // Zbierz daty wystawienia
-                        else if (invoiceDatePattern.test(key)) {
-                            if (!invoiceDates.includes(value)) {
-                                invoiceDates.push(value);
-                            }
-                        }
-                        // Znajdź najpóźniejszy termin płatności
-                        else if (paymentDatePattern.test(key)) {
-                            const parsed = parsePolishDate(value);
-                            if (parsed && (!latestPaymentDate || parsed > latestPaymentDate)) {
-                                latestPaymentDate = parsed;
-                                latestPaymentDateStr = value;
-                            }
-                        }
-                        // Inne pola - weź z pierwszego dokumentu
-                        else if (!mergedFields[key]) {
-                            mergedFields[key] = value;
-                        }
-                    }
-                });
+                    });
 
-                // Wypełnij szablon
-                if (templateIframe && templateIframe.contentDocument) {
-                    const doc = templateIframe.contentDocument;
+                    // Wypełnij szablon
+                    if (templateIframe && templateIframe.contentDocument) {
+                        const doc = templateIframe.contentDocument;
 
-                    // Wypełnij pozostałe pola z pierwszego dokumentu
-                    for (let [fieldName, value] of Object.entries(mergedFields)) {
-                        if (!value) continue;
-                        const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
-                        inputs.forEach(input => {
-                            input.value = value;
+                        // Wypełnij pozostałe pola z pierwszego dokumentu
+                        for (let [fieldName, value] of Object.entries(mergedFields)) {
+                            if (!value) continue;
+                            const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
+                            inputs.forEach(input => {
+                                input.value = value;
+                                input.style.background = '#e8f5e9';
+                            });
+                        }
+
+                        // Wstaw połączone numery faktur
+                        const invoiceInputs = doc.querySelectorAll('input[name*="numer_faktury"]');
+                        invoiceInputs.forEach(input => {
+                            input.value = invoiceNumbers.join(', ');
+                            input.style.background = '#e3f2fd';
+                        });
+
+                        // Wstaw połączone daty wystawienia
+                        const dateInputs = doc.querySelectorAll('input[name*="date_wystawienia"]');
+                        dateInputs.forEach(input => {
+                            input.value = invoiceDates.join(', ');
                             input.style.background = '#e8f5e9';
                         });
-                    }
 
-                    // Wstaw połączone numery faktur
-                    const invoiceInputs = doc.querySelectorAll('input[name*="numer_faktury"]');
-                    invoiceInputs.forEach(input => {
-                        input.value = invoiceNumbers.join(', ');
-                        input.style.background = '#e3f2fd';
-                    });
-
-                    // Wstaw połączone daty wystawienia
-                    const dateInputs = doc.querySelectorAll('input[name*="date_wystawienia"]');
-                    dateInputs.forEach(input => {
-                        input.value = invoiceDates.join(', ');
-                        input.style.background = '#e8f5e9';
-                    });
-
-                    // Wstaw sumę kwot
-                    const amountInputs = doc.querySelectorAll('input[name*="kwot"]');
-                    amountInputs.forEach(input => {
-                        input.value = totalAmount.toFixed(2) + ' zł';
-                        input.style.background = '#fff3e0';
-                    });
-
-                    // Wstaw termin płatności +1 dzień (odsetki od następnego dnia)
-                    if (latestPaymentDateStr) {
-                        const nextDay = addOneDay(latestPaymentDateStr);
-                        const paymentInputs = doc.querySelectorAll('input[name*="terminu_platnosci"], input[name*="date_terminu"]');
-                        paymentInputs.forEach(input => {
-                            input.value = nextDay;
-                            input.style.background = '#fce4ec';
+                        // Wstaw sumę kwot
+                        const amountInputs = doc.querySelectorAll('input[name*="kwot"]');
+                        amountInputs.forEach(input => {
+                            input.value = totalAmount.toFixed(2) + ' zł';
+                            input.style.background = '#fff3e0';
                         });
+
+                        // Wstaw termin płatności +1 dzień (odsetki od następnego dnia)
+                        if (latestPaymentDateStr) {
+                            const nextDay = addOneDay(latestPaymentDateStr);
+                            const paymentInputs = doc.querySelectorAll('input[name*="terminu_platnosci"], input[name*="date_terminu"]');
+                            paymentInputs.forEach(input => {
+                                input.value = nextDay;
+                                input.style.background = '#fce4ec';
+                            });
+                        }
+
+                        // Pokaż sekcję zapisywania dla wezwania
+                        if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
+                            advSaveWezwanieSection.classList.remove('hidden');
+                        }
                     }
 
-                    // Pokaż sekcję zapisywania dla wezwania
-                    if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
-                        advSaveWezwanieSection.classList.remove('hidden');
+                    // Pokaż wyekstrahowane dane
+                    if (extractedDataCard && extractedDataContent) {
+                        extractedDataCard.classList.remove('hidden');
+                        extractedDataContent.textContent = JSON.stringify({
+                            dokumenty: data.documents.length,
+                            numery_faktur: invoiceNumbers,
+                            suma_kwot: totalAmount.toFixed(2) + ' zł',
+                            termin_odsetek: latestPaymentDateStr ? addOneDay(latestPaymentDateStr) : null,
+                            wszystkie_dane: data.documents
+                        }, null, 2);
                     }
-                }
 
-                // Pokaż wyekstrahowane dane
-                if (extractedDataCard && extractedDataContent) {
-                    extractedDataCard.classList.remove('hidden');
-                    extractedDataContent.textContent = JSON.stringify({
-                        dokumenty: data.documents.length,
-                        numery_faktur: invoiceNumbers,
-                        suma_kwot: totalAmount.toFixed(2) + ' zł',
-                        termin_odsetek: latestPaymentDateStr ? addOneDay(latestPaymentDateStr) : null,
-                        wszystkie_dane: data.documents
-                    }, null, 2);
+                    // Wyczyść pliki
+                    advUploadedFiles = [];
+                    renderAdvFileList();
                 }
-
-                // Wyczyść pliki
-                advUploadedFiles = [];
-                renderAdvFileList();
 
             } else if (data.success) {
                 if (ocrFillStatusText) ocrFillStatusText.textContent = '⚠️ Brak danych do ekstrakcji';
@@ -1071,3 +1097,127 @@ if (btnGeneratePozew) {
         }
     });
 }
+
+// === MULTI-WEZWANIE: Generuj plik .md z danymi ze wszystkich faktur ===
+async function handleMultiWezwanieGeneration(documents, statusText, progressFill) {
+    const totalDocs = documents.length;
+
+    if (statusText) statusText.textContent = `📑 Generowanie pliku MD z ${totalDocs} wezwań...`;
+    if (progressFill) progressFill.style.width = '60%';
+
+    // Mapowanie długich nazw pól na czytelne etykiety
+    const fieldLabels = {
+        'nazwa_firmy_sprzedawcy': 'Wierzyciel (nazwa)',
+        'adres_sprzedawcy': 'Wierzyciel (adres)',
+        'nip_sprzedawcy': 'NIP wierzyciela',
+        'nazwa_firmy_nabywcy': 'Dłużnik (nazwa)',
+        'adres_siedziby_nabywcy': 'Dłużnik (adres)',
+        'nip_nabywcy': 'NIP dłużnika',
+        'numer_faktury': 'Numer faktury',
+        'date_wystawienia': 'Data wystawienia',
+        'kwote_do_zaplaty': 'Kwota do zapłaty',
+        'terminu_platnosci': 'Termin płatności',
+        'numer_konta': 'Numer konta',
+        'nazwe_banku': 'Bank'
+    };
+
+    function getLabel(fieldName) {
+        const lower = fieldName.toLowerCase();
+        for (let [key, label] of Object.entries(fieldLabels)) {
+            if (lower.includes(key)) return label;
+        }
+        // Fallback: wyczyść nazwę pola
+        return fieldName
+            .replace(/^Znajdz_na_fakturze_|^Znajdz_i_przepisz_|^Znajdz_/g, '')
+            .replace(/_/g, ' ')
+            .substring(0, 60);
+    }
+
+    // Buduj zawartość MD
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+
+    let md = `# Wezwania do zapłaty\n\n`;
+    md += `Data generowania: ${dateStr}\n\n`;
+    md += `Liczba wezwań: ${totalDocs}\n\n`;
+    md += `---\n\n`;
+
+    for (let i = 0; i < totalDocs; i++) {
+        const doc = documents[i];
+        const fields = doc.fields || {};
+        const invoiceFilename = doc.filename || `faktura_${i + 1}`;
+
+        md += `## Wezwanie ${i + 1} — ${invoiceFilename}\n\n`;
+
+        for (let [fieldName, value] of Object.entries(fields)) {
+            if (!value) continue;
+            const label = getLabel(fieldName);
+            md += `- **${label}:** ${value}\n`;
+        }
+
+        md += `\n---\n\n`;
+    }
+
+    if (progressFill) progressFill.style.width = '80%';
+
+    // Zapisz plik MD na serwerze
+    const mdFilename = `wezwania_${dateStr.replace(/\./g, '-')}.md`;
+
+    try {
+        const saveResp = await fetch('/api/wezwania/save_file', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: mdFilename, content: md })
+        });
+        const saveResult = await saveResp.json();
+
+        if (!saveResult.success) {
+            console.warn('Błąd zapisu MD:', saveResult.error);
+        }
+    } catch (e) {
+        console.warn('Błąd zapisu MD na serwer:', e);
+    }
+
+    // Zapisz każde wezwanie do JSON
+    for (let i = 0; i < totalDocs; i++) {
+        const fields = documents[i].fields || {};
+        try {
+            await fetch('/api/wezwania/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fields })
+            });
+        } catch (e) {
+            console.warn('Błąd zapisu wezwania JSON:', e);
+        }
+    }
+
+    // Pobierz plik MD w przeglądarce
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = mdFilename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(downloadUrl);
+
+    if (progressFill) progressFill.style.width = '100%';
+    if (statusText) statusText.textContent = `✅ Wygenerowano plik ${mdFilename} z ${totalDocs} wezwaniami!`;
+
+    // Pokaż podgląd MD w iframe
+    if (templateIframe && templateIframe.contentDocument) {
+        const iframeDoc = templateIframe.contentDocument;
+        iframeDoc.body.innerHTML = `
+            <div style="padding: 30px; font-family: 'Segoe UI', sans-serif;">
+                <h2 style="color: #2e7d32;">✅ Wygenerowano ${totalDocs} wezwań</h2>
+                <p style="color: #666;">Zapisano w: <strong>output/pobrane/${mdFilename}</strong></p>
+                <hr>
+                <pre style="background: #f5f5f5; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.6;">${md.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+            </div>
+        `;
+    }
+}
+

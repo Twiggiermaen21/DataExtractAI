@@ -5,6 +5,7 @@ input/*
 
 # To samo dla output
 output/*
+pom/
 !output/.gitkeep
 templates_db/*
 !templates_db/.gitkeep

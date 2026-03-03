@@ -70,3 +70,37 @@ def get_wezwania_summary():
         'summary': summary,
         'wezwania': wezwania
     })
+
+
+@wezwania_bp.route('/api/wezwania/save_file', methods=['POST'])
+def save_file():
+    """
+    Zapisuje plik tekstowy (np. .md) do folderu output/pobrane/.
+    Oczekuje: { "filename": "nazwa.md", "content": "zawartość pliku" }
+    """
+    data = request.get_json()
+    
+    if not data or 'filename' not in data or 'content' not in data:
+        return jsonify({'success': False, 'error': 'Brak filename lub content'}), 400
+    
+    filename = data['filename']
+    content = data['content']
+    
+    # Folder na pobrane pliki
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    pobrane_dir = os.path.join(project_root, 'output', 'pobrane')
+    os.makedirs(pobrane_dir, exist_ok=True)
+    
+    filepath = os.path.join(pobrane_dir, filename)
+    
+    try:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"📄 Plik zapisany: {filepath}")
+        return jsonify({
+            'success': True,
+            'filename': filename,
+            'filepath': filepath
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

@@ -4,6 +4,9 @@ import os
 import json
 import time
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
 
 try:
     from docx import Document as DocxDocument
@@ -15,26 +18,21 @@ except ImportError:
 
 class GemmaOCRService:
     
-    # def __init__(self, api_url="https://traditions-average-genetic-wages.trycloudflare.com/v1/chat/completions"):
-    # def __init__(self, api_url="http://127.0.0.1:1234/v1/chat/completions"):
-    def __init__(self, api_url="http://192.168.1.30:1234/v1/chat/completions"):
-
-        
-        self.api_url = api_url
-        self.model = "google/gemma-3-12b"
-        # self.model = "qwen/qwen3-vl-8b"
+    def __init__(self, api_url=None):
+        self.api_url = api_url or os.environ.get("LLM_API_URL")
+        self.model = os.environ.get("LLM_MODEL")
         self.timeout = 600
         self.fields = []  # Pola pobrane z szablonu HTML
         
         print(f"🔗 OCR API: {self.api_url}")
+        print(f"🤖 Model: {self.model}")
         self._check_connection()
     
     def _check_connection(self):
         try:
-            # response = requests.get("https://traditions-average-genetic-wages.trycloudflare.com/v1/models", timeout=5)
-            # response = requests.get("http://127.0.0.1:1234/v1/models", timeout=5)
-            response = requests.get("http://192.168.1.30:1234/v1/models", timeout=5)
-
+            # Derive models endpoint from api_url (replace /chat/completions with /models)
+            base_url = self.api_url.replace("/chat/completions", "/models")
+            response = requests.get(base_url, timeout=5)
             if response.status_code == 200:
                 print("✅ Połączono z LM Studio!")
         except:

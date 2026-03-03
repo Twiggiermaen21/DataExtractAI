@@ -1,6 +1,9 @@
 import os
 import re
 from flask import Blueprint, request, jsonify, current_app
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from app.services.llm_service import extract_invoice_data, extract_template_fields
 
@@ -134,11 +137,9 @@ Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "B
         
         try:
             response = requests.post(
-                # "http://127.0.0.1:1234/v1/chat/completions",
-                "http://192.168.1.30:1234/v1/chat/completions",
-
+                os.environ.get("LLM_API_URL"),
                 json={
-                    "model": "google/gemma-3-12b",
+                    "model": os.environ.get("LLM_MODEL"),
                     "messages": [
                         {"role": "system", "content": "Wyciągasz numery KRS z dokumentów. Odpowiadasz krótko - samym numerem KRS lub BRAK."},
                         {"role": "user", "content": krs_prompt}
