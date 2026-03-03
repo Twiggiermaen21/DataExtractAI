@@ -6,28 +6,33 @@ from app.utils.ocr_result import OCRResult
 class OCRService:
     
     def __init__(self, api_url=None, model=None):
+        print("Wywołano funkcję: __init__")
         self.api_url = api_url or os.environ.get("LLM_API_URL")
         self.model = model or os.environ.get("LLM_MODEL")
         self.timeout = 600
         self.fields = []  # Pola pobrane z szablonu HTML
         
-        print(f"🔗 OCR API: {self.api_url}")
-        print(f"🤖 Model: {self.model}")
+        pass  # usuniety print
+        pass  # usuniety print
         check_connection(self.api_url)
     
     def load_model(self):
+        print("Wywołano funkcję: load_model")
         pass
     
     def unload_model(self):
-        print("✅ Zakończono przetwarzanie")
+        print("Wywołano funkcję: unload_model")
+        pass  # usuniety print
     
     def set_template(self, template_path):
         """Pobiera pola z szablonu HTML (atrybuty name z inputów)."""
+        print("Wywołano funkcję: set_template")
         self.fields = extract_fields_from_template(template_path)
     
     def predict(self, file_path):
         """Wysyła plik do API i zwraca wynik."""
-        print(f"📤 Przetwarzanie: {os.path.basename(file_path)}")
+        print("Wywołano funkcję: predict")
+        pass  # usuniety print
         
         ext = os.path.splitext(file_path)[1].lower()
         
@@ -36,13 +41,13 @@ class OCRService:
         is_scanned_pdf = False
         
         if ext in ['.docx', '.doc']:
-            print("📄 Wykryto dokument Word - ekstrakcja tekstu...")
+            pass  # usuniety print
             text_content = extract_text_from_docx(file_path)
         elif ext == '.pdf':
-            print("📄 Wykryto PDF - ekstrakcja tekstu...")
+            pass  # usuniety print
             text_content = extract_text_from_pdf(file_path)
             if not text_content or len(text_content) < 50:
-                print("⚠️ PDF skanowany (brak tekstu) - konwersja na obraz...")
+                pass  # usuniety print
                 is_scanned_pdf = True
                 # Konwertuj pierwszą stronę PDF na obraz
                 try:
@@ -62,7 +67,7 @@ class OCRService:
         if text_content and len(text_content) >= 50:
             # Ogranicz tekst żeby nie przekroczyć kontekstu LLM 
             if len(text_content) > 3000:
-                print(f"❌ Tekst za długi ({len(text_content)} znaków). Odrzucanie...")
+                pass  # usuniety print
                 raise Exception("Dokument jest zbyt długi do przetworzenia przez LLM.")
             
             # Dla dokumentów tekstowych
@@ -100,21 +105,22 @@ class OCRService:
             }
         
         # DEBUG: Wyświetl dane wysyłane do LLM
-        print(f"📋 Używane pola: {len(self.fields)}")
-        print(f"⏳ Oczekiwanie na odpowiedź API...")
+        pass  # usuniety print
+        pass  # usuniety print
         
         response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=self.timeout)
         
         if response.status_code == 200:
             result = response.json()
             output_text = result["choices"][0]["message"]["content"]
-            print("✅ Przetwarzanie zakończone!")
+            pass  # usuniety print
             return [OCRResult(output_text, file_path)]
         else:
             raise Exception(f"API błąd {response.status_code}: {response.text}")
     
     def _build_prompt(self, is_text=False):
         """Buduje prompt z pól szablonu HTML lub używa domyślnych."""
+        print("Wywołano funkcję: _build_prompt")
         action = "Przeanalizuj tekst" if is_text else "Przeanalizuj obraz"
         
         if self.fields:

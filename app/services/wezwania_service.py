@@ -6,6 +6,7 @@ from datetime import datetime
 
 def get_wezwania_dir():
     """Zwraca ścieżkę do folderu z wezwaniami."""
+    print("Wywołano funkcję: get_wezwania_dir")
     project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     wezwania_dir = os.path.join(project_root, "output", "wezwania")
     os.makedirs(wezwania_dir, exist_ok=True)
@@ -34,6 +35,7 @@ FIELD_NAME_MAP = {
 def _remap_fields(data: dict) -> dict:
     """Zamienia długie nazwy pól z szablonu na krótkie, czytelne nazwy.
     Pomija puste wartości i pola bez mapowania."""
+    print("Wywołano funkcję: _remap_fields")
     remapped = {}
     for key, value in data.items():
         if not value or str(value).strip() == '':
@@ -48,6 +50,7 @@ def _remap_fields(data: dict) -> dict:
 def save_wezwanie(data: dict) -> dict:
    
     # Zamień długie nazwy pól na krótkie
+    print("Wywołano funkcję: save_wezwanie")
     data = _remap_fields(data)
     
     wezwanie_id = str(uuid.uuid4())[:8]
@@ -83,6 +86,7 @@ def save_wezwanie(data: dict) -> dict:
 
 def get_all_wezwania() -> list:
    
+    print("Wywołano funkcję: get_all_wezwania")
     wezwania_dir = get_wezwania_dir()
     wezwania = []
     
@@ -129,7 +133,7 @@ def get_all_wezwania() -> list:
                     'fields': fields  # Dodaj pełne fields dla pozwu
                 })
             except Exception as e:
-                print(f"Błąd odczytu {filename}: {e}")
+                pass  # usuniety print
     
     # Sortuj od najnowszych
     wezwania.sort(key=lambda x: x.get('created_at', ''), reverse=True)
@@ -140,6 +144,7 @@ def get_all_wezwania() -> list:
 
 def get_wezwanie(wezwanie_id: str) -> dict:
    
+    print("Wywołano funkcję: get_wezwanie")
     wezwania_dir = get_wezwania_dir()
     
     for filename in os.listdir(wezwania_dir):
@@ -149,7 +154,7 @@ def get_wezwanie(wezwanie_id: str) -> dict:
                 with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except Exception as e:
-                print(f"Błąd odczytu {filename}: {e}")
+                pass  # usuniety print
                 return None
     
     return None
@@ -157,6 +162,7 @@ def get_wezwanie(wezwanie_id: str) -> dict:
 
 def get_wezwania_by_ids(ids: list) -> list:
 
+    print("Wywołano funkcję: get_wezwania_by_ids")
     wezwania = []
     for wezwanie_id in ids:
         wezwanie = get_wezwanie(wezwanie_id)
@@ -167,6 +173,7 @@ def get_wezwania_by_ids(ids: list) -> list:
 
 def calculate_summary(wezwania: list) -> dict:
    
+    print("Wywołano funkcję: calculate_summary")
     total_amount = 0.0
     invoices = []
     

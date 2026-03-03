@@ -5,12 +5,14 @@ import time
 class OCRResult:
     
     def __init__(self, text, input_path):
+        print("Wywołano funkcję: __init__")
         self.text = text
         self.input_path = input_path
         self.extracted_data = self._parse_json(text)
         self.parsing_res_list = [{"block_content": text}]
     
     def _parse_json(self, text):
+        print("Wywołano funkcję: _parse_json")
         try:
             clean = text.strip()
             if clean.startswith("```"):
@@ -21,6 +23,7 @@ class OCRResult:
             return {}
     
     def save_to_json(self, save_path):
+        print("Wywołano funkcję: save_to_json")
         filename = os.path.basename(self.input_path)
         base_name = os.path.splitext(filename)[0]
         output_filename = f"{base_name}_{int(time.time())}.json"
@@ -36,8 +39,8 @@ class OCRResult:
         try:
             with open(full_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
-            print(f"💾 Zapisano: {output_filename}")
+            pass  # usuniety print
             return full_path
         except Exception as e:
-            print(f"⚠️ Błąd zapisu: {e}")
+            pass  # usuniety print
             return None

@@ -33,6 +33,7 @@ def _map_wezwanie_fields(wezwanie: dict) -> dict:
     Returns:
         Słownik z polami pozwu
     """
+    print("Wywołano funkcję: _map_wezwanie_fields")
     fields = {}
 
     # --- Powód (wierzyciel / sprzedawca) ---
@@ -83,13 +84,14 @@ def _find_krs_number(pozwany_nazwa: str, krs_list: list, model: str = None) -> s
     Returns:
         Numer KRS (string z cyframi) lub None jeśli nie znaleziono
     """
+    print("Wywołano funkcję: _find_krs_number")
     if not krs_list or not pozwany_nazwa:
         return None
 
     # Przygotuj tekst KRS (przytnij do 2000 znaków)
     krs_text = str(krs_list[0])
     if len(krs_text) > 2000:
-        print(f"✂️  KRS: przycięto {len(krs_text) - 2000} znaków")
+        pass  # usuniety print
         krs_text = krs_text[:2000]
 
     krs_prompt = f"""Z poniższego dokumentu KRS znajdź numer KRS dla firmy: "{pozwany_nazwa}"
@@ -101,7 +103,7 @@ Sprawdź czy nazwa firmy w dokumencie zgadza się z podaną nazwą.
 Odpowiedz TYLKO numerem KRS (same cyfry, np. "0000123456"). 
 Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "BRAK"."""
 
-    print(f"🔍 Szukam KRS dla pozwanego: {pozwany_nazwa}")
+    pass  # usuniety print
 
     try:
         # Zapytanie do LLM — krótka odpowiedź (max 50 tokenów)
@@ -122,20 +124,20 @@ Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "B
         if response.status_code == 200:
             result = response.json()
             krs_answer = result["choices"][0]["message"]["content"].strip()
-            print(f"🏢 LLM odpowiedź KRS: {krs_answer}")
+            pass  # usuniety print
 
             # Wyciągnij sam numer (7-10 cyfr)
             krs_match = re.search(r'\d{7,10}', krs_answer)
             if krs_match and 'BRAK' not in krs_answer.upper():
-                print(f"✅ KRS pozwanego: {krs_match.group(0)}")
+                pass  # usuniety print
                 return krs_match.group(0)
             else:
-                print(f"⚠️ Nie znaleziono KRS dla: {pozwany_nazwa}")
+                pass  # usuniety print
         else:
-            print(f"❌ Błąd API KRS: {response.status_code}: {response.text}")
+            pass  # usuniety print
 
     except Exception as e:
-        print(f"❌ Błąd zapytania KRS: {e}")
+        pass  # usuniety print
 
     return None
 
@@ -156,6 +158,7 @@ def _find_court(pozwany_kod_miasto: str, kwota_glowna: str) -> dict:
     Returns:
         Słownik z danymi sądu lub pusty słownik
     """
+    print("Wywołano funkcję: _find_court")
     if not pozwany_kod_miasto:
         return {}
 
@@ -167,7 +170,7 @@ def _find_court(pozwany_kod_miasto: str, kwota_glowna: str) -> dict:
         with open(sady_path, 'r', encoding='utf-8') as f:
             sady_data = json.load(f)
     except Exception as e:
-        print(f"❌ Błąd wczytywania sady.json: {e}")
+        pass  # usuniety print
         return {}
 
     # Ustal typ sądu na podstawie WPS (wartości przedmiotu sporu)
@@ -187,14 +190,14 @@ def _find_court(pozwany_kod_miasto: str, kwota_glowna: str) -> dict:
                     break
 
     if sad_info:
-        print(f"✅ Znaleziono sąd: {sad_info.get('sad_nazwa_pelna')}")
+        pass  # usuniety print
         return {
             'sad_nazwa_pelna': sad_info.get('sad_nazwa_pelna', ''),
             'sad_wydzial_gospodarczy': sad_info.get('sad_wydzial_gospodarczy', ''),
             'sad_adres_pelny': sad_info.get('sad_adres_pelny', '')
         }
     else:
-        print(f"⚠️ Nie znaleziono sądu dla kodu: {pozwany_kod_miasto}")
+        pass  # usuniety print
         return {}
 
 
@@ -215,6 +218,7 @@ def analyze_pozew():
     Oczekuje JSON: { "wezwanie": {...}, "krs": [...] }
     Zwraca JSON:   { "success": true, "fields": {...} }
     """
+    print("Wywołano funkcję: analyze_pozew")
     data = request.get_json()
     if not data:
         return jsonify({'success': False, 'error': 'Brak danych'}), 400
@@ -226,7 +230,7 @@ def analyze_pozew():
     # KROK 1: Bezpośrednie mapowanie pól z wezwania (bez LLM)
     fields = _map_wezwanie_fields(wezwanie)
 
-    print(f"📋 KROK 1: Zmapowano {len(fields)} pól z wezwania (bez LLM)")
+    pass  # usuniety print
 
     # KROK 2: Szukanie numeru KRS pozwanego (krótkie zapytanie LLM)
     krs_number = _find_krs_number(fields.get('pozwany_nazwa_pelna', ''), krs_list, model=model_name)
@@ -243,6 +247,6 @@ def analyze_pozew():
     # Usuń puste pola z wyniku
     fields = {k: v for k, v in fields.items() if v}
 
-    print(f"📝 KROK 4: Finalne pola pozwu: {len(fields)} pól gotowych")
+    pass  # usuniety print
 
     return jsonify({'success': True, 'fields': fields})

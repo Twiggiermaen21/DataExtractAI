@@ -7,12 +7,14 @@ main_bp = Blueprint('main', __name__)
 @main_bp.route('/')
 def index():
     """Główna strona aplikacji."""
+    print("Wywołano funkcję: index")
     return render_template('index.html')
 
 
 @main_bp.route('/api/slownie/<amount>')
 def slownie(amount):
     """Zamienia kwotę na słowa używając niestandardowej logiki gramatycznej."""
+    print("Wywołano funkcję: slownie")
     try:
         from num2words import num2words
         # Zamień przecinek na kropkę i usuń spacje

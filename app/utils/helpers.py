@@ -17,6 +17,7 @@ def parse_kwota(kwota_str: str) -> float:
     Returns:
         Wartość kwoty jako float, 0.0 jeśli nie udało się sparsować
     """
+    print("Wywołano funkcję: parse_kwota")
     if not kwota_str:
         return 0.0
     
@@ -43,6 +44,7 @@ def find_field(data: dict, partial_key: str) -> str:
     Returns:
         Wartość pierwszego pasującego klucza lub pusty string
     """
+    print("Wywołano funkcję: find_field")
     for key, value in data.items():
         if partial_key.lower() in key.lower():
             return value
@@ -60,6 +62,7 @@ def extract_city_from_address(address: str) -> str:
     Returns:
         Nazwa miasta lub pusty string
     """
+    print("Wywołano funkcję: extract_city_from_address")
     if not address:
         return ''
     
@@ -78,6 +81,7 @@ def extract_postal_code_city(address: str) -> str:
     Returns:
         String "XX-XXX Miasto" lub pusty string
     """
+    print("Wywołano funkcję: extract_postal_code_city")
     if not address:
         return ''
     
@@ -95,6 +99,7 @@ def extract_postal_code(address: str) -> str:
     Returns:
         Kod pocztowy lub oryginalny string jeśli nie znaleziono
     """
+    print("Wywołano funkcję: extract_postal_code")
     if not address:
         return ''
     

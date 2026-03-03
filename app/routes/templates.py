@@ -23,6 +23,7 @@ def get_templates():
     Zwraca listę szablonów HTML z folderu templates/documents/.
     Każdy szablon opisany jest nazwą pliku i sformatowaną nazwą wyświetlaną.
     """
+    print("Wywołano funkcję: get_templates")
     templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
 
     if not os.path.exists(templates_dir):
@@ -50,6 +51,7 @@ def get_template(filename):
     Zwraca zawartość szablonu HTML oraz listę nazw pól formularza.
     Pola wyodrębniane są z atrybutów name="" elementów <input>.
     """
+    print("Wywołano funkcję: get_template")
     templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
     template_path = os.path.join(templates_dir, filename)
 
@@ -85,6 +87,7 @@ def process_template():
     Oczekuje JSON: { "files": ["plik1.json", ...], "fields": ["pole1", ...] }
     Zwraca JSON:   { "success": true, "fields": {...} }
     """
+    print("Wywołano funkcję: process_template")
     data = request.get_json()
 
     # Walidacja danych wejściowych

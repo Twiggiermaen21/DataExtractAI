@@ -27,6 +27,7 @@ def process_llm():
     Oczekuje JSON: { "filename": "nazwa_pliku.json", "attributes": "lista atrybutów" }
     Zwraca JSON:   { "success": true, "extracted_data": {...} }
     """
+    print("Wywołano funkcję: process_llm")
     data = request.get_json()
 
     if not data or 'filename' not in data:
@@ -60,6 +61,7 @@ def get_ocr_results():
     Zwraca listę plików JSON z wynikami OCR, posortowaną od najnowszego.
     Pliki pobierane z folderu OUTPUT_FOLDER.
     """
+    print("Wywołano funkcję: get_ocr_results")
     output_folder = current_app.config['OUTPUT_FOLDER']
 
     if not os.path.exists(output_folder):

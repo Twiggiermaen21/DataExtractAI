@@ -1,6 +1,7 @@
 _pipeline = None
 
 def get_pipeline(template_path=None, model=None):
+    print("Wywołano funkcję: get_pipeline")
     global _pipeline
     
     if _pipeline is None:
@@ -8,12 +9,12 @@ def get_pipeline(template_path=None, model=None):
             from app.services.ocr_llm_service import OCRService
             _pipeline = OCRService(model=model)
         except Exception as e:
-            print(f"⚠️ Błąd ładowania OCR: {e}")
+            pass  # usuniety print
             return None
     else:
         if model and _pipeline.model != model:
             _pipeline.model = model
-            print(f"🔄 Zaktualizowano model OCR na: {model}")
+            pass  # usuniety print
     
     # Ustaw szablon jeśli podano
     if template_path:
@@ -22,6 +23,7 @@ def get_pipeline(template_path=None, model=None):
     return _pipeline
 
 def unload_pipeline():
+    print("Wywołano funkcję: unload_pipeline")
     global _pipeline
     if _pipeline is not None:
         _pipeline.unload_model()

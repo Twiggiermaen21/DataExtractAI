@@ -13,6 +13,7 @@ LLAMA_SERVER_URL = "http://localhost:8080"
 
 def _get_text_from_ocr_json(json_path: str) -> str:
     """Wyciąga tekst z pliku JSON OCR."""
+    print("Wywołano funkcję: _get_text_from_ocr_json")
     with open(json_path, 'r', encoding='utf-8') as f:
         ocr_data = json.load(f)
     
@@ -27,13 +28,14 @@ def _get_text_from_ocr_json(json_path: str) -> str:
 
 def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     """Wysyła zapytanie do llama-server i zwraca odpowiedź."""
+    print("Wywołano funkcję: _call_llm")
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
     # === LOGOWANIE PROMPTÓW (Skrócone) ===
-    print(f"📤 WYSYŁANIE DO LLM...")
+    pass  # usuniety print
     
     response = requests.post(
         f"{LLAMA_SERVER_URL}/v1/chat/completions",
@@ -53,7 +55,7 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     llm_response = result['choices'][0]['message']['content'].strip()
     
     # === LOGOWANIE ODPOWIEDZI (Skrócone) ===
-    print("📥 POBRANO ODPOWIEDŹ LLM")
+    pass  # usuniety print
     
     return llm_response
 
@@ -61,6 +63,7 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
 
 def _parse_json_response(text: str) -> dict:
     """Parsuje odpowiedź JSON z LLM, usuwając markdown code blocks."""
+    print("Wywołano funkcję: _parse_json_response")
     if text.startswith('```'):
         lines = text.split('\n')
         if lines[0].startswith('```'):
@@ -80,6 +83,7 @@ def extract_invoice_data(ocr_json_path: str, custom_attributes: str = '', model:
     Ekstrahuje dane z dokumentu na podstawie wyników OCR.
     Wynik zapisywany jest automatycznie do output/extract_data/.
     """
+    print("Wywołano funkcję: extract_invoice_data")
     
     # System role - jasna rola dla LLM
     SYSTEM_ROLE = """Jesteś specjalistycznym asystentem do ekstrakcji danych z dokumentów.
@@ -125,7 +129,7 @@ TEKST DOKUMENTU:
 
 Zwróć TYLKO JSON:"""
         
-        print("🤖 Wysyłanie zapytania do llama-server...")
+        pass  # usuniety print
         
         generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         
@@ -153,7 +157,7 @@ Zwróć TYLKO JSON:"""
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, ensure_ascii=False, indent=2)
         
-        print(f"✅ Ekstrakcja zakończona. Zapisano: {output_path}")
+        pass  # usuniety print
         
         return {
             'success': True,
@@ -168,7 +172,7 @@ Zwróć TYLKO JSON:"""
     except requests.exceptions.Timeout:
         return {'error': 'Przekroczono czas oczekiwania na odpowiedź od llama-server'}
     except Exception as e:
-        print(f"❌ Błąd ekstrakcji: {e}")
+        pass  # usuniety print
         return {'error': str(e)}
 
 
@@ -183,6 +187,7 @@ def extract_template_fields(json_paths: list, field_names: list, model: str = No
     Returns:
         Słownik z wyekstrahowanymi wartościami pól
     """
+    print("Wywołano funkcję: extract_template_fields")
     
     # System role - precyzyjny dla Llama 3.2
     SYSTEM_ROLE = """Jesteś precyzyjnym systemem ekstrakcji danych z dokumentów.
@@ -225,13 +230,13 @@ TREŚĆ DOKUMENTÓW:
 
 Zwróć TYLKO wypełniony JSON:"""
         
-        print(f"🤖 Przetwarzanie {len(json_paths)} plików przez LLM...")
+        pass  # usuniety print
         
         generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         
         extracted_data = _parse_json_response(generated_text)
         
-        print("✅ Ekstrakcja szablonu zakończona.")
+        pass  # usuniety print
         
         return {
             'success': True,
@@ -244,5 +249,5 @@ Zwróć TYLKO wypełniony JSON:"""
     except requests.exceptions.Timeout:
         return {'error': 'Przekroczono czas oczekiwania na odpowiedź od llama-server'}
     except Exception as e:
-        print(f"❌ Błąd ekstrakcji szablonu: {e}")
+        pass  # usuniety print
         return {'error': str(e)}

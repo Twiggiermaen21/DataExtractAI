@@ -13,6 +13,7 @@ IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}
 @ocr_bp.route('/api/extract_pdf_text', methods=['POST'])
 def extract_pdf_text():
     """Wyciąga surowy tekst z PDF/DOCX bez wysyłania do LLM. Używane dla KRS."""
+    print("Wywołano funkcję: extract_pdf_text")
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'Brak pliku'}), 400
     
@@ -53,10 +54,10 @@ def extract_pdf_text():
         original_len = len(text)
         
         if original_len > 3000:
-            print(f"✂️ KRS tekst przycięty: {original_len} → 3000 znaków")
+            pass  # usuniety print
             text = text[:3000]
         
-        print(f"📄 Wyciągnięto tekst z {filename}: {len(text)} znaków")
+        pass  # usuniety print
         
         return jsonify({
             'success': True,
@@ -73,6 +74,7 @@ def extract_pdf_text():
 @ocr_bp.route('/api/process_ocr', methods=['POST'])
 def process_ocr():
     """OCR - przetwarza pliki i zwraca wyekstrahowane dane."""
+    print("Wywołano funkcję: process_ocr")
     if 'files' not in request.files:
         return jsonify({'success': False, 'error': 'Brak plików'}), 400
     
@@ -105,7 +107,7 @@ def process_ocr():
         
         try:
             file.save(original_path)
-            print(f"📁 Przetwarzanie: {filename}")
+            pass  # usuniety print
             
             # OCR
             ocr_output = pipeline.predict(original_path)
@@ -122,10 +124,10 @@ def process_ocr():
                         'fields': res.extracted_data
                     })
             
-            print(f"  ✅ Sukces!")
+            pass  # usuniety print
             
         except Exception as e:
-            print(f"  ❌ Błąd: {e}")
+            pass  # usuniety print
             traceback.print_exc()
             errors.append({'file': filename, 'error': str(e)})
     
@@ -143,6 +145,7 @@ def process_ocr():
 @ocr_bp.route('/api/get_results')
 def get_results():
     """Zwraca listę plików JSON z folderu output."""
+    print("Wywołano funkcję: get_results")
     output_folder = current_app.config['OUTPUT_FOLDER']
     
     if not os.path.exists(output_folder):
@@ -159,6 +162,7 @@ def get_results():
 @ocr_bp.route('/api/get_result/<filename>')
 def get_result(filename):
     """Zwraca zawartość pliku JSON."""
+    print("Wywołano funkcję: get_result")
     try:
         path = os.path.join(current_app.config['OUTPUT_FOLDER'], filename)
         with open(path, 'r', encoding='utf-8') as f:
@@ -170,4 +174,5 @@ def get_result(filename):
 @ocr_bp.route('/input/<filename>')
 def serve_input(filename):
     """Serwuje plik wejściowy."""
+    print("Wywołano funkcję: serve_input")
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)

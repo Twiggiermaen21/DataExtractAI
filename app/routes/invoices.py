@@ -29,6 +29,7 @@ def process_multiple_invoices():
     Zwraca JSON:   { "success": true, "results": [...], "invoices": [...],
                      "common_data": {...}, "total_amount": "0.00" }
     """
+    print("Wywołano funkcję: process_multiple_invoices")
     data = request.get_json()
 
     # Walidacja danych wejściowych
@@ -55,7 +56,7 @@ def process_multiple_invoices():
         if not os.path.exists(json_path):
             continue
 
-        print(f"📄 Przetwarzanie faktury: {filename}")
+        pass  # usuniety print
 
         # Przetwórz każdy plik osobno przez LLM
         result = extract_template_fields([json_path], fields, model=model_name)
@@ -65,7 +66,7 @@ def process_multiple_invoices():
 
             # Zapisz wynik do osobnego pliku JSON
             invoice_result = _save_invoice_result(filename, invoice_data, output_dir)
-            print(f"💾 Zapisano: {invoice_result['output_filename']}")
+            pass  # usuniety print
 
             # Wyciągnij kluczowe dane faktury (numer, kwota, termin)
             invoice_info = _extract_invoice_summary(filename, invoice_data)
@@ -117,6 +118,7 @@ def _save_invoice_result(filename: str, invoice_data: dict, output_dir: str) -> 
     Returns:
         Słownik z nazwą i ścieżką pliku wyjściowego
     """
+    print("Wywołano funkcję: _save_invoice_result")
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     base_name = os.path.splitext(filename)[0]
     output_filename = f"faktura_{base_name}_{timestamp}.json"
@@ -144,6 +146,7 @@ def _extract_invoice_summary(filename: str, invoice_data: dict) -> dict:
     Returns:
         Słownik z: source, numer, data, kwota, termin
     """
+    print("Wywołano funkcję: _extract_invoice_summary")
     # Szukaj kwoty — LLM może użyć różnych wariantów nazwy klucza
     kwota_val = (find_field(invoice_data, 'kwote_do_zaplaty')
                  or find_field(invoice_data, 'kwota_do_zaplaty')
@@ -169,6 +172,7 @@ def _calculate_total(invoices: list) -> float:
     Returns:
         Łączna suma jako float
     """
+    print("Wywołano funkcję: _calculate_total")
     total = 0.0
     for inv in invoices:
         total += parse_kwota(inv.get('kwota', '0'))
