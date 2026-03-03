@@ -25,31 +25,22 @@ def _get_text_from_ocr_json(json_path: str) -> str:
     return '\n'.join(text_blocks)
 
 
-def _call_llm(prompt: str, system_prompt: str = None) -> str:
+def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     """Wysyła zapytanie do llama-server i zwraca odpowiedź."""
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
-    # === LOGOWANIE PROMPTÓW ===
-    print("\n" + "="*60)
-    print("📤 WYSYŁANIE DO LLM")
-    print("="*60)
-    if system_prompt:
-        print("\n🔧 SYSTEM PROMPT:")
-        print("-"*40)
-        print(system_prompt)
-    print("\n💬 USER PROMPT:")
-    print("-"*40)
-    print(prompt)
-    print("="*60 + "\n")
+    # === LOGOWANIE PROMPTÓW (Skrócone) ===
+    print(f"📤 WYSYŁANIE DO LLM...")
     
     response = requests.post(
         f"{LLAMA_SERVER_URL}/v1/chat/completions",
         json={
+            "model": model or os.environ.get("LLM_MODEL", "default"),
             "messages": messages,
-            "max_tokens": 2000,
+            "max_tokens": 8000,
             "temperature": 0.1
         },
         timeout=120
@@ -61,12 +52,8 @@ def _call_llm(prompt: str, system_prompt: str = None) -> str:
     result = response.json()
     llm_response = result['choices'][0]['message']['content'].strip()
     
-    # === LOGOWANIE ODPOWIEDZI ===
-    print("\n" + "="*60)
-    print("📥 ODPOWIEDŹ LLM:")
-    print("="*60)
-    print(llm_response)
-    print("="*60 + "\n")
+    # === LOGOWANIE ODPOWIEDZI (Skrócone) ===
+    print("📥 POBRANO ODPOWIEDŹ LLM")
     
     return llm_response
 
@@ -88,7 +75,7 @@ def _parse_json_response(text: str) -> dict:
         return {'raw_response': text}
 
 
-def extract_invoice_data(ocr_json_path: str, custom_attributes: str = '') -> dict:
+def extract_invoice_data(ocr_json_path: str, custom_attributes: str = '', model: str = None) -> dict:
     """
     Ekstrahuje dane z dokumentu na podstawie wyników OCR.
     Wynik zapisywany jest automatycznie do output/extract_data/.
@@ -140,7 +127,7 @@ Zwróć TYLKO JSON:"""
         
         print("🤖 Wysyłanie zapytania do llama-server...")
         
-        generated_text = _call_llm(prompt, SYSTEM_ROLE)
+        generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         
         extracted_data = _parse_json_response(generated_text)
         
@@ -185,7 +172,7 @@ Zwróć TYLKO JSON:"""
         return {'error': str(e)}
 
 
-def extract_template_fields(json_paths: list, field_names: list) -> dict:
+def extract_template_fields(json_paths: list, field_names: list, model: str = None) -> dict:
     """
     Ekstrahuje wartości pól szablonu z wielu plików JSON OCR.
     
@@ -240,7 +227,7 @@ Zwróć TYLKO wypełniony JSON:"""
         
         print(f"🤖 Przetwarzanie {len(json_paths)} plików przez LLM...")
         
-        generated_text = _call_llm(prompt, SYSTEM_ROLE)
+        generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         
         extracted_data = _parse_json_response(generated_text)
         

@@ -270,6 +270,9 @@ if (btnOcrFill) {
         const templateName = templateSelect ? templateSelect.value : '';
         if (templateName) formData.append('template', templateName);
 
+        const modelSelect = document.getElementById('modelSelect');
+        if (modelSelect) formData.append('model', modelSelect.value);
+
         try {
             if (ocrFillStatusText) ocrFillStatusText.textContent = '🤖 OCR + Analiza AI...';
             if (ocrFillProgressFill) ocrFillProgressFill.style.width = '30%';
@@ -477,7 +480,8 @@ if (btnRunLlm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     files: selectedFiles,
-                    fields: currentTemplateFields
+                    fields: currentTemplateFields,
+                    model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : null
                 })
             });
 
@@ -846,6 +850,9 @@ if (btnPozewOcr) {
         pozewUploadedFiles.forEach(f => formData.append('files', f));
         formData.append('template', 'wezwanie_do_zaplaty.html');
 
+        const modelSelect = document.getElementById('modelSelect');
+        if (modelSelect) formData.append('model', modelSelect.value);
+
         try {
             const response = await fetch('/api/process_ocr', { method: 'POST', body: formData });
             if (progressFill) progressFill.style.width = '80%';
@@ -967,6 +974,9 @@ if (btnGeneratePozew) {
                 const wezForm = new FormData();
                 pozewUploadedFiles.forEach(f => wezForm.append('files', f));
                 wezForm.append('template', templateSelect.value);
+
+                const modelSelect = document.getElementById('modelSelect');
+                if (modelSelect) wezForm.append('model', modelSelect.value);
 
                 const wezResp = await fetch('/api/process_ocr', { method: 'POST', body: wezForm });
                 const wezData = await wezResp.json();

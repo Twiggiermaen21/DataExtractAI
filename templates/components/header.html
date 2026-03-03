@@ -1,4 +1,18 @@
 <header>
     <h1>Document AI</h1>
-    <p class="subtitle">OCR • Extraction • Template Filling</p>
+    <p class="subtitle" style="margin-bottom: 8px;">OCR • Extraction • Template Filling</p>
+
+    <div
+        style="margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 20px;">
+        <label for="modelSelect"
+            style="font-size: 0.9em; font-weight: 500; margin-right: 8px; color: var(--text-muted); margin-bottom: 0;">🤖
+            Model AI:</label>
+        <select id="modelSelect"
+            style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); font-size: 0.9em; color: var(--text-color);">
+            <option value="google/gemma-3-12b">google/gemma-3-12b</option>
+            <option value="google/gemma-3-4b">google/gemma-3-4b</option>
+            <option value="qwen/qwen3-v1-8b">qwen/qwen3-v1-8b</option>
+            <option value="qwen/qwen3.5-9b">qwen/qwen3.5-9b</option>
+        </select>
+    </div>
 </header>

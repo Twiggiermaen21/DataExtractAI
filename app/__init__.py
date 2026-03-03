@@ -19,10 +19,16 @@ def create_app():
     from app.routes.ocr import ocr_bp
     from app.routes.llm import llm_bp
     from app.routes.wezwania import wezwania_bp
+    from app.routes.pozew import pozew_bp
+    from app.routes.templates import templates_bp
+    from app.routes.invoices import invoices_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
     app.register_blueprint(llm_bp)
     app.register_blueprint(wezwania_bp)
+    app.register_blueprint(pozew_bp)
+    app.register_blueprint(templates_bp)
+    app.register_blueprint(invoices_bp)
 
     return app

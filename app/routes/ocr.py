@@ -3,8 +3,7 @@ import json
 import traceback
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 
-from app.services.ocr_service import get_pipeline, unload_pipeline
-from app.services.image_enhancer import enhance_image_for_ocr
+from app.services.ocr_pipeline import get_pipeline, unload_pipeline
 
 ocr_bp = Blueprint('ocr', __name__)
 
@@ -84,9 +83,10 @@ def process_ocr():
     # Pobierz szablon (opcjonalnie)
     template_name = request.form.get('template', 'wezwanie_do_zaplaty.html')
     template_path = os.path.join(current_app.root_path, '..', 'templates', 'documents', template_name)
+    model_name = request.form.get('model')
     
     try:
-        pipeline = get_pipeline(template_path if os.path.exists(template_path) else None)
+        pipeline = get_pipeline(template_path if os.path.exists(template_path) else None, model=model_name)
         if pipeline is None:
             return jsonify({'success': False, 'error': 'Nie można połączyć z LM Studio'}), 500
     except Exception as e:
@@ -102,24 +102,13 @@ def process_ocr():
             
         filename = file.filename
         original_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        temp_enhanced_path = None
         
         try:
             file.save(original_path)
             print(f"📁 Przetwarzanie: {filename}")
             
-            path_to_process = original_path
-            file_ext = os.path.splitext(filename)[1].lower()
-            
-            if file_ext in IMAGE_EXTENSIONS:
-                try:
-                    temp_enhanced_path = enhance_image_for_ocr(original_path, scale_factor=1.5)
-                    path_to_process = temp_enhanced_path
-                except:
-                    pass
-            
             # OCR
-            ocr_output = pipeline.predict(path_to_process)
+            ocr_output = pipeline.predict(original_path)
             
             for res in ocr_output:
                 saved = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
@@ -132,11 +121,6 @@ def process_ocr():
                         'filename': filename,
                         'fields': res.extracted_data
                     })
-            
-            # Usuń temp
-            if temp_enhanced_path and os.path.exists(temp_enhanced_path):
-                try: os.remove(temp_enhanced_path)
-                except: pass
             
             print(f"  ✅ Sukces!")
             
