@@ -112,6 +112,7 @@ def process_ocr():
             # OCR
             ocr_output = pipeline.predict(original_path)
             
+            has_data = False
             for res in ocr_output:
                 saved = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
                 if saved:
@@ -123,8 +124,11 @@ def process_ocr():
                         'filename': filename,
                         'fields': res.extracted_data
                     })
+                    has_data = True
             
-            pass  # usuniety print
+            # Jeśli model nie zwrócił żadnych danych — zgłoś błąd z nazwą pliku
+            if not has_data:
+                errors.append({'file': filename, 'error': f'Model nie zwrócił danych dla pliku: {filename}'})
             
         except Exception as e:
             pass  # usuniety print

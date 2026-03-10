@@ -44,6 +44,33 @@
 
 ---
 
+## 🐳 Uruchamianie przez Docker (Zalecane)
+
+Aplikację można łatwo uruchomić jako samodzielny kontener Docker, bez używania `docker-compose`.
+
+1.  Upewnij się, że masz zainstalowanego Dockera.
+2.  Zbuduj obraz na podstawie przygotowanego `Dockerfile`:
+
+    ```bash
+    docker build -t ocr_bot .
+    ```
+
+3.  Uruchom kontener w tle (`-d`):
+
+    ```bash
+    docker run -d --name ocr_bot -p 5000:5000 ocr_bot
+    ```
+
+4.  Aplikacja będzie dostępna pod adresem: `http://localhost:5000`
+
+### Praca z kontenerem:
+
+- Podgląd logów aplikacji: `docker logs -f ocr_bot`
+- Zatrzymanie aplikacji: `docker stop ocr_bot`
+- Usunięcie kontenera: `docker rm ocr_bot`
+
+---
+
 <div align="center">
     <sub>Projekt stworzony w celach edukacyjnych.</sub>
 </div>
