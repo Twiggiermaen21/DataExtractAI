@@ -80,7 +80,7 @@ class OCRService:
                         "content": f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n{self._build_prompt(is_text=True)}"
                     }
                 ],
-                "max_tokens": 8000,
+                "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
                 "temperature": 0.1
             }
         else:
@@ -100,7 +100,7 @@ class OCRService:
                         ]
                     }
                 ],
-                "max_tokens": 8000,
+                "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
                 "temperature": 0.1
             }
         

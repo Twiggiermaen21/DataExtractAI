@@ -50,7 +50,7 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
         json={
             "model": model or os.environ.get("LLM_MODEL", "default"),
             "messages": messages,
-            "max_tokens": 20000,
+            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
             "temperature": 0.1
         },
         timeout=120
