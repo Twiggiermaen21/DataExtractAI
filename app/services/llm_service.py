@@ -34,15 +34,23 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
-    # === LOGOWANIE PROMPTÓW (Skrócone) ===
-    pass  # usuniety print
+    # === LOGOWANIE PROMPTÓW ===
+    print("\n" + "="*80)
+    print("[LLM_SERVICE] WYSYŁANIE ZAPYTANIA DO LLM")
+    print("="*80)
+    print(f"[LLM_SERVICE] Model: {model or os.environ.get('LLM_MODEL', 'default')}")
+    print(f"[LLM_SERVICE] URL: {LLAMA_SERVER_URL}/v1/chat/completions")
+    if system_prompt:
+        print(f"[LLM_SERVICE] System prompt: {system_prompt[:300]}..." if len(system_prompt) > 300 else f"[LLM_SERVICE] System prompt: {system_prompt}")
+    print(f"[LLM_SERVICE] User prompt: {prompt[:500]}..." if len(prompt) > 500 else f"[LLM_SERVICE] User prompt: {prompt}")
+    print("="*80)
     
     response = requests.post(
         f"{LLAMA_SERVER_URL}/v1/chat/completions",
         json={
             "model": model or os.environ.get("LLM_MODEL", "default"),
             "messages": messages,
-            "max_tokens": 8000,
+            "max_tokens": 20000,
             "temperature": 0.1
         },
         timeout=120
@@ -54,8 +62,9 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     result = response.json()
     llm_response = result['choices'][0]['message']['content'].strip()
     
-    # === LOGOWANIE ODPOWIEDZI (Skrócone) ===
-    pass  # usuniety print
+    # === LOGOWANIE ODPOWIEDZI ===
+    print(f"[LLM_SERVICE] ODPOWIEDŹ (pierwsze 500 znaków): {llm_response[:500]}")
+    print("="*80 + "\n")
     
     return llm_response
 
@@ -129,7 +138,7 @@ TEKST DOKUMENTU:
 
 Zwróć TYLKO JSON:"""
         
-        pass  # usuniety print
+        print(f"\n[LLM_SERVICE extract_invoice_data] Pełny PROMPT:\n{prompt}")
         
         generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         
@@ -230,7 +239,7 @@ TREŚĆ DOKUMENTÓW:
 
 Zwróć TYLKO wypełniony JSON:"""
         
-        pass  # usuniety print
+        print(f"\n[LLM_SERVICE extract_template_fields] Pełny PROMPT:\n{prompt}")
         
         generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
         

@@ -105,15 +105,33 @@ class OCRService:
             }
         
         # DEBUG: Wyświetl dane wysyłane do LLM
-        pass  # usuniety print
-        pass  # usuniety print
+        print("\n" + "="*80)
+        print("[OCR_LLM] WYSYŁANIE ZAPYTANIA DO LLM")
+        print("="*80)
+        print(f"[OCR_LLM] Model: {self.model}")
+        print(f"[OCR_LLM] API URL: {self.api_url}")
+        print(f"[OCR_LLM] System prompt: {payload['messages'][0]['content']}")
+        user_msg = payload['messages'][1]['content']
+        if isinstance(user_msg, list):
+            # Wiadomość z obrazem - wyświetl tylko tekst
+            for part in user_msg:
+                if part.get('type') == 'text':
+                    print(f"[OCR_LLM] User prompt (tekst): {part['text']}")
+                elif part.get('type') == 'image_url':
+                    print(f"[OCR_LLM] User prompt zawiera obraz base64 (długość: {len(part['image_url']['url'])} znaków)")
+        else:
+            print(f"[OCR_LLM] User prompt: {user_msg}")
+        print(f"[OCR_LLM] Max tokens: {payload.get('max_tokens')}")
+        print(f"[OCR_LLM] Temperature: {payload.get('temperature')}")
+        print(f"[OCR_LLM] Pola do ekstrakcji: {self.fields}")
+        print("="*80 + "\n")
         
         response = requests.post(self.api_url, json=payload, headers={"Content-Type": "application/json"}, timeout=self.timeout)
         
         if response.status_code == 200:
             result = response.json()
             output_text = result["choices"][0]["message"]["content"]
-            pass  # usuniety print
+            print(f"[OCR_LLM] ODPOWIEDŹ LLM (pierwsze 500 znaków): {output_text[:500]}")
             return [OCRResult(output_text, file_path)]
         else:
             raise Exception(f"API błąd {response.status_code}: {response.text}")
