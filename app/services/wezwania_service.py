@@ -13,6 +13,25 @@ def get_wezwania_dir():
     return wezwania_dir
 
 
+
+# Mapowanie długich nazw pól z szablonu na krótkie nazwy
+FIELD_NAME_MAP = {
+    'Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_czesto_na_gorze_faktury': 'wierzyciel_nazwa',
+    'Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto': 'wierzyciel_adres',
+    'Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto': 'wierzyciel_adres',
+    'Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji': 'wierzyciel_nip',
+    'Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge': 'dluznik_nazwa',
+    'Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto': 'dluznik_adres',
+    'Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany': 'dluznik_nip',
+    'Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty': 'faktura_numer',
+    'Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy': 'faktura_data_wystawienia',
+    'Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta': 'kwota_do_zaplaty',
+    'Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki': 'termin_platnosci',
+    'Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury': 'numer_konta',
+    'Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta': 'nazwa_banku',
+}
+
+
 def _remap_fields(data: dict) -> dict:
     """Zamienia długie nazwy pól z szablonu na krótkie, czytelne nazwy.
     Pomija puste wartości i pola bez mapowania."""
