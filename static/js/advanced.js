@@ -226,19 +226,6 @@ function updateAdvOcrButton() {
     if (btnOcrFill) {
         btnOcrFill.disabled = advUploadedFiles.length === 0;
     }
-
-    // Pokaż/ukryj checkbox "Generuj wiele wezwań" gdy >1 plik i workflow=wezwanie
-    const multiOption = document.getElementById('multiWezwanieOption');
-    if (multiOption) {
-        if (advUploadedFiles.length > 1 && advWorkflowType === 'wezwanie') {
-            multiOption.classList.remove('hidden');
-        } else {
-            multiOption.classList.add('hidden');
-            // Odznacz checkbox gdy schowany
-            const chk = document.getElementById('chkMultiWezwanie');
-            if (chk) chk.checked = false;
-        }
-    }
 }
 
 // === OCR + FILL PROCESSING ===
@@ -284,17 +271,127 @@ if (btnOcrFill) {
 
             if (data.success && data.documents && data.documents.length > 0) {
 
-                // === TRYB: Generuj wiele wezwań (osobny PDF per faktura) ===
-                const chkMulti = document.getElementById('chkMultiWezwanie');
-                if (chkMulti && chkMulti.checked && data.documents.length > 1) {
-                    await handleMultiWezwanieGeneration(data.documents, ocrFillStatusText, ocrFillProgressFill);
+                // === TRYB: Podsumowanie (wiele faktur) ===
+                if (advWorkflowType === 'podsumowanie') {
+                    if (ocrFillStatusText) ocrFillStatusText.textContent = `📑 Generowanie wpisów dla ${data.documents.length} faktur...`;
+                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '60%';
 
-                    // Wyczyść pliki
+                    // Mapowanie długich nazw pól na czytelne etykiety
+                    const fieldLabels = {
+                        'nazwa_firmy_sprzedawcy': 'Wierzyciel (nazwa)',
+                        'adres_sprzedawcy': 'Wierzyciel (adres)',
+                        'nip_sprzedawcy': 'NIP wierzyciela',
+                        'nazwa_firmy_nabywcy': 'Dłużnik (nazwa)',
+                        'adres_siedziby_nabywcy': 'Dłużnik (adres)',
+                        'nip_nabywcy': 'NIP dłużnika',
+                        'numer_faktury': 'Numer faktury',
+                        'date_wystawienia': 'Data wystawienia',
+                        'kwote_do_zaplaty': 'Kwota do zapłaty',
+                        'terminu_platnosci': 'Termin płatności',
+                        'numer_konta': 'Numer konta',
+                        'nazwe_banku': 'Bank'
+                    };
+
+                    function getLabel(fieldName) {
+                        const lower = fieldName.toLowerCase();
+                        for (let [key, label] of Object.entries(fieldLabels)) {
+                            if (lower.includes(key)) return label;
+                        }
+                        return fieldName.replace(/^Znajdz_na_fakturze_|^Znajdz_i_przepisz_|^Znajdz_/g, '').replace(/_/g, ' ').substring(0, 60);
+                    }
+
+                    if (templateIframe && templateIframe.contentDocument) {
+                        const doc = templateIframe.contentDocument;
+                        const listContainer = doc.getElementById('podsumowanie-list');
+                        if (listContainer) {
+                            let html = '';
+                            data.documents.forEach((docData, i) => {
+                                const fields = docData.fields || {};
+                                const invoiceFilename = docData.filename || `Faktura ${i + 1}`;
+                                
+                                html += `<div class="summary-item">
+                                    <div class="summary-header">#${i + 1} — ${invoiceFilename}</div>
+                                    <div class="summary-body">`;
+                                
+                                // Specific ordering
+                                const orderedKeys = Object.keys(fields).sort((a,b) => {
+                                    const str_a = a.toLowerCase();
+                                    const str_b = b.toLowerCase();
+                                    const isA_dluznik = str_a.includes('nabywc');
+                                    const isA_wierzyciel = str_a.includes('sprzedawc');
+                                    const isB_dluznik = str_b.includes('nabywc');
+                                    const isB_wierzyciel = str_b.includes('sprzedawc');
+                                    if(isA_wierzyciel && !isB_wierzyciel) return -1;
+                                    if(!isA_wierzyciel && isB_wierzyciel) return 1;
+                                    if(isA_dluznik && !isB_dluznik) return -1;
+                                    if(!isA_dluznik && isB_dluznik) return 1;
+                                    return 0;
+                                });
+
+                                for (let fieldName of orderedKeys) {
+                                    const value = fields[fieldName];
+                                    if (!value) continue;
+                                    const label = getLabel(fieldName);
+                                    let cssClass = 'field-row';
+                                    if (label.includes('nazwa') || label.includes('adres') || label.includes('Bank') || label.includes('konta')) {
+                                         cssClass += ' full-width';
+                                    }
+
+                                    let valueStyle = '';
+                                    if (label === 'Kwota do zapłaty') {
+                                        const numStr = String(value).replace(/[^\d,.]/g, '').replace(',', '.');
+                                        const num = parseFloat(numStr);
+                                        if (!isNaN(num) && num > 1000) {
+                                            valueStyle = 'color: #d32f2f; font-weight: bold;';
+                                        }
+                                    }
+
+                                    html += `
+                                        <div class="${cssClass}">
+                                            <div class="field-label">${label}</div>
+                                            <div class="field-value" style="${valueStyle}">${value}</div>
+                                        </div>
+                                    `;
+                                }
+                                html += `</div></div>`;
+                            });
+                            listContainer.innerHTML = html;
+                        }
+                    }
+
+                    // Zapisz każde wezwanie do JSON - backend API do generowania POZWU czy wykorzystania zapisanych dokumentow
+                    if (progressFill) progressFill.style.width = '80%';
+                    for (let i = 0; i < data.documents.length; i++) {
+                        const fields = data.documents[i].fields || {};
+                        try {
+                            await fetch('/api/wezwania/save', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ fields })
+                            });
+                        } catch (e) {
+                            console.warn('Błąd zapisu wezwania JSON:', e);
+                        }
+                    }
+
+                    if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Wygenerowano podsumowanie dla ${data.documents.length} faktur!`;
+                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
+
+                    // Pokaż wyekstrahowane dane
+                    if (extractedDataCard && extractedDataContent) {
+                        extractedDataCard.classList.remove('hidden');
+                        extractedDataContent.textContent = JSON.stringify({
+                            dokumenty: data.documents.length,
+                            wszystkie_dane: data.documents
+                        }, null, 2);
+                    }
+
                     advUploadedFiles = [];
                     renderAdvFileList();
                     updateAdvOcrButton();
+
                 } else {
-                    // === TRYB NORMALNY: Agregacja danych ===
+                    // === TRYB NORMALNY: Agregacja danych dla wezwania ===
                     if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Przetworzono ${data.documents.length} dokumentów!`;
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
@@ -660,6 +757,10 @@ if (templateSelect) {
 
             // Załaduj listę wezwań
             loadAdvWezwaniaList();
+        } else if (filename.includes('podsumowanie')) {
+            advWorkflowType = 'podsumowanie';
+            // Pokaż sekcję upload dla podsumowania
+            if (advStepUpload) advStepUpload.classList.remove('hidden');
         }
 
 
@@ -1104,126 +1205,4 @@ if (btnGeneratePozew) {
     });
 }
 
-// === MULTI-WEZWANIE: Generuj plik .md z danymi ze wszystkich faktur ===
-async function handleMultiWezwanieGeneration(documents, statusText, progressFill) {
-    const totalDocs = documents.length;
-
-    if (statusText) statusText.textContent = `📑 Generowanie pliku MD z ${totalDocs} wezwań...`;
-    if (progressFill) progressFill.style.width = '60%';
-
-    // Mapowanie długich nazw pól na czytelne etykiety
-    const fieldLabels = {
-        'nazwa_firmy_sprzedawcy': 'Wierzyciel (nazwa)',
-        'adres_sprzedawcy': 'Wierzyciel (adres)',
-        'nip_sprzedawcy': 'NIP wierzyciela',
-        'nazwa_firmy_nabywcy': 'Dłużnik (nazwa)',
-        'adres_siedziby_nabywcy': 'Dłużnik (adres)',
-        'nip_nabywcy': 'NIP dłużnika',
-        'numer_faktury': 'Numer faktury',
-        'date_wystawienia': 'Data wystawienia',
-        'kwote_do_zaplaty': 'Kwota do zapłaty',
-        'terminu_platnosci': 'Termin płatności',
-        'numer_konta': 'Numer konta',
-        'nazwe_banku': 'Bank'
-    };
-
-    function getLabel(fieldName) {
-        const lower = fieldName.toLowerCase();
-        for (let [key, label] of Object.entries(fieldLabels)) {
-            if (lower.includes(key)) return label;
-        }
-        // Fallback: wyczyść nazwę pola
-        return fieldName
-            .replace(/^Znajdz_na_fakturze_|^Znajdz_i_przepisz_|^Znajdz_/g, '')
-            .replace(/_/g, ' ')
-            .substring(0, 60);
-    }
-
-    // Buduj zawartość MD
-    const now = new Date();
-    const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
-
-    let md = `# Wezwania do zapłaty\n\n`;
-    md += `Data generowania: ${dateStr}\n\n`;
-    md += `Liczba wezwań: ${totalDocs}\n\n`;
-    md += `---\n\n`;
-
-    for (let i = 0; i < totalDocs; i++) {
-        const doc = documents[i];
-        const fields = doc.fields || {};
-        const invoiceFilename = doc.filename || `faktura_${i + 1}`;
-
-        md += `## Wezwanie ${i + 1} — ${invoiceFilename}\n\n`;
-
-        for (let [fieldName, value] of Object.entries(fields)) {
-            if (!value) continue;
-            const label = getLabel(fieldName);
-            md += `- **${label}:** ${value}\n`;
-        }
-
-        md += `\n---\n\n`;
-    }
-
-    if (progressFill) progressFill.style.width = '80%';
-
-    // Zapisz plik MD na serwerze
-    const mdFilename = `wezwania_${dateStr.replace(/\./g, '-')}.md`;
-
-    try {
-        const saveResp = await fetch('/api/wezwania/save_file', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filename: mdFilename, content: md })
-        });
-        const saveResult = await saveResp.json();
-
-        if (!saveResult.success) {
-            console.warn('Błąd zapisu MD:', saveResult.error);
-        }
-    } catch (e) {
-        console.warn('Błąd zapisu MD na serwer:', e);
-    }
-
-    // Zapisz każde wezwanie do JSON
-    for (let i = 0; i < totalDocs; i++) {
-        const fields = documents[i].fields || {};
-        try {
-            await fetch('/api/wezwania/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fields })
-            });
-        } catch (e) {
-            console.warn('Błąd zapisu wezwania JSON:', e);
-        }
-    }
-
-    // Pobierz plik MD w przeglądarce
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const downloadUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = mdFilename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(downloadUrl);
-
-    if (progressFill) progressFill.style.width = '100%';
-    if (statusText) statusText.textContent = `✅ Wygenerowano plik ${mdFilename} z ${totalDocs} wezwaniami!`;
-
-    // Pokaż podgląd MD w iframe
-    if (templateIframe && templateIframe.contentDocument) {
-        const iframeDoc = templateIframe.contentDocument;
-        iframeDoc.body.innerHTML = `
-            <div style="padding: 30px; font-family: 'Segoe UI', sans-serif;">
-                <h2 style="color: #2e7d32;">✅ Wygenerowano ${totalDocs} wezwań</h2>
-                <p style="color: #666;">Zapisano w: <strong>output/pobrane/${mdFilename}</strong></p>
-                <hr>
-                <pre style="background: #f5f5f5; padding: 20px; border-radius: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.6;">${md.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-            </div>
-        `;
-    }
-}
 
