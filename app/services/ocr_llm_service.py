@@ -1,6 +1,6 @@
 import os
 import requests
-from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf, extract_fields_from_template
+from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf, extract_text_from_pdf_pages, extract_fields_from_template
 from app.utils.ocr_result import OCRResult
 
 class OCRService:
@@ -30,80 +30,124 @@ class OCRService:
         self.fields = extract_fields_from_template(template_path)
     
     def predict(self, file_path):
-        """Wysyła plik do API i zwraca wynik."""
+        """Wysyła plik do API i zwraca wynik. Dla PDF-ów przetwarza każdą stronę osobno."""
         print("Wywołano funkcję: predict")
-        pass  # usuniety print
         
         ext = os.path.splitext(file_path)[1].lower()
         
-        # Dla plików tekstowych (DOCX, PDF) - wyciągnij tekst
-        text_content = None
-        is_scanned_pdf = False
+        # ── PDF: przetwarzaj każdą stronę osobno ──
+        if ext == '.pdf':
+            return self._predict_pdf(file_path)
         
+        # ── DOCX / DOC ──
         if ext in ['.docx', '.doc']:
-            pass  # usuniety print
             text_content = extract_text_from_docx(file_path)
-        elif ext == '.pdf':
-            pass  # usuniety print
-            text_content = extract_text_from_pdf(file_path)
-            if not text_content or len(text_content) < 50:
-                pass  # usuniety print
-                is_scanned_pdf = True
-                # Konwertuj pierwszą stronę PDF na obraz
+            if text_content and len(text_content) >= 50:
+                return [self._predict_text(text_content, file_path)]
+        
+        # ── Obrazy i inne pliki ──
+        return [self._predict_image(file_path)]
+    
+    def _predict_pdf(self, file_path):
+        """Przetwarza PDF — każdą stronę osobno. Zwraca listę OCRResult."""
+        print("Wywołano funkcję: _predict_pdf")
+        import fitz
+        
+        # Wyciągnij tekst z każdej strony osobno
+        page_texts = extract_text_from_pdf_pages(file_path)
+        num_pages = len(page_texts)
+        print(f"[OCR_LLM] PDF ma {num_pages} stron(y)")
+        
+        all_results = []
+        
+        for page_num in range(num_pages):
+            page_text = page_texts[page_num]
+            print(f"\n[OCR_LLM] === Przetwarzanie strony {page_num + 1}/{num_pages} ===")
+            
+            if page_text and len(page_text) >= 50:
+                # Strona z tekstem — wyślij tekst do LLM
+                result = self._predict_text(
+                    page_text, file_path,
+                    page_info=f"strona {page_num + 1}/{num_pages}"
+                )
+                all_results.append(result)
+            else:
+                # Strona bez tekstu (skan) — konwertuj na obraz
                 try:
-                    import fitz
                     doc = fitz.open(file_path)
-                    page = doc[0]
+                    page = doc[page_num]
                     pix = page.get_pixmap(dpi=150)
-                    img_path = file_path + ".png"
+                    img_path = f"{file_path}_page{page_num + 1}.png"
                     pix.save(img_path)
                     doc.close()
-                    file_path = img_path  # Użyj obrazu zamiast PDF
-                    ext = '.png'
+                    
+                    result = self._predict_image(img_path, source_path=file_path)
+                    all_results.append(result)
+                    
+                    # Usuń tymczasowy obraz
+                    try:
+                        os.remove(img_path)
+                    except:
+                        pass
                 except Exception as e:
-                    raise Exception(f"Nie można skonwertować PDF na obraz: {e}")
-                text_content = None  # Wymuś ścieżkę obrazu
+                    print(f"[OCR_LLM] Błąd strony {page_num + 1}: {e}")
         
-        if text_content and len(text_content) >= 50:
-            # Ogranicz tekst żeby nie przekroczyć kontekstu LLM 
-            if len(text_content) > 3000:
-                pass  # usuniety print
-                raise Exception("Dokument jest zbyt długi do przetworzenia przez LLM.")
-            
-            # Dla dokumentów tekstowych
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": "Jesteś asystentem. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
-                    {
-                        "role": "user",
-                        "content": f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n{self._build_prompt(is_text=True)}"
-                    }
-                ],
-                "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
-                "temperature": 0.1
-            }
-        else:
-            # Dla obrazów - wyślij jako base64
-            image_base64 = image_to_base64(file_path)
-            mime_type = get_mime_type(file_path)
-            
-            payload = {
-                "model": self.model,
-                "messages": [
-                    {"role": "system", "content": "Jesteś asystentem OCR. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}},
-                            {"type": "text", "text": self._build_prompt(is_text=False)}
-                        ]
-                    }
-                ],
-                "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
-                "temperature": 0.1
-            }
+        if not all_results:
+            raise Exception("Nie udało się przetworzyć żadnej strony PDF.")
         
+        return all_results
+    
+    def _predict_text(self, text_content, file_path, page_info=None):
+        """Wysyła tekst dokumentu do LLM i zwraca OCRResult."""
+        label = f" ({page_info})" if page_info else ""
+        print(f"[OCR_LLM] Przetwarzanie tekstu{label}, długość: {len(text_content)} znaków")
+        
+        if len(text_content) > 3000:
+            print(f"[OCR_LLM] Tekst za długi ({len(text_content)} znaków), przycinanie do 3000")
+            text_content = text_content[:3000]
+        
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": "Jesteś asystentem. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
+                {
+                    "role": "user",
+                    "content": f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n{self._build_prompt(is_text=True)}"
+                }
+            ],
+            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
+            "temperature": 0.1
+        }
+        
+        return self._send_to_llm(payload, file_path)
+    
+    def _predict_image(self, image_path, source_path=None):
+        """Wysyła obraz do LLM i zwraca OCRResult."""
+        print(f"[OCR_LLM] Przetwarzanie obrazu: {image_path}")
+        
+        image_base64 = image_to_base64(image_path)
+        mime_type = get_mime_type(image_path)
+        
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": "Jesteś asystentem OCR. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}},
+                        {"type": "text", "text": self._build_prompt(is_text=False)}
+                    ]
+                }
+            ],
+            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
+            "temperature": 0.1
+        }
+        
+        return self._send_to_llm(payload, source_path or image_path)
+    
+    def _send_to_llm(self, payload, result_path):
+        """Wysyła payload do API LLM i zwraca OCRResult."""
         # DEBUG: Wyświetl dane wysyłane do LLM
         print("\n" + "="*80)
         print("[OCR_LLM] WYSYŁANIE ZAPYTANIA DO LLM")
@@ -113,7 +157,6 @@ class OCRService:
         print(f"[OCR_LLM] System prompt: {payload['messages'][0]['content']}")
         user_msg = payload['messages'][1]['content']
         if isinstance(user_msg, list):
-            # Wiadomość z obrazem - wyświetl tylko tekst
             for part in user_msg:
                 if part.get('type') == 'text':
                     print(f"[OCR_LLM] User prompt (tekst): {part['text']}")
@@ -132,7 +175,7 @@ class OCRService:
             result = response.json()
             output_text = result["choices"][0]["message"]["content"]
             print(f"[OCR_LLM] ODPOWIEDŹ LLM (pierwsze 500 znaków): {output_text[:500]}")
-            return [OCRResult(output_text, file_path)]
+            return OCRResult(output_text, result_path)
         else:
             raise Exception(f"API błąd {response.status_code}: {response.text}")
     

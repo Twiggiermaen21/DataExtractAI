@@ -65,3 +65,18 @@ def extract_text_from_pdf(path):
         return text.strip()
     except ImportError:
         raise Exception("PyMuPDF (fitz) nie jest zainstalowane. Uruchom: pip install pymupdf")
+
+def extract_text_from_pdf_pages(path):
+    """Wyciąga tekst z każdej strony PDF osobno. Zwraca listę stringów."""
+    print("Wywołano funkcję: extract_text_from_pdf_pages")
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(path)
+        pages = []
+        for page in doc:
+            text = page.get_text().strip()
+            pages.append(text)
+        doc.close()
+        return pages
+    except ImportError:
+        raise Exception("PyMuPDF (fitz) nie jest zainstalowane. Uruchom: pip install pymupdf")

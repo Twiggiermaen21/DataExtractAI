@@ -93,11 +93,6 @@ if (btnOcr) {
             formData.append('files', file);
         });
 
-        const modelSelect = document.getElementById('modelSelect');
-        if (modelSelect) {
-            formData.append('model', modelSelect.value);
-        }
-
         try {
             if (statusText) statusText.textContent = 'Przetwarzanie obrazów...';
             if (progressFill) progressFill.style.width = '30%';
