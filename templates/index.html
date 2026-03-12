@@ -5,16 +5,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OCR & AI Document Processor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/advanced.css') }}">
 </head>
 
 <body>
-  <div class="container">
-    {% include 'components/header.html' %}
-    {% include 'components/tab_advanced.html' %}
+  <div class="app-layout">
+    {% include 'components/sidebar.html' %}
+    
+    <div class="main-content">
+      {% include 'components/header.html' %}
+      
+      <div class="dashboard-content">
+        {% include 'components/tab_advanced.html' %}
+      </div>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

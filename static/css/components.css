@@ -2,21 +2,46 @@
 
 /* Cards */
 .card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--card-dark);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 28px;
     margin-bottom: 28px;
     transition: var(--transition);
     box-shadow: var(--shadow);
+    color: var(--text-primary);
 }
 
 .card:hover {
-    border-color: var(--border-glow);
-    box-shadow: var(--shadow), var(--shadow-glow);
-    transform: translateY(-2px);
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* Card Variations based on Dashboard Design */
+.card-green {
+    background: var(--card-green);
+    color: var(--text-on-light);
+    border: none;
+}
+.card-purple {
+    background: var(--card-purple);
+    color: var(--text-on-light);
+    border: none;
+}
+.card-beige {
+    background: var(--card-beige);
+    color: var(--text-on-light);
+    border: none;
+}
+
+/* Text overrides for light cards */
+.card-green .card-title, .card-purple .card-title, .card-beige .card-title,
+.card-green .step-label, .card-purple .step-label, .card-beige .step-label {
+    color: var(--text-on-light);
+}
+.card-green .icon, .card-purple .icon, .card-beige .icon {
+    filter: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .card-title {
@@ -26,12 +51,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    color: var(--text-primary);
-}
-
-.card-title .icon {
-    font-size: 1.4rem;
-    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
 }
 
 /* Upload Zone */
@@ -193,6 +212,18 @@
     font-size: 0.85rem !important;
 }
 
+.btn-dark {
+    background: #111111;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.btn-dark:hover:not(:disabled) {
+    background: #222222;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
 .btn.loading {
     background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-blue));
     background-size: 200% 100%;
@@ -276,20 +307,32 @@ select,
 textarea {
     width: 100%;
     padding: 14px 18px;
-    background: rgba(20, 20, 30, 0.6);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
+    border-radius: var(--radius-xl);
+    color: inherit;
     font-family: inherit;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     transition: var(--transition);
     outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Light cards override for inputs */
+.card-green select, .card-purple select, .card-beige select,
+.card-green textarea, .card-purple textarea, .card-beige textarea {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: rgba(0,0,0,0.1);
+    color: var(--text-on-light);
 }
 
 select:focus,
 textarea:focus {
-    border-color: var(--accent-purple);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    border-color: var(--accent-blue);
+    background: rgba(255, 255, 255, 0.1);
+}
+.card-green select:focus, .card-purple select:focus, .card-beige select:focus {
+    background: rgba(255, 255, 255, 0.7);
 }
 
 textarea {
@@ -297,10 +340,10 @@ textarea {
     resize: vertical;
 }
 
-label {
+label, .step-label {
     display: block;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     margin-bottom: 10px;
     font-weight: 500;
 }

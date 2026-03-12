@@ -717,6 +717,31 @@ if (btnRunLlm) {
 
 // === TEMPLATE SELECTION - WORKFLOW BRANCHING ===
 
+// Połącz powiązania z Sidebarem (Paskiem bocznym)
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebarNav = document.getElementById('sidebarTemplateNav');
+    if (sidebarNav && templateSelect) {
+        const navItems = sidebarNav.querySelectorAll('.nav-item');
+        
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const templateFile = item.getAttribute('data-template');
+                if (templateFile) {
+                    // Odznacz wszystkie
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    // Zaznacz kliknięty
+                    item.classList.add('active');
+                    
+                    // Zmień wartość ukrytego selecta i wywołaj event zmiany
+                    templateSelect.value = templateFile;
+                    templateSelect.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    }
+});
+
 if (templateSelect) {
     templateSelect.addEventListener('change', async function () {
         const filename = this.value;
