@@ -19,7 +19,11 @@
     <div class="main-content">
       {% include 'components/header.html' %}
 
-      <div class="dashboard-content" id="dashboard-advanced">
+      <div class="dashboard-content" id="dashboard-welcome">
+        {% include 'components/welcome.html' %}
+      </div>
+
+      <div class="dashboard-content hidden" id="dashboard-advanced">
         {% include 'components/tab_advanced.html' %}
       </div>
 

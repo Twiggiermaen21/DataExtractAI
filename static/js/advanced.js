@@ -3,9 +3,6 @@ const templateSelect = document.getElementById('templateSelect');
 const templatePreview = document.getElementById('templatePreview');
 const extractedDataCard = document.getElementById('extractedDataCard');
 const extractedDataContent = document.getElementById('extractedDataContent');
-const advSaveWezwanieSection = document.getElementById('advSaveWezwanieSection');
-const advBtnSaveWezwanie = document.getElementById('advBtnSaveWezwanie');
-const advSaveToLibrarySection = document.getElementById('advSaveToLibrarySection');
 const advActionsCard = document.getElementById('advActionsCard');
 
 // Kroki workflow
@@ -743,11 +740,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Zaznacz kliknięty
                     item.classList.add('active');
 
+                    // Ukryj welcome screen i bibliotekę
+                    const welcome = document.getElementById('dashboard-welcome');
+                    const library = document.getElementById('dashboard-library');
+                    const advanced = document.getElementById('dashboard-advanced');
+                    if (welcome) welcome.classList.add('hidden');
+                    if (library) library.classList.add('hidden');
+                    if (advanced) advanced.classList.remove('hidden');
+
                     // Zmień wartość ukrytego selecta i wywołaj event zmiany
                     templateSelect.value = templateFile;
                     templateSelect.dispatchEvent(new Event('change'));
                 }
             });
+        });
+    }
+
+    // Logo Click -> Go to Welcome Screen
+    const sidebarLogo = document.getElementById('sidebar-logo');
+    if (sidebarLogo) {
+        sidebarLogo.addEventListener('click', () => {
+            // Update Page Title
+            updateHeaderTitle("iusfully");
+
+            // Odznacz wszystkie nav
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(nav => nav.classList.remove('active'));
+
+            // View Switch
+            const welcome = document.getElementById('dashboard-welcome');
+            const library = document.getElementById('dashboard-library');
+            const advanced = document.getElementById('dashboard-advanced');
+            
+            if (welcome) welcome.classList.remove('hidden');
+            if (library) library.classList.add('hidden');
+            if (advanced) advanced.classList.add('hidden');
         });
     }
 });
@@ -766,11 +793,14 @@ if (templateSelect) {
         if (advStepPozewExtra) advStepPozewExtra.classList.add('hidden');
         if (advDividerStep2) advDividerStep2.classList.add('hidden');
         if (advDividerStep3) advDividerStep3.classList.add('hidden');
-        if (advSaveWezwanieSection) advSaveWezwanieSection.classList.add('hidden');
+        
+        // Reset button states
         if (advStepUpload) advStepUpload.classList.add('hidden');
         if (advPreviewCard) advPreviewCard.classList.add('hidden');
         if (advActionsCard) advActionsCard.classList.add('hidden');
-        if (advSaveToLibrarySection) advSaveToLibrarySection.classList.add('hidden');
+        
+        const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
+        if (btnSaveLib) btnSaveLib.disabled = true;
 
         if (!filename) {
             advWorkflowType = null;
@@ -846,9 +876,7 @@ if (templateSelect) {
             }
             
             const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
-            if (btnSaveLib) {
-                if (advSaveToLibrarySection) advSaveToLibrarySection.classList.remove('hidden');
-            }
+            if (btnSaveLib) btnSaveLib.disabled = false;
 
         } catch (e) {
             if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
@@ -914,46 +942,6 @@ if (templateSelect) {
     }
 }
 
-// === SAVE WEZWANIE (ADVANCED) ===
-if (advBtnSaveWezwanie) {
-    advBtnSaveWezwanie.addEventListener('click', async () => {
-
-        const iframe = document.getElementById('advDocumentIframe');
-        if (!iframe) {
-            alert('Brak dokumentu do zapisania!');
-            return;
-        }
-
-        const doc = iframe.contentDocument;
-        const fields = {};
-
-        doc.querySelectorAll('input[name]').forEach(input => {
-            fields[input.name] = input.value;
-        });
-
-        try {
-            const response = await fetch('/api/wezwania/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fields })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert(`✅ Wezwanie zapisane!\nID: ${result.id}`);
-                advSaveWezwanieSection.innerHTML = `
-                    <p style="margin: 0; color: #2e7d32; font-weight: 500;">
-                        ✅ Wezwanie zapisane (ID: ${result.id})
-                    </p>`;
-            } else {
-                alert(`❌ Błąd: ${result.error}`);
-            }
-        } catch (e) {
-            alert(`❌ Błąd zapisu: ${e.message}`);
-        }
-    });
-}
 
 // === POZEW SOURCE TOGGLE ===
 const btnPozewSourceSaved = document.getElementById('btnPozewSourceSaved');

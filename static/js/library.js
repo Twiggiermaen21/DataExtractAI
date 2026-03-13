@@ -27,6 +27,11 @@ function initLibrary() {
             newNavLibrary.classList.add('active');
 
             // View Switch
+            const welcome = document.getElementById('dashboard-welcome');
+            const dashboardAdvanced = document.getElementById('dashboard-advanced');
+            const dashboardLibrary = document.getElementById('dashboard-library');
+            
+            if (welcome) welcome.classList.add('hidden');
             if (dashboardAdvanced) dashboardAdvanced.classList.add('hidden');
             if (dashboardLibrary) {
                 dashboardLibrary.classList.remove('hidden');
