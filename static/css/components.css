@@ -1,4 +1,23 @@
 /* ==================== REUSABLE COMPONENTS ==================== */
+#tab-advanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 30px;
+    align-items: start;
+}
+
+.actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+@media (max-width: 900px) {
+    #tab-advanced {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* Cards */
 .card {
@@ -23,11 +42,13 @@
     color: var(--text-on-light);
     border: none;
 }
+
 .card-purple {
     background: var(--card-purple);
     color: var(--text-on-light);
     border: none;
 }
+
 .card-beige {
     background: var(--card-beige);
     color: var(--text-on-light);
@@ -35,13 +56,20 @@
 }
 
 /* Text overrides for light cards */
-.card-green .card-title, .card-purple .card-title, .card-beige .card-title,
-.card-green .step-label, .card-purple .step-label, .card-beige .step-label {
+.card-green .card-title,
+.card-purple .card-title,
+.card-beige .card-title,
+.card-green .step-label,
+.card-purple .step-label,
+.card-beige .step-label {
     color: var(--text-on-light);
 }
-.card-green .icon, .card-purple .icon, .card-beige .icon {
+
+.card-green .icon,
+.card-purple .icon,
+.card-beige .icon {
     filter: none;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card-title {
@@ -109,7 +137,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: var(--bg-secondary);
+    background: white;
     border-radius: var(--radius-sm);
     margin-bottom: 8px;
     font-size: 0.9rem;
@@ -207,6 +235,29 @@
     box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
 }
 
+/* Button overrides for light cards to improve visibility */
+.card-green .btn,
+.card-purple .btn,
+.card-beige .btn {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-green .btn:hover:not(:disabled),
+.card-purple .btn:hover:not(:disabled),
+.card-beige .btn:hover:not(:disabled) {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.card-green .btn-purple {
+    background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%); /* Slightly darker purple for green background */
+}
+
+.card-green .btn-green {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%); /* Slightly darker green for green background */
+}
+
 .btn-sm {
     padding: 6px 12px !important;
     font-size: 0.85rem !important;
@@ -274,6 +325,7 @@
 .status-text {
     text-align: center;
     color: var(--text-secondary);
+    background: var(--bg-primary);
     margin-top: 12px;
     font-size: 0.9rem;
 }
@@ -315,14 +367,18 @@ textarea {
     font-size: 0.95rem;
     transition: var(--transition);
     outline: none;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Light cards override for inputs */
-.card-green select, .card-purple select, .card-beige select,
-.card-green textarea, .card-purple textarea, .card-beige textarea {
+.card-green select,
+.card-purple select,
+.card-beige select,
+.card-green textarea,
+.card-purple textarea,
+.card-beige textarea {
     background: rgba(255, 255, 255, 0.4);
-    border-color: rgba(0,0,0,0.1);
+    border-color: rgba(0, 0, 0, 0.1);
     color: var(--text-on-light);
 }
 
@@ -331,7 +387,10 @@ textarea:focus {
     border-color: var(--accent-blue);
     background: rgba(255, 255, 255, 0.1);
 }
-.card-green select:focus, .card-purple select:focus, .card-beige select:focus {
+
+.card-green select:focus,
+.card-purple select:focus,
+.card-beige select:focus {
     background: rgba(255, 255, 255, 0.7);
 }
 
@@ -340,7 +399,8 @@ textarea {
     resize: vertical;
 }
 
-label, .step-label {
+label,
+.step-label {
     display: block;
     color: var(--text-secondary);
     font-size: 0.9rem;

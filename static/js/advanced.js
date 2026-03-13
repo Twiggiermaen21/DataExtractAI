@@ -5,6 +5,7 @@ const extractedDataCard = document.getElementById('extractedDataCard');
 const extractedDataContent = document.getElementById('extractedDataContent');
 const advSaveWezwanieSection = document.getElementById('advSaveWezwanieSection');
 const advBtnSaveWezwanie = document.getElementById('advBtnSaveWezwanie');
+const advActionsCard = document.getElementById('advActionsCard');
 
 // Kroki workflow
 const advStepSource = document.getElementById('advStepSource');
@@ -749,6 +750,7 @@ if (templateSelect) {
         // Hide all step sections
         const advStepUpload = document.getElementById('advStepUpload');
         const advPreviewCard = document.getElementById('advPreviewCard');
+        const advActionsCard = document.getElementById('advActionsCard');
         if (advStepSource) advStepSource.classList.add('hidden');
         if (advStepSourcePozew) advStepSourcePozew.classList.add('hidden');
         if (advStepLlm) advStepLlm.classList.add('hidden');
@@ -758,6 +760,7 @@ if (templateSelect) {
         if (advSaveWezwanieSection) advSaveWezwanieSection.classList.add('hidden');
         if (advStepUpload) advStepUpload.classList.add('hidden');
         if (advPreviewCard) advPreviewCard.classList.add('hidden');
+        if (advActionsCard) advActionsCard.classList.add('hidden');
 
         if (!filename) {
             advWorkflowType = null;
@@ -769,6 +772,7 @@ if (templateSelect) {
         // Show workflow sections based on template type
         if (advDividerStep2) advDividerStep2.classList.remove('hidden');
         if (advPreviewCard) advPreviewCard.classList.remove('hidden');
+        if (advActionsCard) advActionsCard.classList.remove('hidden');
 
         if (filename.includes('wezwanie')) {
             advWorkflowType = 'wezwanie';
