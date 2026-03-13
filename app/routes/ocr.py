@@ -151,10 +151,10 @@ def get_results():
     """Zwraca listę plików JSON z folderu output."""
     print("Wywołano funkcję: get_results")
     output_folder = current_app.config['OUTPUT_FOLDER']
-    
+
     if not os.path.exists(output_folder):
         return jsonify([])
-    
+
     try:
         files = [f for f in os.listdir(output_folder) if f.endswith('.json')]
         files.sort(reverse=True)

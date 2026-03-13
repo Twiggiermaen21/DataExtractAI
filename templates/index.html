@@ -18,8 +18,18 @@
     <div class="main-content">
       {% include 'components/header.html' %}
       
-      <div class="dashboard-content">
+      <div class="dashboard-content" id="dashboard-advanced">
         {% include 'components/tab_advanced.html' %}
+      </div>
+
+      <div class="dashboard-content hidden" id="dashboard-library">
+        <div class="card">
+            <div class="card-title"><span class="icon">📚</span> Biblioteka dokumentów</div>
+            <div id="library-grid" class="library-grid">
+                <!-- Dokumenty będą tu ładowane dynamicznie -->
+                <div style="padding: 40px; text-align: center; color: var(--text-muted);">Ładowanie biblioteki...</div>
+            </div>
+        </div>
       </div>
     </div>
   </div>
@@ -29,6 +39,21 @@
   <script src="{{ url_for('static', filename='js/ocr.js') }}"></script>
   <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
   <script src="{{ url_for('static', filename='js/pozew-process.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/library.js') }}"></script>
+
+  <!-- Modal Podglądu -->
+  <div id="previewModal" class="modal">
+    <div class="modal-overlay" onclick="closeModal()"></div>
+    <div class="modal-container">
+        <div class="modal-header">
+            <h3 id="modalTitle">Podgląd dokumentu</h3>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Zawartość podglądu -->
+        </div>
+    </div>
+  </div>
 </body>
 
 </html>

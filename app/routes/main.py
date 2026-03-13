@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, render_template, jsonify, current_app
 
 main_bp = Blueprint('main', __name__)
 
@@ -47,3 +47,32 @@ def slownie(amount):
         return jsonify({'slownie': final_text})
     except Exception as e:
         return jsonify({'error': str(e)}), 400
+
+
+@main_bp.route('/api/library')
+def get_library():
+    """Zwraca listę plików z folderu input do biblioteki."""
+    print("Wywołano funkcję: get_library (z main_bp)")
+    input_folder = current_app.config['UPLOAD_FOLDER']
+    if not os.path.exists(input_folder):
+        return jsonify([])
+
+    try:
+        files = []
+        for filename in os.listdir(input_folder):
+            if filename.startswith('.'):
+                continue
+            filepath = os.path.join(input_folder, filename)
+            if os.path.isfile(filepath):
+                ext = os.path.splitext(filename)[1].lower()
+                files.append({
+                    'name': filename,
+                    'url': f'/input/{filename}',
+                    'ext': ext,
+                    'size': os.path.getsize(filepath)
+                })
+        # Sortuj od najnowszych - zmiana na path.join(input_folder, ...)
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(input_folder, x['name'])), reverse=True)
+        return jsonify(files)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

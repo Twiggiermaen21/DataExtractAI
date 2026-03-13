@@ -309,23 +309,23 @@ if (btnOcrFill) {
                             data.documents.forEach((docData, i) => {
                                 const fields = docData.fields || {};
                                 const invoiceFilename = docData.filename || `Faktura ${i + 1}`;
-                                
+
                                 html += `<div class="summary-item">
                                     <div class="summary-header">#${i + 1} — ${invoiceFilename}</div>
                                     <div class="summary-body">`;
-                                
+
                                 // Specific ordering
-                                const orderedKeys = Object.keys(fields).sort((a,b) => {
+                                const orderedKeys = Object.keys(fields).sort((a, b) => {
                                     const str_a = a.toLowerCase();
                                     const str_b = b.toLowerCase();
                                     const isA_dluznik = str_a.includes('nabywc');
                                     const isA_wierzyciel = str_a.includes('sprzedawc');
                                     const isB_dluznik = str_b.includes('nabywc');
                                     const isB_wierzyciel = str_b.includes('sprzedawc');
-                                    if(isA_wierzyciel && !isB_wierzyciel) return -1;
-                                    if(!isA_wierzyciel && isB_wierzyciel) return 1;
-                                    if(isA_dluznik && !isB_dluznik) return -1;
-                                    if(!isA_dluznik && isB_dluznik) return 1;
+                                    if (isA_wierzyciel && !isB_wierzyciel) return -1;
+                                    if (!isA_wierzyciel && isB_wierzyciel) return 1;
+                                    if (isA_dluznik && !isB_dluznik) return -1;
+                                    if (!isA_dluznik && isB_dluznik) return 1;
                                     return 0;
                                 });
 
@@ -335,7 +335,7 @@ if (btnOcrFill) {
                                     const label = getLabel(fieldName);
                                     let cssClass = 'field-row';
                                     if (label.includes('nazwa') || label.includes('adres') || label.includes('Bank') || label.includes('konta')) {
-                                         cssClass += ' full-width';
+                                        cssClass += ' full-width';
                                     }
 
                                     let valueStyle = '';
@@ -723,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarNav = document.getElementById('sidebarTemplateNav');
     if (sidebarNav && templateSelect) {
         const navItems = sidebarNav.querySelectorAll('.nav-item');
-        
+
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -733,7 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     navItems.forEach(nav => nav.classList.remove('active'));
                     // Zaznacz kliknięty
                     item.classList.add('active');
-                    
+
                     // Zmień wartość ukrytego selecta i wywołaj event zmiany
                     templateSelect.value = templateFile;
                     templateSelect.dispatchEvent(new Event('change'));
@@ -804,7 +804,7 @@ if (templateSelect) {
                 templatePreview.innerHTML = '';
                 templateIframe = document.createElement('iframe');
                 templateIframe.style.width = '100%';
-                templateIframe.style.height = '850px';
+                templateIframe.style.height = 'full';
                 templateIframe.style.border = 'none';
                 templateIframe.id = 'advDocumentIframe';
                 templatePreview.appendChild(templateIframe);
