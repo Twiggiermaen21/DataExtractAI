@@ -180,3 +180,10 @@ def serve_input(filename):
     """Serwuje plik wejściowy."""
     print("Wywołano funkcję: serve_input")
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+
+
+@ocr_bp.route('/saved/<filename>')
+def serve_saved(filename):
+    """Serwuje zapisany dokument."""
+    print("Wywołano funkcję: serve_saved")
+    return send_from_directory(current_app.config['SAVED_FOLDER'], filename)

@@ -1,6 +1,6 @@
 <header class="dashboard-header">
     <div class="header-title">
-        <h1>Dashboard</h1>
+        <h1 id="header-page-title">iusfully</h1>
         <div class="header-actions-left">
             <button class="icon-btn" title="Screen Area">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -27,13 +27,8 @@
     </div>
 
     <div class="header-profile">
-        <button class="lang-btn">
-            <span class="flag-icon">🇺🇸</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        </button>
-        
+
+
         <button class="icon-btn badge-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -41,15 +36,15 @@
             </svg>
             <span class="badge">9</span>
         </button>
-        
+
         <button class="icon-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
         </button>
-        
+
         <div class="profile-avatar">
-            <img src="https://i.pravatar.cc/150?img=11" alt="User Profile">
+            <img src="{{ url_for('static', filename='user.png') }}" alt="User Profile">
         </div>
     </div>
 </header>

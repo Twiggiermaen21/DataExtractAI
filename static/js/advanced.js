@@ -5,6 +5,7 @@ const extractedDataCard = document.getElementById('extractedDataCard');
 const extractedDataContent = document.getElementById('extractedDataContent');
 const advSaveWezwanieSection = document.getElementById('advSaveWezwanieSection');
 const advBtnSaveWezwanie = document.getElementById('advBtnSaveWezwanie');
+const advSaveToLibrarySection = document.getElementById('advSaveToLibrarySection');
 const advActionsCard = document.getElementById('advActionsCard');
 
 // Kroki workflow
@@ -130,6 +131,11 @@ window.toggleAdvWezwanieSelection = function (id) {
         selectedAdvWezwania.splice(index, 1);
     } else {
         selectedAdvWezwania.push(id);
+    }
+    
+    // Explicitly update calling generated button state if necessary
+    if (typeof updateGeneratePozewButton === 'function') {
+        updateGeneratePozewButton();
     }
 };
 
@@ -729,6 +735,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const templateFile = item.getAttribute('data-template');
                 if (templateFile) {
+                    // Update Page Title
+                    updateHeaderTitle(item.title);
+
                     // Odznacz wszystkie
                     navItems.forEach(nav => nav.classList.remove('active'));
                     // Zaznacz kliknięty
@@ -825,6 +834,15 @@ if (templateSelect) {
                 templateIframe.contentDocument.close();
             }
 
+            const btnPrint = document.getElementById('btnPrintTemplate');
+            if (btnPrint) {
+                btnPrint.disabled = false;
+                btnPrint.onclick = function () {
+                    if (templateIframe && templateIframe.contentWindow) {
+                        templateIframe.contentWindow.focus();
+                        templateIframe.contentWindow.print();
+                    }
+                };
             }
             
             const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
@@ -836,6 +854,64 @@ if (templateSelect) {
             if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
         }
     });
+
+    const advBtnSaveToLibrary = document.getElementById('advBtnSaveToLibrary');
+    if (advBtnSaveToLibrary) {
+        advBtnSaveToLibrary.addEventListener('click', async () => {
+            if (!templateIframe || !templateIframe.contentDocument) {
+                alert('Brak dokumentu do zapisu!');
+                return;
+            }
+
+            const doc = templateIframe.contentDocument;
+            
+            // Krytyczne: Zsynchronizuj wartości inputów z atrybutami, aby zachowały się w HTML
+            doc.querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio')) {
+                    if (el.checked) el.setAttribute('checked', 'checked');
+                    else el.removeAttribute('checked');
+                } else if (el.tagName === 'SELECT') {
+                    Array.from(el.options).forEach(opt => {
+                        if (opt.selected) opt.setAttribute('selected', 'selected');
+                        else opt.removeAttribute('selected');
+                    });
+                } else {
+                    el.setAttribute('value', el.value);
+                }
+            });
+
+            const htmlContent = doc.documentElement.outerHTML;
+            const filename = (templateSelect.options[templateSelect.selectedIndex]?.text || 'dokument') + '.html';
+
+            try {
+                advBtnSaveToLibrary.disabled = true;
+                advBtnSaveToLibrary.textContent = 'Zapisywanie...';
+
+                const response = await fetch('/api/library/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: htmlContent,
+                        filename: filename
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('✅ Dokument zapisany w bibliotece!');
+                    if (typeof loadLibrary === 'function') loadLibrary(); // Odśwież widok biblioteki jeśli funkcja dostępna
+                } else {
+                    alert('❌ Błąd zapisu: ' + result.error);
+                }
+            } catch (e) {
+                console.error('Save to library error:', e);
+                alert('❌ Błąd połączenia z serwerem');
+            } finally {
+                advBtnSaveToLibrary.disabled = false;
+                advBtnSaveToLibrary.textContent = 'Zapisz w bibliotece';
+            }
+        });
+    }
 }
 
 // === SAVE WEZWANIE (ADVANCED) ===

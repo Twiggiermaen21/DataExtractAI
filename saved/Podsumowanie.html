@@ -1,0 +1,146 @@
+<html lang="pl"><head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0">
+    <title>Podsumowanie Faktur</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            font-size: 24px;
+        }
+
+        #podsumowanie-list {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .summary-item {
+            border: 1px solid #d0d8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+
+        .summary-header {
+            background: #f0f4ff;
+            padding: 12px 16px;
+            font-weight: 600;
+            color: #2e4a8f;
+            border-bottom: 1px solid #d0d8f0;
+            font-size: 16px;
+        }
+
+        .summary-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background-color: #ffffff;
+        }
+
+        .field-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .field-value {
+            font-size: 1.05em;
+            font-weight: 500;
+            color: #222;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 600px) {
+            .summary-body {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                max-width: 100%;
+            }
+
+            .summary-item {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+<style>
+                    body::-webkit-scrollbar { width: 8px; }
+                    body::-webkit-scrollbar-track { background: #f1f1f1; }
+                    body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+                    body::-webkit-scrollbar-thumb:hover { background: #555; }
+                    body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
+                </style></head>
+
+<body>
+
+    <div class="container">
+        <h1>Podsumowanie Przetworzonych Faktur</h1>
+        <div id="podsumowanie-list">
+            <div style="text-align: center; color: #888; padding: 40px; font-style: italic;">
+                Brak danych. Przetwórz faktury, aby wygenerować podsumowanie.
+            </div>
+        </div>
+    </div>
+
+    <!-- Ukryte pola do ekstrakcji przez model AI (identyczne jak w wezwaniu) -->
+    <div style="display: none;">
+        <input type="hidden" name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany" value="">
+        <input type="hidden" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury" value="">
+        <input type="hidden" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki" value="">
+        <input type="hidden" name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury" value="">
+        <input type="hidden" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta" value="">
+    </div>
+
+
+
+</body></html>

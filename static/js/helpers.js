@@ -97,3 +97,10 @@ function updateLlmButton() {
         btnRunLlm.disabled = selected.length === 0;
     }
 }
+
+function updateHeaderTitle(title) {
+    const headerTitle = document.getElementById('header-page-title');
+    if (headerTitle) {
+        headerTitle.textContent = title;
+    }
+}

@@ -51,17 +51,17 @@ def slownie(amount):
 
 @main_bp.route('/api/library')
 def get_library():
-    """Zwraca listę plików z folderu input do biblioteki."""
+    """Zwraca listę plików z folderów input i saved do biblioteki."""
     print("Wywołano funkcję: get_library (z main_bp)")
     input_folder = current_app.config['UPLOAD_FOLDER']
-    if not os.path.exists(input_folder):
-        return jsonify([])
-
-    try:
-        files = []
+    saved_folder = current_app.config.get('SAVED_FOLDER')
+    
+    files = []
+    
+    # 1. Skanuj folder input
+    if os.path.exists(input_folder):
         for filename in os.listdir(input_folder):
-            if filename.startswith('.'):
-                continue
+            if filename.startswith('.'): continue
             filepath = os.path.join(input_folder, filename)
             if os.path.isfile(filepath):
                 ext = os.path.splitext(filename)[1].lower()
@@ -69,10 +69,66 @@ def get_library():
                     'name': filename,
                     'url': f'/input/{filename}',
                     'ext': ext,
-                    'size': os.path.getsize(filepath)
+                    'size': os.path.getsize(filepath),
+                    'mtime': os.path.getmtime(filepath)
                 })
-        # Sortuj od najnowszych - zmiana na path.join(input_folder, ...)
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(input_folder, x['name'])), reverse=True)
+                
+    # 2. Skanuj folder saved
+    if saved_folder and os.path.exists(saved_folder):
+        for filename in os.listdir(saved_folder):
+            if filename.startswith('.'): continue
+            filepath = os.path.join(saved_folder, filename)
+            if os.path.isfile(filepath):
+                ext = os.path.splitext(filename)[1].lower()
+                files.append({
+                    'name': filename,
+                    'url': f'/saved/{filename}',
+                    'ext': ext,
+                    'size': os.path.getsize(filepath),
+                    'mtime': os.path.getmtime(filepath)
+                })
+
+    try:
+        # Sortuj od najnowszych
+        files.sort(key=lambda x: x['mtime'], reverse=True)
         return jsonify(files)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@main_bp.route('/api/library/save', methods=['POST'])
+def save_to_library():
+    """Zapisuje otrzymany kod HTML jako plik w folderze saved."""
+    print("Wywołano funkcję: save_to_library")
+    try:
+        data = request.json
+        content = data.get('content')
+        filename = data.get('filename', 'document.html')
+
+        if not content:
+            return jsonify({'success': False, 'error': 'Brak treści dokumentu'}), 400
+
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(filename)
+        
+        if not filename.endswith('.html'):
+            filename += '.html'
+
+        saved_folder = current_app.config['SAVED_FOLDER']
+        if not os.path.exists(saved_folder):
+            os.makedirs(saved_folder)
+
+        filepath = os.path.join(saved_folder, filename)
+        
+        if os.path.exists(filepath):
+            import time
+            name, ext = os.path.splitext(filename)
+            filename = f"{name}_{int(time.time())}{ext}"
+            filepath = os.path.join(saved_folder, filename)
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+
+        return jsonify({'success': True, 'filename': filename})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
