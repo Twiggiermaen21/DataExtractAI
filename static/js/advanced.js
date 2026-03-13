@@ -761,6 +761,7 @@ if (templateSelect) {
         if (advStepUpload) advStepUpload.classList.add('hidden');
         if (advPreviewCard) advPreviewCard.classList.add('hidden');
         if (advActionsCard) advActionsCard.classList.add('hidden');
+        if (advSaveToLibrarySection) advSaveToLibrarySection.classList.add('hidden');
 
         if (!filename) {
             advWorkflowType = null;
@@ -804,7 +805,7 @@ if (templateSelect) {
                 templatePreview.innerHTML = '';
                 templateIframe = document.createElement('iframe');
                 templateIframe.style.width = '100%';
-                templateIframe.style.height = 'full';
+                templateIframe.style.height = '100%';
                 templateIframe.style.border = 'none';
                 templateIframe.id = 'advDocumentIframe';
                 templatePreview.appendChild(templateIframe);
@@ -824,15 +825,11 @@ if (templateSelect) {
                 templateIframe.contentDocument.close();
             }
 
-            const btnPrint = document.getElementById('btnPrintTemplate');
-            if (btnPrint) {
-                btnPrint.disabled = false;
-                btnPrint.onclick = function () {
-                    if (templateIframe && templateIframe.contentWindow) {
-                        templateIframe.contentWindow.focus();
-                        templateIframe.contentWindow.print();
-                    }
-                };
+            }
+            
+            const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
+            if (btnSaveLib) {
+                if (advSaveToLibrarySection) advSaveToLibrarySection.classList.remove('hidden');
             }
 
         } catch (e) {

@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, jsonify, current_app
+from flask import Blueprint, render_template, jsonify, current_app, request
 
 main_bp = Blueprint('main', __name__)
 

@@ -1,7 +1,7 @@
 <div id="tab-advanced">
     <div class="actions-column">
         <div class="card card-green" style="animation-delay: 0.1s;">
-            <div class="card-title"><span class="icon">📄</span> Przetwarzanie zaawansowane</div>
+            <div class="card-title">Importuj dane</div>
 
             <!-- KROK 1: Wybór szablonu (ukryty bo przeniesiony do Sidebar) -->
             <div class="step-section hidden" style="display: none;">
@@ -15,7 +15,6 @@
 
             <!-- KROK 2: Upload faktury (dla Wezwania do Zapłaty) -->
             <div class="step-section hidden" id="advStepUpload">
-                <label class="step-label">📄 Krok 2: Wgraj zdjęcie faktury</label>
                 <div class="upload-zone" id="advUploadZone" style="padding: 32px 20px; margin-top: 12px;">
                     <div class="upload-icon" style="font-size: 2rem;">📄</div>
                     <div class="upload-text">Przeciągnij zdjęcie faktury lub kliknij</div>
@@ -106,19 +105,22 @@
 
         <!-- NEW ACTION CARD -->
         <div class="card card-beige hidden" id="advActionsCard" style="animation-delay: 0.15s;">
-            <div class="card-title"><span class="icon">⚙️</span> Akcje dokumentu</div>
+            <div class="card-title">Akcje dokumentu</div>
             <div class="document-actions" style="display: flex; gap: 12px; align-items: stretch;">
                 <div id="advSaveWezwanieSection" class="hidden" style="flex: 1;">
                     <button class="btn btn-purple" id="advBtnSaveWezwanie" style="margin-top: 0; height: 100%;">
-                        <span>💾</span>
                         <span>Zapisz wezwanie</span>
                     </button>
                 </div>
                 <div style="flex: 1;">
                     <button class="btn btn-green" id="btnPrintTemplate" style="margin-top: 0; width: 100%; height: 100%;"
                         disabled>
-                        <span>🖨️</span>
                         <span>Pobierz PDF / Drukuj</span>
+                    </button>
+                </div>
+                <div id="advSaveToLibrarySection" class="hidden" style="flex: 1;">
+                    <button class="btn btn-dark" id="advBtnSaveToLibrary" style="margin-top: 0; height: 100%;">
+                        <span>Zapisz w bibliotece</span>
                     </button>
                 </div>
             </div>
@@ -127,7 +129,7 @@
 
     <!-- Template Preview -->
     <div class="card card-purple hidden" id="advPreviewCard" style="animation-delay: 0.2s;">
-        <div class="card-title"><span class="icon">👁️</span> Podgląd szablonu</div>
+        <div class="card-title">Podgląd dokumentu</div>
         <div class="template-preview" id="templatePreview">
             <div style="padding: 48px; text-align: center; color: var(--text-muted);">
                 Wybierz szablon aby zobaczyć podgląd

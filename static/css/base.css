@@ -286,8 +286,10 @@ body {
 /* --- DASHBOARD SCROLL AREA --- */
 .dashboard-content {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: hidden;
     padding: 30px 40px;
+    display: flex;
+    flex-direction: column;
     animation: fadeInUp 0.5s ease-out forwards;
 }
 
