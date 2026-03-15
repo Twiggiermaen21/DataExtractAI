@@ -1,26 +1,63 @@
-/* ==================== ADVANCED TAB STYLES ==================== */
-
-/* Step sections */
-.step-section {
-    margin-bottom: 20px;
+.checkbox-list {
+    background: #1e1f24;
+    /* Lighter than pure black */
+    border-radius: var(--radius-md);
+    padding: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    overflow-y: auto;
 }
 
-.step-label {
-    font-size: 1.1em;
-    font-weight: 600;
+.checkbox-item {
+    margin-bottom: 6px;
+    position: relative;
+}
+
+.checkbox-item input[type="checkbox"] {
+    display: none;
+    /* Hide the standard checkbox */
+}
+
+.checkbox-item label {
     display: block;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
 }
 
-.hint-text {
-    font-size: 0.85em;
-    color: var(--text-muted);
-    margin: 4px 0 0;
+.checkbox-item label:hover {
+    background: rgba(255, 255, 255, 0.06);
 }
 
-.divider-light {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    margin: 16px 0;
+.checkbox-item input[type="checkbox"]:checked+label {
+    background: rgba(238, 207, 109, 0.1);
+    border-color: var(--accent-yellow);
+}
+
+.checkbox-item label strong {
+    color: var(--text-primary);
+    display: block;
+    margin-bottom: 4px;
+}
+
+#advRefreshWezwaniaList {
+    background: rgba(99, 102, 241, 0.1);
+    /* Subtle blue tint */
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+#advRefreshWezwaniaList:hover {
+    background: var(--accent-blue);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 /* Template Preview */
@@ -63,25 +100,31 @@
 .checkbox-list::-webkit-scrollbar-track,
 .template-preview::-webkit-scrollbar-track,
 .json-output::-webkit-scrollbar-track {
-    background: rgba(20, 20, 30, 0.4);
+    background: rgba(255, 255, 255, 0.02);
     border-radius: 4px;
 }
 
 .checkbox-list::-webkit-scrollbar-thumb,
 .template-preview::-webkit-scrollbar-thumb,
 .json-output::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--accent-purple), var(--accent-blue));
+    background: rgba(255, 255, 255, 0.15);
+    /* Slightly more visible */
     border-radius: 4px;
+    border: 2px solid transparent;
+    /* Gives it some breathing room */
+    background-clip: content-box;
 }
 
 .checkbox-list::-webkit-scrollbar-thumb:hover,
 .template-preview::-webkit-scrollbar-thumb:hover,
 .json-output::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #c084fc, #818cf8);
+    background: var(--accent-blue);
+    /* Consistent with theme */
+    background-clip: border-box;
 }
 
 /* Firefox scrollbar */
-.checkbox-list,
+
 .template-preview,
 .json-output {
     scrollbar-width: thin;

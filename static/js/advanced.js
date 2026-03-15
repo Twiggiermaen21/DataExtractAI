@@ -107,7 +107,7 @@ async function loadAdvWezwaniaList() {
                     <input type="checkbox" id="advWez_${w.id}" value="${w.id}" 
                         onchange="toggleAdvWezwanieSelection('${w.id}')">
                     <label for="advWez_${w.id}">
-                        <strong>${w.dluznik_nazwa}</strong><br>
+                        <strong>${w.dluznik_nazwa}</strong>
                         <span style="font-size: 0.85em; color: #666;">
                             Faktura: ${w.faktura_numer} | ${w.kwota} | ${new Date(w.created_at).toLocaleDateString('pl-PL')}
                         </span>
