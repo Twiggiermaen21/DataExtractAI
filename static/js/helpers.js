@@ -121,4 +121,45 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('sidebarExpanded', nowExpanded);
         });
     }
+
+    // Header Dropdowns Toggle Logic
+    const dropdownTriggers = [
+        { btnId: 'btn-notifications', menuId: 'menu-notifications' },
+        { btnId: 'btn-messages', menuId: 'menu-messages' },
+        { btnId: 'btn-profile', menuId: 'menu-profile' }
+    ];
+
+    dropdownTriggers.forEach(t => {
+        const btn = document.getElementById(t.btnId);
+        const menu = document.getElementById(t.menuId);
+
+        if (btn && menu) {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                
+                // Close other open menus
+                dropdownTriggers.forEach(other => {
+                    const otherMenu = document.getElementById(other.menuId);
+                    if (otherMenu && otherMenu !== menu) {
+                        otherMenu.classList.remove('active');
+                    }
+                });
+
+                menu.classList.toggle('active');
+            });
+        }
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        dropdownTriggers.forEach(t => {
+            const menu = document.getElementById(t.menuId);
+            const btn = document.getElementById(t.btnId);
+            if (menu && menu.classList.contains('active')) {
+                if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.remove('active');
+                }
+            }
+        });
+    });
 });

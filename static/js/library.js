@@ -2,6 +2,7 @@
 
 let fullLibraryFiles = [];
 let currentCategory = 'all';
+let searchQuery = '';
 
 function initLibrary() {
     console.log("Initializing Library...");
@@ -9,6 +10,7 @@ function initLibrary() {
     const navItems = document.querySelectorAll('.nav-item');
     const dashboardAdvanced = document.getElementById('dashboard-advanced');
     const dashboardLibrary = document.getElementById('dashboard-library');
+    const globalSearch = document.getElementById('global-search');
 
     if (navLibrary) {
         // Remove existing listener if any (though unlikely here)
@@ -16,7 +18,7 @@ function initLibrary() {
         const newNavLibrary = document.getElementById('navLibrary');
 
         newNavLibrary.addEventListener('click', (e) => {
-            e.preventDefault();
+            if (e) e.preventDefault();
             console.log("Library nav clicked");
 
             // Update Page Title
@@ -41,6 +43,23 @@ function initLibrary() {
             // Add header padding when in library
             const header = document.querySelector('.dashboard-header');
             if (header) header.classList.add('header-padded');
+        });
+    }
+
+    // Global Search Logic
+    if (globalSearch) {
+        globalSearch.addEventListener('focus', () => {
+            const dashboardLibrary = document.getElementById('dashboard-library');
+            // Switch to library if not already there
+            if (dashboardLibrary && dashboardLibrary.classList.contains('hidden')) {
+                const navLibrary = document.getElementById('navLibrary');
+                if (navLibrary) navLibrary.click();
+            }
+        });
+
+        globalSearch.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            filterAndRenderLibrary();
         });
     }
 
@@ -97,11 +116,16 @@ async function loadLibrary() {
 function filterAndRenderLibrary() {
     let filtered = fullLibraryFiles;
 
-    // Categorization logic based on URL structure added in main.py
+    // Filter by Category
     if (currentCategory === 'input') {
         filtered = fullLibraryFiles.filter(f => f.url.startsWith('/input/'));
     } else if (currentCategory === 'saved') {
         filtered = fullLibraryFiles.filter(f => f.url.startsWith('/saved/'));
+    }
+
+    // Filter by Search Query
+    if (searchQuery) {
+        filtered = filtered.filter(f => f.name.toLowerCase().includes(searchQuery));
     }
 
     renderLibrary(filtered);
