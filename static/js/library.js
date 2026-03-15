@@ -37,6 +37,10 @@ function initLibrary() {
                 dashboardLibrary.classList.remove('hidden');
                 loadLibrary();
             }
+
+            // Add header padding when in library
+            const header = document.querySelector('.dashboard-header');
+            if (header) header.classList.add('header-padded');
         });
     }
 
@@ -60,6 +64,10 @@ function initLibrary() {
             if (dashboardAdvanced) dashboardAdvanced.classList.remove('hidden');
             const navLib = document.getElementById('navLibrary');
             if (navLib) navLib.classList.remove('active');
+
+            // Add header padding when leaving welcome
+            const header = document.querySelector('.dashboard-header');
+            if (header) header.classList.add('header-padded');
         });
     });
 }

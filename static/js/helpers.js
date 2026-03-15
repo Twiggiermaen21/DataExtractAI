@@ -104,3 +104,21 @@ function updateHeaderTitle(title) {
         headerTitle.textContent = title;
     }
 }
+// Dodaj event listener do przełączania sidebaru
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const appLayout = document.querySelector('.app-layout');
+
+    if (sidebarToggleBtn && appLayout) {
+        // Przywróć stan z localStorage
+        const isExpanded = localStorage.getItem('sidebarExpanded') === 'true';
+        if (isExpanded) {
+            appLayout.classList.add('sidebar-expanded');
+        }
+
+        sidebarToggleBtn.addEventListener('click', () => {
+            const nowExpanded = appLayout.classList.toggle('sidebar-expanded');
+            localStorage.setItem('sidebarExpanded', nowExpanded);
+        });
+    }
+});

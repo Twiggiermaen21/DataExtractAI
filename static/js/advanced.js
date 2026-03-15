@@ -129,7 +129,7 @@ window.toggleAdvWezwanieSelection = function (id) {
     } else {
         selectedAdvWezwania.push(id);
     }
-    
+
     // Explicitly update calling generated button state if necessary
     if (typeof updateGeneratePozewButton === 'function') {
         updateGeneratePozewButton();
@@ -748,6 +748,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (library) library.classList.add('hidden');
                     if (advanced) advanced.classList.remove('hidden');
 
+                    // Add header padding when in template
+                    const header = document.querySelector('.dashboard-header');
+                    if (header) header.classList.add('header-padded');
+
                     // Zmień wartość ukrytego selecta i wywołaj event zmiany
                     templateSelect.value = templateFile;
                     templateSelect.dispatchEvent(new Event('change'));
@@ -761,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarLogo) {
         sidebarLogo.addEventListener('click', () => {
             // Update Page Title
-            updateHeaderTitle("iusfully");
+            updateHeaderTitle("");
 
             // Odznacz wszystkie nav
             const navItems = document.querySelectorAll('.nav-item');
@@ -771,10 +775,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const welcome = document.getElementById('dashboard-welcome');
             const library = document.getElementById('dashboard-library');
             const advanced = document.getElementById('dashboard-advanced');
-            
+
             if (welcome) welcome.classList.remove('hidden');
             if (library) library.classList.add('hidden');
             if (advanced) advanced.classList.add('hidden');
+
+            // Remove header padding on welcome
+            const header = document.querySelector('.dashboard-header');
+            if (header) header.classList.remove('header-padded');
         });
     }
 });
@@ -793,12 +801,12 @@ if (templateSelect) {
         if (advStepPozewExtra) advStepPozewExtra.classList.add('hidden');
         if (advDividerStep2) advDividerStep2.classList.add('hidden');
         if (advDividerStep3) advDividerStep3.classList.add('hidden');
-        
+
         // Reset button states
         if (advStepUpload) advStepUpload.classList.add('hidden');
         if (advPreviewCard) advPreviewCard.classList.add('hidden');
         if (advActionsCard) advActionsCard.classList.add('hidden');
-        
+
         const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
         if (btnSaveLib) btnSaveLib.disabled = true;
 
@@ -874,7 +882,7 @@ if (templateSelect) {
                     }
                 };
             }
-            
+
             const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
             if (btnSaveLib) btnSaveLib.disabled = false;
 
@@ -892,7 +900,7 @@ if (templateSelect) {
             }
 
             const doc = templateIframe.contentDocument;
-            
+
             // Krytyczne: Zsynchronizuj wartości inputów z atrybutami, aby zachowały się w HTML
             doc.querySelectorAll('input, textarea, select').forEach(el => {
                 if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio')) {
