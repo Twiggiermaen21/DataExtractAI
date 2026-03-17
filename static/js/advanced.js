@@ -242,17 +242,12 @@ if (btnOcrFill) {
         const btnOcrFillText = document.getElementById('btnOcrFillText');
         const ocrFillProgressBar = document.getElementById('ocrFillProgressBar');
         const ocrFillProgressFill = document.getElementById('ocrFillProgressFill');
-        const ocrFillStatusText = document.getElementById('ocrFillStatusText');
 
         btnOcrFill.disabled = true;
         btnOcrFill.classList.add('loading');
         if (btnOcrFillIcon) btnOcrFillIcon.innerHTML = '<span class="spinner">⏳</span>';
         if (btnOcrFillText) btnOcrFillText.textContent = 'Przetwarzanie...';
         if (ocrFillProgressBar) ocrFillProgressBar.classList.remove('hidden');
-        if (ocrFillStatusText) {
-            ocrFillStatusText.classList.remove('hidden');
-            ocrFillStatusText.textContent = `📷 Przetwarzanie ${advUploadedFiles.length} dokumentów...`;
-        }
         if (ocrFillProgressFill) ocrFillProgressFill.style.width = '10%';
 
         const formData = new FormData();
@@ -262,7 +257,6 @@ if (btnOcrFill) {
         if (templateName) formData.append('template', templateName);
 
         try {
-            if (ocrFillStatusText) ocrFillStatusText.textContent = '🤖 OCR + Analiza AI...';
             if (ocrFillProgressFill) ocrFillProgressFill.style.width = '30%';
 
             const response = await fetch('/api/process_ocr', {
@@ -277,7 +271,6 @@ if (btnOcrFill) {
 
                 // === TRYB: Podsumowanie (wiele faktur) ===
                 if (advWorkflowType === 'podsumowanie') {
-                    if (ocrFillStatusText) ocrFillStatusText.textContent = `📑 Generowanie wpisów dla ${data.documents.length} faktur...`;
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '60%';
 
                     if (templateIframe && templateIframe.contentDocument) {
@@ -304,32 +297,52 @@ if (btnOcrFill) {
                             const fields = docData.fields || {};
                             
                             // Ekstrakcja kluczowych danych dla tabeli
-                            const kwotaRaw = fields['Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury'] || '0,00 zł';
-                            const nrFaktury = fields['Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty'] || 'brak';
-                            const sprzedawca = fields['Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury'] || 'nieznany';
-                            const nabywca = fields['Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge'] || 'nieznany';
+                            const kwotaRaw = fields['kwota_do_zaplaty'] || '0,00 zł';
+                            const nrFaktury = fields['numer_faktury'] || 'brak';
+                            const sprzedawca = fields['sprzedawca'] || 'nieznany';
+                            const nabywca = fields['nabywca'] || 'nieznany';
+                            const pewnoscProcent = fields['pewnosc_ocr_procent'] || '0%';
+                            const komentarzOcr = fields['komentarz_ocr'] || '';
                             
-                            // Przeliczanie kwoty do sumy
+                            // Przeliczanie kwoty do sumy i ujednolicenie formatu
                             const numStr = String(kwotaRaw).replace(/[^\d,.-]/g, '').replace(',', '.');
                             const val = parseFloat(numStr);
                             if (!isNaN(val)) totalAmount += val;
 
-                            // Przykład logiki pewności OCR
-                            const isLowConfidence = val > 10000; 
+                            const valFormatted = !isNaN(val) 
+                                ? val.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
+                                : '0,00 zł';
+
+                            // Logika pewności OCR na podstawie procentów
+                            const pctValue = parseInt(String(pewnoscProcent).replace('%', ''));
+                            const isLowConfidence = !isNaN(pctValue) && pctValue < 85; 
                             if (isLowConfidence) lowConfidenceCount++;
 
                             tableHtml += `
-                                <div class="grid grid-cols-[150px_1fr_1fr_1fr_150px] gap-4 px-5 py-4 border-b border-zinc-100 last:border-b-0 items-center">
-                                    <div class="text-lg font-semibold text-zinc-900">${kwotaRaw}</div>
-                                    <div class="text-sm font-medium text-zinc-800">${nrFaktury}</div>
-                                    <div class="text-sm text-zinc-700 truncate" title="${sprzedawca}">${sprzedawca}</div>
-                                    <div class="text-sm text-zinc-700 truncate" title="${nabywca}">${nabywca}</div>
-                                    <div>
-                                        <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 text-xs font-semibold">
-                                            ${isLowConfidence ? 'niska pewność' : 'poprawny odczyt'}
-                                        </span>
-                                    </div>
-                                </div>
+                                <tr class="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="text-base font-semibold text-zinc-900">${valFormatted}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-zinc-800">${nrFaktury}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-zinc-700 max-w-[200px] truncate" title="${sprzedawca}">${sprzedawca}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-zinc-700 max-w-[200px] truncate" title="${nabywca}">${nabywca}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center gap-3">
+                                            <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 text-xs font-semibold whitespace-nowrap">
+                                                ${pewnoscProcent}
+                                            </span>
+                                            <span class="text-xs text-zinc-500 italic truncate max-w-[150px]" title="${komentarzOcr}">
+                                                ${komentarzOcr}
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
                             `;
                         });
 
@@ -385,7 +398,6 @@ if (btnOcrFill) {
                         }
                     }
 
-                    if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Wygenerowano podsumowanie dla ${data.documents.length} faktur!`;
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
                     // Pokaż wyekstrahowane dane
@@ -403,7 +415,6 @@ if (btnOcrFill) {
 
                 } else {
                     // === TRYB NORMALNY: Agregacja danych dla wezwania ===
-                    if (ocrFillStatusText) ocrFillStatusText.textContent = `✅ Przetworzono ${data.documents.length} dokumentów!`;
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
 
                     // Agreguj dane z wielu dokumentów
@@ -527,14 +538,12 @@ if (btnOcrFill) {
                     renderAdvFileList();
                 }
 
-            } else if (data.success) {
-                if (ocrFillStatusText) ocrFillStatusText.textContent = '⚠️ Brak danych do ekstrakcji';
             } else {
-                if (ocrFillStatusText) ocrFillStatusText.textContent = `❌ ${data.error}`;
+                console.error('OCR Error:', data.error);
             }
 
         } catch (error) {
-            if (ocrFillStatusText) ocrFillStatusText.textContent = `❌ ${error.message}`;
+            console.error('Fetch Error:', error);
         } finally {
             btnOcrFill.classList.remove('loading');
             if (btnOcrFillIcon) btnOcrFillIcon.textContent = '🚀';

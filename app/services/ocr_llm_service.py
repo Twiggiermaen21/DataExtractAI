@@ -191,6 +191,8 @@ class OCRService:
 Pola do ekstrakcji:
 {fields_list}
 
+WAŻNE: Dla pól kończących się na "_procent" (np. pewnosc_ocr_procent), podaj szacunkową pewność odczytu jako tekst z procentem (np. "95%").
+Dla pola "komentarz_ocr", podaj krótki komentarz (max 10 słów) o tym, jak dobrze udało się odczytać dane (np. "Wszystkie dane czytelne" lub "Brak NIP nabywcy").
 Jeśli wartości nie ma, użyj null."""
         else:
             return f"""{action} i wyodrębnij wszystkie kluczowe dane z dokumentu. 

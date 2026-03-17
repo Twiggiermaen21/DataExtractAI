@@ -25,8 +25,12 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
@@ -93,19 +97,24 @@
                 </div>
                 <div class="bg-zinc-50 p-4 md:p-5">
                     <div class="rounded-[24px] bg-white border border-zinc-200 overflow-hidden">
-                        <div class="grid grid-cols-[150px_1fr_1fr_1fr_150px] gap-4 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-zinc-500 border-b border-zinc-200">
-                            <div>Kwota</div>
-                            <div>Nr faktury</div>
-                            <div>Sprzedawca</div>
-                            <div>Nabywca</div>
-                            <div>OCR</div>
-                        </div>
-                        <div id="summary-table-body">
-                            <!-- Dokumenty będą tu ładowane dynamicznie -->
-                            <div class="p-8 text-center text-zinc-400 italic">
-                                Brak danych do wyświetlenia.
-                            </div>
-                        </div>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-zinc-50 border-b border-zinc-100 text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                    <th class="px-6 py-4 font-bold">Kwota</th>
+                                    <th class="px-6 py-4 font-bold">Nr faktury</th>
+                                    <th class="px-6 py-4 font-bold">Sprzedawca</th>
+                                    <th class="px-6 py-4 font-bold">Nabywca</th>
+                                    <th class="px-6 py-4 font-bold">Zgodnosć</th>
+                                </tr>
+                            </thead>
+                            <tbody id="summary-table-body">
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-zinc-400 italic">
+                                        Brak danych do wyświetlenia.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -114,18 +123,12 @@
 
     <!-- Ukryte pola do ekstrakcji przez model AI -->
     <div style="display: none;">
-        <input type="hidden" name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury">
-        <input type="hidden" name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto">
-        <input type="hidden" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji">
-        <input type="hidden" name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge">
-        <input type="hidden" name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto">
-        <input type="hidden" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany">
-        <input type="hidden" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty">
-        <input type="hidden" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy">
-        <input type="hidden" name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury">
-        <input type="hidden" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki">
-        <input type="hidden" name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury">
-        <input type="hidden" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta">
+        <input type="hidden" name="kwota_do_zaplaty">
+        <input type="hidden" name="numer_faktury">
+        <input type="hidden" name="sprzedawca">
+        <input type="hidden" name="nabywca">
+        <input type="hidden" name="pewnosc_ocr_procent">
+        <input type="hidden" name="komentarz_ocr">
     </div>
 
 </body>

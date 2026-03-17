@@ -297,7 +297,6 @@
 }
 
 .btn.loading {
-    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-blue));
     background-size: 200% 100%;
     animation: shimmer 2s infinite linear;
 }
@@ -560,12 +559,14 @@ label,
     top: 0;
     left: 0;
     pointer-events: none;
-    background: #fff; /* Ensure white base */
+    background: #fff;
+    /* Ensure white base */
     overflow: hidden;
 }
 
 .library-html-preview iframe {
-    width: 400%; /* ~720px - 800px logical width */
+    width: 400%;
+    /* ~720px - 800px logical width */
     height: 600%;
     transform: scale(0.25);
     transform-origin: top left;
@@ -769,8 +770,13 @@ label,
 }
 
 @keyframes blobFloat {
-    from { transform: translate(0, 0) rotate(0deg); }
-    to { transform: translate(100px, 50px) rotate(30deg); }
+    from {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    to {
+        transform: translate(100px, 50px) rotate(30deg);
+    }
 }
 
 .welcome-content {
@@ -869,4 +875,4 @@ label,
         opacity: 1;
         transform: translateY(0);
     }
-}
+}
