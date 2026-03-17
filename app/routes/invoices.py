@@ -1,5 +1,5 @@
 """
-Endpointy API do batch-przetwarzania faktur.
+Endpointy API do batch-przetwarzania faktur. exe
 """
 
 import os
