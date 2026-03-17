@@ -65,13 +65,21 @@
     border: none;
 }
 
+.card-white {
+    background: #ffffff;
+    color: var(--text-on-light);
+    border: 1px solid #e5e7eb;
+}
+
 /* Text overrides for light cards */
 .card-green .card-title,
 .card-purple .card-title,
 .card-beige .card-title,
+.card-white .card-title,
 .card-green .step-label,
 .card-purple .step-label,
-.card-beige .step-label {
+.card-beige .step-label,
+.card-white .step-label {
     color: var(--text-on-light);
 }
 

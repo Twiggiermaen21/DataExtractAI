@@ -811,7 +811,12 @@ if (templateSelect) {
 
         // Reset button states
         if (advStepUpload) advStepUpload.classList.add('hidden');
-        if (advPreviewCard) advPreviewCard.classList.add('hidden');
+        if (advPreviewCard) {
+            advPreviewCard.classList.add('hidden');
+            // Reset styling classes
+            advPreviewCard.classList.remove('card-white', 'card-beige');
+            advPreviewCard.classList.add('card-purple');
+        }
         if (advActionsCard) advActionsCard.classList.add('hidden');
 
         const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
@@ -845,6 +850,11 @@ if (templateSelect) {
             advWorkflowType = 'podsumowanie';
             // Pokaż sekcję upload dla podsumowania
             if (advStepUpload) advStepUpload.classList.remove('hidden');
+            // Stylizacja dla podsumowania: wywal fioletowe
+            if (advPreviewCard) {
+                advPreviewCard.classList.remove('card-purple');
+                advPreviewCard.classList.add('card-white');
+            }
         }
 
 
