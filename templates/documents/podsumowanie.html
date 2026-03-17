@@ -5,124 +5,114 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0">
     <title>Podsumowanie Faktur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
+            font-family: 'Outfit', sans-serif;
+            background-color: transparent;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 40px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+        /* Opcjonalne: dopasowanie stylu przewijania */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
 
-        h1 {
-            text-align: center;
-            color: #1a1a1a;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 15px;
-            font-size: 24px;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
 
-        #podsumowanie-list {
-            display: flex;
-            flex-direction: column;
-            gap: 25px;
-        }
-
-        .summary-item {
-            border: 1px solid #d0d8f0;
-            border-radius: 8px;
-            overflow: hidden;
-            page-break-inside: avoid;
-        }
-
-        .summary-header {
-            background: #f0f4ff;
-            padding: 12px 16px;
-            font-weight: 600;
-            color: #2e4a8f;
-            border-bottom: 1px solid #d0d8f0;
-            font-size: 16px;
-        }
-
-        .summary-body {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            background-color: #ffffff;
-        }
-
-        .field-row {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .field-label {
-            font-size: 0.85em;
-            color: #666;
-            text-transform: uppercase;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .field-value {
-            font-size: 1.05em;
-            font-weight: 500;
-            color: #222;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        @media (max-width: 600px) {
-            .summary-body {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media print {
-            body {
-                padding: 0;
-                background: white;
-            }
-
-            .container {
-                box-shadow: none;
-                padding: 0;
-                margin: 0;
-                max-width: 100%;
-            }
-
-            .summary-item {
-                margin-bottom: 20px;
-            }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
         }
     </style>
 </head>
 
-<body>
+<body class="p-6">
 
-    <div class="container">
-        <h1>Podsumowanie Przetworzonych Faktur</h1>
-        <div id="podsumowanie-list">
-            <div style="text-align: center; color: #888; padding: 40px; font-style: italic;">
-                Brak danych. Przetwórz faktury, aby wygenerować podsumowanie.
+    <section id="summary-container" class="rounded-3xl bg-white shadow-sm border border-zinc-200 overflow-hidden">
+        <div class="border-b border-zinc-100 px-8 py-6 flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-zinc-500">Wynik końcowy</p>
+                <h1 id="summary-title" class="text-2xl font-semibold tracking-tight mt-1">Analiza pakietu faktur</h1>
+            </div>
+            <div id="summary-header-badge" class="rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700">0 faktur • PLN</div>
+        </div>
+        
+        <div class="p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
+                <!-- Suma Card -->
+                <div class="rounded-[28px] p-7 bg-zinc-950 text-white relative overflow-hidden">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]"></div>
+                    <div class="relative z-10">
+                        <p class="text-sm text-zinc-400">Suma </p>
+                        <div class="mt-6 flex items-end gap-3">
+                            <span id="summary-total-amount" class="text-5xl md:text-6xl font-semibold tracking-tight text-emerald-400">0,00 zł</span>
+                        </div>
+                        <div id="summary-threshold-alert" class="mt-8 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 hidden">
+                            <div id="summary-threshold-indicator" class="h-3 w-3 rounded-full bg-emerald-400"></div>
+                            <span id="summary-threshold-text" class="text-sm md:text-base font-medium">Przekroczono próg 50 000 zł</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Szybki kontekst -->
+                <div class="rounded-[28px] border border-zinc-200 bg-zinc-50 p-6">
+                    <p class="text-sm font-medium text-zinc-500">Szybki kontekst</p>
+                    <div class="mt-5 space-y-4">
+                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
+                            <div class="text-sm text-zinc-500">Próg kontrolny</div>
+                            <div id="summary-threshold-value" class="mt-1 text-2xl font-semibold">50 000,00 zł</div>
+                        </div>
+                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
+                            <div class="text-sm text-zinc-500">Różnica</div>
+                            <div id="summary-difference-value" class="mt-1 text-2xl font-semibold text-zinc-400">0,00 zł</div>
+                        </div>
+                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
+                            <div class="text-sm text-zinc-500">Jakość OCR</div>
+                            <div id="summary-ocr-status" class="mt-2 flex items-center justify-between">
+                                <span id="summary-ocr-status-text" class="text-base font-medium">Brak danych</span>
+                                <span id="summary-ocr-status-badge" class="rounded-full bg-zinc-100 text-zinc-500 px-3 py-1 text-xs font-semibold">oczekiwanie</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela Faktur -->
+            <div class="mt-8 rounded-[28px] border border-zinc-200 overflow-hidden">
+                <div class="px-6 py-4 bg-white border-b border-zinc-200 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold">Szczegóły odczytu</h2>
+                        <p class="text-sm text-zinc-500 mt-1">Lista wszystkich przetworzonych faktur w pakiecie.</p>
+                    </div>
+                    <!-- Można tu dodać akcje, np. eksport -->
+                </div>
+                <div class="bg-zinc-50 p-4 md:p-5">
+                    <div class="rounded-[24px] bg-white border border-zinc-200 overflow-hidden">
+                        <div class="grid grid-cols-[150px_1fr_1fr_1fr_150px] gap-4 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-zinc-500 border-b border-zinc-200">
+                            <div>Kwota</div>
+                            <div>Nr faktury</div>
+                            <div>Sprzedawca</div>
+                            <div>Nabywca</div>
+                            <div>OCR</div>
+                        </div>
+                        <div id="summary-table-body">
+                            <!-- Dokumenty będą tu ładowane dynamicznie -->
+                            <div class="p-8 text-center text-zinc-400 italic">
+                                Brak danych do wyświetlenia.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Ukryte pola do ekstrakcji przez model AI (identyczne jak w wezwaniu) -->
+    <!-- Ukryte pola do ekstrakcji przez model AI -->
     <div style="display: none;">
         <input type="hidden" name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury">
         <input type="hidden" name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto">

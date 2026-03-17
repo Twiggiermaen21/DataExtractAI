@@ -280,91 +280,98 @@ if (btnOcrFill) {
                     if (ocrFillStatusText) ocrFillStatusText.textContent = `📑 Generowanie wpisów dla ${data.documents.length} faktur...`;
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '60%';
 
-                    // Mapowanie długich nazw pól na czytelne etykiety
-                    const fieldLabels = {
-                        'nazwa_firmy_sprzedawcy': 'Wierzyciel (nazwa)',
-                        'adres_sprzedawcy': 'Wierzyciel (adres)',
-                        'nip_sprzedawcy': 'NIP wierzyciela',
-                        'nazwa_firmy_nabywcy': 'Dłużnik (nazwa)',
-                        'adres_siedziby_nabywcy': 'Dłużnik (adres)',
-                        'nip_nabywcy': 'NIP dłużnika',
-                        'numer_faktury': 'Numer faktury',
-                        'date_wystawienia': 'Data wystawienia',
-                        'kwote_do_zaplaty': 'Kwota do zapłaty',
-                        'terminu_platnosci': 'Termin płatności',
-                        'numer_konta': 'Numer konta',
-                        'nazwe_banku': 'Bank'
-                    };
-
-                    function getLabel(fieldName) {
-                        const lower = fieldName.toLowerCase();
-                        for (let [key, label] of Object.entries(fieldLabels)) {
-                            if (lower.includes(key)) return label;
-                        }
-                        return fieldName.replace(/^Znajdz_na_fakturze_|^Znajdz_i_przepisz_|^Znajdz_/g, '').replace(/_/g, ' ').substring(0, 60);
-                    }
-
                     if (templateIframe && templateIframe.contentDocument) {
                         const doc = templateIframe.contentDocument;
-                        const listContainer = doc.getElementById('podsumowanie-list');
-                        if (listContainer) {
-                            let html = '';
-                            data.documents.forEach((docData, i) => {
-                                const fields = docData.fields || {};
-                                const invoiceFilename = docData.filename || `Faktura ${i + 1}`;
+                        
+                        // 1. Podstawowe dane
+                        let totalAmount = 0;
+                        let lowConfidenceCount = 0;
+                        const threshold = 50000;
 
-                                html += `<div class="summary-item">
-                                    <div class="summary-header">#${i + 1} — ${invoiceFilename}</div>
-                                    <div class="summary-body">`;
+                        // Kontenery w nowym szablonie
+                        const totalAmountEl = doc.getElementById('summary-total-amount');
+                        const headerBadgeEl = doc.getElementById('summary-header-badge');
+                        const thresholdAlertEl = doc.getElementById('summary-threshold-alert');
+                        const thresholdTextEl = doc.getElementById('summary-threshold-text');
+                        const differenceValueEl = doc.getElementById('summary-difference-value');
+                        const ocrStatusTextEl = doc.getElementById('summary-ocr-status-text');
+                        const ocrStatusBadgeEl = doc.getElementById('summary-ocr-status-badge');
+                        const tableBodyEl = doc.getElementById('summary-table-body');
 
-                                // Specific ordering
-                                const orderedKeys = Object.keys(fields).sort((a, b) => {
-                                    const str_a = a.toLowerCase();
-                                    const str_b = b.toLowerCase();
-                                    const isA_dluznik = str_a.includes('nabywc');
-                                    const isA_wierzyciel = str_a.includes('sprzedawc');
-                                    const isB_dluznik = str_b.includes('nabywc');
-                                    const isB_wierzyciel = str_b.includes('sprzedawc');
-                                    if (isA_wierzyciel && !isB_wierzyciel) return -1;
-                                    if (!isA_wierzyciel && isB_wierzyciel) return 1;
-                                    if (isA_dluznik && !isB_dluznik) return -1;
-                                    if (!isA_dluznik && isB_dluznik) return 1;
-                                    return 0;
-                                });
+                        let tableHtml = '';
 
-                                for (let fieldName of orderedKeys) {
-                                    const value = fields[fieldName];
-                                    if (!value) continue;
-                                    const label = getLabel(fieldName);
-                                    let cssClass = 'field-row';
-                                    if (label.includes('nazwa') || label.includes('adres') || label.includes('Bank') || label.includes('konta')) {
-                                        cssClass += ' full-width';
-                                    }
+                        data.documents.forEach((docData, i) => {
+                            const fields = docData.fields || {};
+                            
+                            // Ekstrakcja kluczowych danych dla tabeli
+                            const kwotaRaw = fields['Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury'] || '0,00 zł';
+                            const nrFaktury = fields['Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty'] || 'brak';
+                            const sprzedawca = fields['Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury'] || 'nieznany';
+                            const nabywca = fields['Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge'] || 'nieznany';
+                            
+                            // Przeliczanie kwoty do sumy
+                            const numStr = String(kwotaRaw).replace(/[^\d,.-]/g, '').replace(',', '.');
+                            const val = parseFloat(numStr);
+                            if (!isNaN(val)) totalAmount += val;
 
-                                    let valueStyle = '';
-                                    if (label === 'Kwota do zapłaty') {
-                                        const numStr = String(value).replace(/[^\d,.]/g, '').replace(',', '.');
-                                        const num = parseFloat(numStr);
-                                        if (!isNaN(num) && num > 1000) {
-                                            valueStyle = 'color: #d32f2f; font-weight: bold;';
-                                        }
-                                    }
+                            // Przykład logiki pewności OCR
+                            const isLowConfidence = val > 10000; 
+                            if (isLowConfidence) lowConfidenceCount++;
 
-                                    html += `
-                                        <div class="${cssClass}">
-                                            <div class="field-label">${label}</div>
-                                            <div class="field-value" style="${valueStyle}">${value}</div>
-                                        </div>
-                                    `;
-                                }
-                                html += `</div></div>`;
-                            });
-                            listContainer.innerHTML = html;
+                            tableHtml += `
+                                <div class="grid grid-cols-[150px_1fr_1fr_1fr_150px] gap-4 px-5 py-4 border-b border-zinc-100 last:border-b-0 items-center">
+                                    <div class="text-lg font-semibold text-zinc-900">${kwotaRaw}</div>
+                                    <div class="text-sm font-medium text-zinc-800">${nrFaktury}</div>
+                                    <div class="text-sm text-zinc-700 truncate" title="${sprzedawca}">${sprzedawca}</div>
+                                    <div class="text-sm text-zinc-700 truncate" title="${nabywca}">${nabywca}</div>
+                                    <div>
+                                        <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 text-xs font-semibold">
+                                            ${isLowConfidence ? 'niska pewność' : 'poprawny odczyt'}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        // 2. Aktualizacja UI
+                        if (tableBodyEl) tableBodyEl.innerHTML = tableHtml;
+                        if (headerBadgeEl) headerBadgeEl.textContent = `${data.documents.length} faktur • PLN`;
+                        if (totalAmountEl) totalAmountEl.textContent = totalAmount.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+
+                        // Threshold logic
+                        const diff = totalAmount - threshold;
+                        if (thresholdAlertEl) {
+                            if (totalAmount > threshold) {
+                                thresholdAlertEl.classList.remove('hidden');
+                                if (thresholdTextEl) thresholdTextEl.textContent = `Przekroczono próg ${threshold.toLocaleString()} zł`;
+                            } else {
+                                thresholdAlertEl.classList.add('hidden');
+                            }
+                        }
+
+                        if (differenceValueEl) {
+                            const diffStr = (diff >= 0 ? '+' : '') + diff.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
+                            differenceValueEl.textContent = diffStr;
+                            differenceValueEl.className = `mt-1 text-2xl font-semibold ${diff >= 0 ? 'text-emerald-600' : 'text-zinc-400'}`;
+                        }
+
+                        // OCR Status
+                        if (ocrStatusTextEl) {
+                            ocrStatusTextEl.textContent = lowConfidenceCount > 0 ? `${lowConfidenceCount} ${lowConfidenceCount === 1 ? 'faktura wymaga' : 'faktury wymagają'} uwagi` : 'Wszystkie odczyty poprawne';
+                        }
+                        if (ocrStatusBadgeEl) {
+                            if (lowConfidenceCount > 0) {
+                                ocrStatusBadgeEl.className = "rounded-full bg-amber-100 text-amber-700 px-3 py-1 text-xs font-semibold";
+                                ocrStatusBadgeEl.textContent = "niska pewność";
+                            } else {
+                                ocrStatusBadgeEl.className = "rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold";
+                                ocrStatusBadgeEl.textContent = "wysoka pewność";
+                            }
                         }
                     }
 
-                    // Zapisz każde wezwanie do JSON - backend API do generowania POZWU czy wykorzystania zapisanych dokumentow
-                    if (progressFill) progressFill.style.width = '80%';
+                    // Zapisz każde wezwanie do JSON
+                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
                     for (let i = 0; i < data.documents.length; i++) {
                         const fields = data.documents[i].fields || {};
                         try {
