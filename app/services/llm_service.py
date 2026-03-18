@@ -6,7 +6,7 @@ Serwis LLM do ekstrakcji danych z wyników OCR.
 import os
 import json
 import logging
-import requests
+from openai import OpenAI
 
 log = logging.getLogger(__name__)
 
@@ -26,32 +26,24 @@ def _get_text_from_ocr_json(json_path: str) -> str:
 
 
 def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
-    """Wysyła zapytanie do LLM API i zwraca odpowiedź."""
-    api_url = os.environ.get("LLM_API_URL", "http://localhost:8080/v1/chat/completions")
-    model_name = model or os.environ.get("LLM_MODEL", "default")
-
+    """Generuje odpowiedź przy użyciu lokalnego serwera llama.cpp na porcie 8080."""
+    client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+    
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    log.debug("LLM request: model=%s, url=%s", model_name, api_url)
+    log.debug("LLM request using OpenAI client to llama-server.exe")
 
-    response = requests.post(
-        api_url,
-        json={
-            "model": model_name,
-            "messages": messages,
-            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
-            "temperature": 0.1,
-        },
-        timeout=120,
+    response = client.chat.completions.create(
+        model="local-model",
+        messages=messages,
+        temperature=0.99,
+        max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
     )
 
-    if response.status_code != 200:
-        raise Exception(f'Błąd serwera LLM: {response.status_code}')
-
-    llm_response = response.json()['choices'][0]['message']['content'].strip()
+    llm_response = response.choices[0].message.content.strip()
     log.info("LLM odpowiedź (%d zn.): %.200s", len(llm_response), llm_response)
     return llm_response
 
@@ -143,10 +135,6 @@ Zwróć TYLKO JSON:"""
             'extracted_data': extracted_data,
         }
 
-    except requests.exceptions.ConnectionError:
-        return {'error': 'Nie można połączyć się z serwerem LLM. Sprawdź LLM_API_URL.'}
-    except requests.exceptions.Timeout:
-        return {'error': 'Przekroczono czas oczekiwania na odpowiedź od LLM'}
     except Exception as e:
         log.exception("extract_invoice_data error")
         return {'error': str(e)}
@@ -199,10 +187,6 @@ Zwróć TYLKO wypełniony JSON:"""
             'fields': extracted_data,
         }
 
-    except requests.exceptions.ConnectionError:
-        return {'error': 'Nie można połączyć się z serwerem LLM. Sprawdź LLM_API_URL.'}
-    except requests.exceptions.Timeout:
-        return {'error': 'Przekroczono czas oczekiwania na odpowiedź od LLM'}
     except Exception as e:
         log.exception("extract_template_fields error")
         return {'error': str(e)}

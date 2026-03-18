@@ -46,6 +46,7 @@ function handleFiles(files) {
     }
     renderFileList();
     updateOcrButton();
+    if (fileInput) fileInput.value = '';
 }
 
 function renderFileList() {

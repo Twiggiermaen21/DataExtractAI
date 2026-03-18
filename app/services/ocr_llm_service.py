@@ -1,7 +1,15 @@
 import os
-import requests
-from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template
+import glob
+from app.utils.ocr_utils import get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template
 from app.utils.ocr_result import OCRResult
+
+import subprocess
+import atexit
+import time
+import sys
+from openai import OpenAI
+
+# Usuwamy stare importy llama_cpp
 
 # Schema JSON wysyłany do LLM (structured output)
 RESPONSE_SCHEMA = {
@@ -14,7 +22,6 @@ RESPONSE_SCHEMA = {
                 "nabywca":              {"type": "string"},
                 "pewnosc_ocr_procent":  {"type": "integer"},
                 "kwota_do_zaplaty":     {"type": "number"},
-                "komentarz_ocr":       {"type": "string"},
                 "sprzedawca":          {"type": "string"},
                 "numer_faktury":       {"type": "string"},
             },
@@ -29,14 +36,12 @@ RESPONSE_SCHEMA = {
 }
 
 
+# Usunięto lokalne uruchamianie serwera - teraz zarządza nim run.py globalnie
+
 class OCRService:
 
     def __init__(self, api_url=None, model=None):
-        self.api_url = api_url or os.environ.get("LLM_API_URL")
-        self.model = model or os.environ.get("LLM_MODEL")
-        self.timeout = 600
         self.fields = []
-        check_connection(self.api_url)
 
     # ── public API ──────────────────────────────────────────────
 
@@ -100,59 +105,81 @@ class OCRService:
         if len(text_content) > max_chars:
             text_content = text_content[:max_chars]
 
-        payload = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": "Jesteś asystentem. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
-                {"role": "user",   "content": (
-                    f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n"
-                    f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n"
-                    f"{self._build_prompt(is_text=True)}"
-                )},
+        print(f"[OCR] --- ODPOWIEDŹ Z PLIKU/STRONY ---")
+        print(f"{text_content[:1000]}{'...' if len(text_content) > 1000 else ''}")
+        print(f"[OCR] ---------------------------------")
+
+        print(f"[OCR] Wysyłanie zapytania tekstowego do wbudowanego serwera llama.cpp...")
+        client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+        
+        system_prompt = "Jesteś bezwzględnym ekstraktorem danych. Oczekuję wyłącznie surowego formatu JSON. Bezwzględny zakaz dodawania procesu myślowego, wstępów i podsumowań."
+        user_msg = (
+            f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n"
+            f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n"
+            f"{self._build_prompt(is_text=True)}"
+        )
+        
+        print(f"[OCR] --- PROMPT DO LLM ---")
+        print(user_msg)
+        print(f"[OCR] ----------------------")
+        
+        response = client.chat.completions.create(
+            model="local-model",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_msg}
             ],
-            **self._common_params(),
-        }
-        return self._send_to_llm(payload, file_path)
+            response_format=RESPONSE_SCHEMA,
+            temperature=0.99,
+            max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
+            extra_body={
+        "top_k": 20,
+        "chat_template_kwargs": {"enable_thinking": False},
+    }, 
+        )
+        
+        output_text = response.choices[0].message.content
+        print(f"[OCR] --- ODPOWIEDŹ LLM ---")
+        print(output_text)
+        print(f"[OCR] ---------------------")
+        return OCRResult(output_text, file_path)
 
     # ── obraz → LLM ────────────────────────────────────────────
 
     def _predict_image(self, image_path, source_path=None):
+        print(f"[OCR] Wysyłanie zapytania graficznego do wbudowanego serwera llama.cpp...")
+        client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+        
+        print(f"[OCR] Przetwarzanie obrazu: {image_path}")
         image_base64 = image_to_base64(image_path)
         mime_type = get_mime_type(image_path)
+        user_msg = self._build_prompt(is_text=False)
 
-        payload = {
-            "model": self.model,
-            "messages": [
+        print(f"[OCR] --- PROMPT DO LLM (WIZJA) ---")
+        print(user_msg)
+        print(f"[OCR] -------------------------------")
+
+        response = client.chat.completions.create(
+            model="local-model",
+            messages=[
                 {"role": "system", "content": "Jesteś asystentem OCR. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
-                {"role": "user",   "content": [
-                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}},
-                    {"type": "text", "text": self._build_prompt(is_text=False)},
-                ]},
+                {"role": "user", "content": [
+                    {"type": "text", "text": user_msg},
+                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
+                ]}
             ],
-            **self._common_params(),
-        }
-        return self._send_to_llm(payload, source_path or image_path)
+            response_format=RESPONSE_SCHEMA,
+            temperature=0.99,
+            max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000))
+        )
+        
+        output_text = response.choices[0].message.content
+        print(f"[OCR] --- ODPOWIEDŹ LLM (WIZJA) ---")
+        print(output_text)
+        print(f"[OCR] -----------------------------")
+        return OCRResult(output_text, source_path or image_path)
 
     # ── wspólne elementy ────────────────────────────────────────
-
-    def _common_params(self):
-        return {
-            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
-            "temperature": 0.1,
-            "response_format": RESPONSE_SCHEMA,
-        }
-
-    def _send_to_llm(self, payload, result_path):
-        response = requests.post(
-            self.api_url, json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=self.timeout,
-        )
-        if response.status_code == 200:
-            output_text = response.json()["choices"][0]["message"]["content"]
-            print(f"[OCR] Odpowiedź LLM (500 zn.): {output_text[:500]}")
-            return OCRResult(output_text, result_path)
-        raise Exception(f"API błąd {response.status_code}: {response.text}")
 
     def _build_prompt(self, is_text=False):
         action = "Przeanalizuj tekst" if is_text else "Przeanalizuj obraz"
@@ -164,10 +191,7 @@ class OCRService:
             return (
                 f"{action} i wyodrębnij dane. Zwróć TYLKO obiekt JSON (bez markdown).\n\n"
                 f"Pola do ekstrakcji:\n{fields_list}\n\n"
-                "WAŻNE: Dla pól kończących się na \"_procent\" (np. pewnosc_ocr_procent), "
-                "podaj szacunkową pewność odczytu jako tekst z procentem (np. \"95%\").\n"
-                "Dla pola \"komentarz_ocr\", podaj krótki komentarz (max 10 słów) o tym, "
-                "jak dobrze udało się odczytać dane.\n"
+                "WAŻNE: Dla pól  pewnosc_ocr_procent podaj szacunkową pewność odczytu jako tekst z procentem.\n"
                 "Jeśli wartości nie ma, użyj null."
             )
         return (

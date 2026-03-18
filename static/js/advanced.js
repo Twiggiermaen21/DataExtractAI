@@ -205,6 +205,7 @@ function handleAdvUploadFiles(files) {
     }
     renderAdvFileList();
     updateAdvOcrButton();
+    if (advFileInput) advFileInput.value = '';
 }
 
 function renderAdvFileList() {
@@ -1027,6 +1028,7 @@ function handlePozewFiles(files) {
     pozewUploadedFiles = [...pozewUploadedFiles, ...Array.from(files)];
     renderPozewFileList();
     updatePozewOcrButton();
+    if (pozewFileInput) pozewFileInput.value = '';
 }
 
 function renderPozewFileList() {
@@ -1131,6 +1133,7 @@ function handleKrsFiles(files) {
     krsUploadedFiles = [...krsUploadedFiles, ...Array.from(files)];
     renderKrsFileList();
     updateGeneratePozewButton();
+    if (krsFileInput) krsFileInput.value = '';
 }
 
 function renderKrsFileList() {

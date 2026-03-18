@@ -16,3 +16,5 @@ llama.md
 models/*
 !models/.gitkeep
 venv/*
+llama/*
+model*

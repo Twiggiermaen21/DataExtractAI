@@ -75,7 +75,39 @@
         <!-- Zawartość podglądu -->
       </div>
     </div>
+  <!-- Modal Pomocy -->
+  <div id="helpModal" class="modal">
+    <div class="modal-overlay" onclick="closeHelpModal()"></div>
+    <div class="modal-container" style="max-width: 500px; height: auto;">
+      <div class="modal-header">
+        <h3 id="helpModalTitle">Potrzebujesz pomocy?</h3>
+        <button class="close-btn" onclick="closeHelpModal()">✕</button>
+      </div>
+      <div class="modal-body" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+        <svg fill="none" stroke="var(--accent-yellow)" stroke-width="2" viewBox="0 0 24 24" width="64" height="64" style="margin-bottom: 20px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 1.05rem;">
+          Więcej informacji, wsparcie techniczne oraz odpowiedzi na najczęściej zadawane pytania eksperckie znajdziesz na naszej stronie internetowej.
+        </p>
+        <a href="https://iusfully.com" target="_blank" class="btn" style="background: var(--accent-yellow); color: #121316; text-decoration: none; width: auto; padding: 12px 30px; border-radius: var(--radius-xl);">
+          Przejdź na iusfully.com
+        </a>
+      </div>
+    </div>
   </div>
+
+  <script>
+    function openHelpModal() {
+      document.getElementById('helpModal').classList.add('active');
+    }
+    
+    function closeHelpModal() {
+      document.getElementById('helpModal').classList.remove('active');
+    }
+  </script>
 </body>
 
 </html>

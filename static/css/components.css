@@ -192,7 +192,7 @@
 }
 
 .file-item .remove {
-    color: var(--text-muted);
+    color: var(--text-on-light);
     cursor: pointer;
     padding: 4px 8px;
     border-radius: var(--radius-sm);

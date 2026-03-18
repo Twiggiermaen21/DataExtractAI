@@ -19,49 +19,4 @@
         <input type="text" id="global-search" placeholder="Search for anything">
     </div>
 
-    <div class="header-profile">
-
-
-        <div class="dropdown-container">
-            <button class="icon-btn badge-btn" id="btn-notifications" title="Powiadomienia">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                </svg>
-                <span class="badge">9</span>
-            </button>
-            <div class="dropdown-menu" id="menu-notifications">
-                <div class="dropdown-header">Powiadomienia</div>
-                <div class="dropdown-item">📄 Nowa faktura PDF czeka na OCR</div>
-                <div class="dropdown-item">⚖️ Pozew #123 został wygenerowany</div>
-                <div class="dropdown-divider"></div>
-                <div class="dropdown-item" style="text-align: center; font-size: 0.85em; color: var(--accent-blue);">Zobacz wszystkie</div>
-            </div>
-        </div>
-
-        <div class="dropdown-container">
-            <button class="icon-btn" id="btn-messages" title="Wiadomości">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-            </button>
-            <div class="dropdown-menu" id="menu-messages">
-                <div class="dropdown-header">Wiadomości</div>
-                <div class="dropdown-item">Brak nowych wiadomości</div>
-            </div>
-        </div>
-
-        <div class="dropdown-container">
-            <div class="profile-avatar" id="btn-profile" title="Profil użytkownika">
-                <img src="{{ url_for('static', filename='user.png') }}" alt="User Profile">
-            </div>
-            <div class="dropdown-menu" id="menu-profile">
-                <div class="dropdown-header">Moje Konto</div>
-                <a href="#" class="dropdown-item">Ustawienia</a>
-                <a href="#" class="dropdown-item">Moja Biblioteka</a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item" style="color: #ef4444;">Wyloguj się</a>
-            </div>
-        </div>
-    </div>
 </header>
