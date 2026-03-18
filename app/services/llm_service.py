@@ -25,7 +25,7 @@ def _get_text_from_ocr_json(json_path: str) -> str:
     return '\n'.join(text_blocks)
 
 
-def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
+def call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     """Generuje odpowiedź przy użyciu lokalnego serwera llama.cpp na porcie 8080."""
     client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
     
@@ -109,7 +109,7 @@ TEKST DOKUMENTU:
 
 Zwróć TYLKO JSON:"""
 
-        generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
+        generated_text = call_llm(prompt, SYSTEM_ROLE, model=model)
         extracted_data = _parse_json_response(generated_text)
 
         # Zapis do output/extract_data/
@@ -178,7 +178,7 @@ TREŚĆ DOKUMENTÓW:
 
 Zwróć TYLKO wypełniony JSON:"""
 
-        generated_text = _call_llm(prompt, SYSTEM_ROLE, model=model)
+        generated_text = call_llm(prompt, SYSTEM_ROLE, model=model)
         extracted_data = _parse_json_response(generated_text)
 
         return {

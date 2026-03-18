@@ -7,10 +7,9 @@ import os
 import re
 import json
 import logging
-import requests
 from flask import Blueprint, request, jsonify, current_app
-
 from app.utils.helpers import parse_kwota, extract_city_from_address, extract_postal_code_city, extract_postal_code
+from app.services.llm_service import call_llm
 
 log = logging.getLogger(__name__)
 
@@ -65,25 +64,11 @@ Odpowiedz TYLKO numerem KRS (same cyfry, np. "0000123456").
 Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "BRAK"."""
 
     try:
-        response = requests.post(
-            os.environ.get("LLM_API_URL"),
-            json={
-                "model": model or os.environ.get("LLM_MODEL"),
-                "messages": [
-                    {"role": "system", "content": "Wyciągasz numery KRS z dokumentów. Odpowiadasz krótko - samym numerem KRS lub BRAK."},
-                    {"role": "user", "content": krs_prompt},
-                ],
-                "max_tokens": 50,
-                "temperature": 0.1,
-            },
-            timeout=120,
-        )
-
-        if response.status_code == 200:
-            krs_answer = response.json()["choices"][0]["message"]["content"].strip()
-            krs_match = re.search(r'\d{7,10}', krs_answer)
-            if krs_match and 'BRAK' not in krs_answer.upper():
-                return krs_match.group(0)
+        krs_answer = call_llm(krs_prompt, system_prompt="Wyciągasz numery KRS z dokumentów. Odpowiadasz krótko - samym numerem KRS lub BRAK.", model=model)
+        
+        krs_match = re.search(r'\d{7,10}', krs_answer)
+        if krs_match and 'BRAK' not in krs_answer.upper():
+            return krs_match.group(0)
     except Exception as e:
         log.warning("KRS lookup failed: %s", e)
 

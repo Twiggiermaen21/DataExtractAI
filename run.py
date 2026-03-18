@@ -82,6 +82,7 @@ def start_background_server():
     # Pobieranie nazw plików modeli z .env
     model_file = os.environ.get("LLM_MODEL_FILE", "Qwen3.5-2B.gguf")
     mmproj_file = os.environ.get("LLM_MMPROJ_FILE", "mmproj-Qwen3.5-2B.gguf")
+    max_tokens = os.environ.get("LLM_MAX_TOKENS", "8000")
 
     model_path = os.path.join(base_path, "model", model_file)
     mmproj_path = os.path.join(base_path, "model", mmproj_file)
@@ -93,7 +94,7 @@ def start_background_server():
     "-m", model_path,
     "--mmproj", mmproj_path,
     "--port", "8080",
-    "-c", "20000",       # Zwiększamy do 8k - masz 16GB VRAM, wejdzie bez problemu, a obsłuży długie faktury
+    "-c", max_tokens,    # Rozmiar kontekstu pobrany z .env
     "-ngl", "99",       # Przerzucenie wszystkiego na GPU
     "-fa", "on",       # Flash Attention - MUSISZ to mieć. Przyspiesza analizę obrazu i oszczędza VRAM
     "--temp", "0.0",    # Temperatura 0.0 - eliminuje "kreatywność" modelu, wymusza faktyczne dane z obrazu
