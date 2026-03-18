@@ -101,3 +101,56 @@ def save_to_library():
         return jsonify({'success': True, 'filename': filename})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@main_bp.route('/api/library/delete', methods=['POST'])
+def delete_from_library():
+    """Usuwa wybrane pliki z folderów input lub saved."""
+    try:
+        data = request.json
+        urls = data.get('urls', [])
+
+        if not urls:
+            return jsonify({'success': False, 'error': 'Nie wybrano plików do usunięcia'}), 400
+
+        deleted_count = 0
+        errors = []
+
+        # Mapowanie prefixów URL na ścieżki fizyczne
+        folder_map = {
+            'input': current_app.config['UPLOAD_FOLDER'],
+            'saved': current_app.config['SAVED_FOLDER']
+        }
+
+        for url in urls:
+            try:
+                # Oczyszczamy URL z ewentualnych ukośników
+                url_clean = url.lstrip('/')
+                parts = url_clean.split('/')
+                if len(parts) < 2:
+                    continue
+                
+                prefix = parts[0]
+                filename = parts[1]
+                
+                if prefix in folder_map:
+                    base_folder = folder_map[prefix]
+                    filepath = os.path.join(base_folder, filename)
+                    
+                    if os.path.exists(filepath):
+                        os.remove(filepath)
+                        deleted_count += 1
+                    else:
+                        errors.append(f"Nie znaleziono pliku: {filename}")
+            except Exception as e:
+                errors.append(f"Błąd przy usuwaniu {url}: {str(e)}")
+
+        return jsonify({
+            'success': True, 
+            'deleted_count': deleted_count,
+            'errors': errors
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

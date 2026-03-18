@@ -515,12 +515,63 @@ label,
     transition: var(--transition);
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .library-item:hover {
     transform: translateY(-4px);
     border-color: var(--accent-purple);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.library-item.selected {
+    border-color: var(--accent-purple);
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.library-checkbox-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 30;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    width: 24px;
+    height: 24px;
+    display: none; /* Ukryte domyślnie */
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: var(--transition);
+}
+
+.selection-mode .library-checkbox-container {
+    display: flex; /* Widoczne tylko w trybie usuwania */
+}
+
+.library-item:hover .library-checkbox-container,
+.library-item.selected .library-checkbox-container {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: var(--accent-purple);
+}
+
+.lib-control:hover {
+    color: var(--accent-purple) !important;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.lib-control.active {
+    color: var(--accent-purple) !important;
+    background: rgba(139, 92, 246, 0.2);
+}
+
+.library-checkbox-container input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-purple);
+    cursor: pointer;
+    margin: 0;
 }
 
 .library-thumbnail {

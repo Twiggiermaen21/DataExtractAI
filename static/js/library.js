@@ -1,92 +1,103 @@
-// ==================== Document Library Logic ====================
+let libSelectedFiles = new Set();
+let libFullLibraryFiles = [];
+let libCurrentCategory = 'all';
+let libSearchQuery = '';
+let libIsSelectionMode = false;
 
-let fullLibraryFiles = [];
-let currentCategory = 'all';
-let searchQuery = '';
+window.toggleSelectionMode = function() {
+    libIsSelectionMode = !libIsSelectionMode;
+    const dashboardLibrary = document.getElementById('dashboard-library');
+    const trashBtn = document.getElementById('lib-toggle-trash');
+    const selectionControls = document.getElementById('library-selection-controls');
+    
+    if (libIsSelectionMode) {
+        dashboardLibrary.classList.add('selection-mode');
+        if (trashBtn) trashBtn.classList.add('active');
+        if (selectionControls) selectionControls.style.display = 'flex';
+    } else {
+        dashboardLibrary.classList.remove('selection-mode');
+        if (trashBtn) trashBtn.classList.remove('active');
+        if (selectionControls) selectionControls.style.display = 'none';
+        
+        // Clear selection when exiting mode
+        libSelectedFiles.clear();
+        const checkboxes = document.querySelectorAll('.library-checkbox-container input');
+        checkboxes.forEach(cb => cb.checked = false);
+        const items = document.querySelectorAll('.library-item');
+        items.forEach(item => item.classList.remove('selected'));
+        if (document.getElementById('lib-select-all')) document.getElementById('lib-select-all').checked = false;
+    }
+};
 
 function initLibrary() {
     console.log("Initializing Library...");
     const navLibrary = document.getElementById('navLibrary');
-    const navItems = document.querySelectorAll('.nav-item');
-    const dashboardAdvanced = document.getElementById('dashboard-advanced');
-    const dashboardLibrary = document.getElementById('dashboard-library');
     const globalSearch = document.getElementById('global-search');
+    const dashboardLibrary = document.getElementById('dashboard-library');
+    const selectAllCheckbox = document.getElementById('lib-select-all');
 
     if (navLibrary) {
-        // Remove existing listener if any (though unlikely here)
         navLibrary.replaceWith(navLibrary.cloneNode(true));
         const newNavLibrary = document.getElementById('navLibrary');
 
         newNavLibrary.addEventListener('click', (e) => {
             if (e) e.preventDefault();
-            console.log("Library nav clicked");
-
-            // Update Page Title
             updateHeaderTitle(newNavLibrary.title || "Biblioteka dokumentów");
-
-            // UI Update: Sidebar active state
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             newNavLibrary.classList.add('active');
-
-            // View Switch
+            
             const welcome = document.getElementById('dashboard-welcome');
             const dashboardAdvanced = document.getElementById('dashboard-advanced');
-            const dashboardLibrary = document.getElementById('dashboard-library');
-            
             if (welcome) welcome.classList.add('hidden');
             if (dashboardAdvanced) dashboardAdvanced.classList.add('hidden');
             if (dashboardLibrary) {
                 dashboardLibrary.classList.remove('hidden');
                 loadLibrary();
             }
-
-            // Add header padding when in library
             const header = document.querySelector('.dashboard-header');
             if (header) header.classList.add('header-padded');
         });
     }
 
-    // Global Search Logic
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            selectAllFiles(e.target.checked);
+        });
+    }
+
     if (globalSearch) {
         globalSearch.addEventListener('focus', () => {
-            const dashboardLibrary = document.getElementById('dashboard-library');
-            // Switch to library if not already there
             if (dashboardLibrary && dashboardLibrary.classList.contains('hidden')) {
                 const navLibrary = document.getElementById('navLibrary');
                 if (navLibrary) navLibrary.click();
             }
         });
-
         globalSearch.addEventListener('input', (e) => {
-            searchQuery = e.target.value.toLowerCase();
+            libSearchQuery = e.target.value.toLowerCase();
             filterAndRenderLibrary();
         });
     }
 
-    // Tab switching logic
     document.querySelectorAll('.lib-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.lib-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            currentCategory = tab.dataset.category;
+            libCurrentCategory = tab.dataset.category;
+            libSelectedFiles.clear();
+            updateBatchActionBar();
             filterAndRenderLibrary();
         });
     });
 
-    // Handle template clicks to return to advanced view
     const templateNavItems = document.querySelectorAll('#sidebarTemplateNav .nav-item');
     templateNavItems.forEach(item => {
         if (item.id === 'navLibrary') return;
-
         item.addEventListener('click', () => {
             if (dashboardLibrary) dashboardLibrary.classList.add('hidden');
+            const dashboardAdvanced = document.getElementById('dashboard-advanced');
             if (dashboardAdvanced) dashboardAdvanced.classList.remove('hidden');
             const navLib = document.getElementById('navLibrary');
             if (navLib) navLib.classList.remove('active');
-
-            // Add header padding when leaving welcome
-            const header = document.querySelector('.dashboard-header');
-            if (header) header.classList.add('header-padded');
         });
     });
 }
@@ -104,8 +115,9 @@ async function loadLibrary() {
 
     try {
         const response = await fetch('/api/library');
-        fullLibraryFiles = await response.json();
-
+        libFullLibraryFiles = await response.json();
+        libSelectedFiles.clear();
+        updateBatchActionBar();
         filterAndRenderLibrary();
     } catch (e) {
         console.error('Error loading library:', e);
@@ -114,20 +126,15 @@ async function loadLibrary() {
 }
 
 function filterAndRenderLibrary() {
-    let filtered = fullLibraryFiles;
-
-    // Filter by Category
-    if (currentCategory === 'input') {
-        filtered = fullLibraryFiles.filter(f => f.url.startsWith('/input/'));
-    } else if (currentCategory === 'saved') {
-        filtered = fullLibraryFiles.filter(f => f.url.startsWith('/saved/'));
+    let filtered = libFullLibraryFiles;
+    if (libCurrentCategory === 'input') {
+        filtered = libFullLibraryFiles.filter(f => f.url.startsWith('/input/'));
+    } else if (libCurrentCategory === 'saved') {
+        filtered = libFullLibraryFiles.filter(f => f.url.startsWith('/saved/'));
     }
-
-    // Filter by Search Query
-    if (searchQuery) {
-        filtered = filtered.filter(f => f.name.toLowerCase().includes(searchQuery));
+    if (libSearchQuery) {
+        filtered = filtered.filter(f => f.name.toLowerCase().includes(libSearchQuery));
     }
-
     renderLibrary(filtered);
 }
 
@@ -144,6 +151,7 @@ function renderLibrary(files) {
         const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.bmp'].includes(file.ext.toLowerCase());
         const isHtml = file.ext.toLowerCase() === '.html';
         const isXml = file.ext.toLowerCase() === '.xml';
+        const isSelected = libSelectedFiles.has(file.url);
         
         let iconHtml = '';
         if (isImage) {
@@ -166,15 +174,15 @@ function renderLibrary(files) {
         else if (isHtml) type = 'html';
         else if (isXml) type = 'xml';
 
-        // Show folder label for 'all' view
-
-
         return `
-            <div class="library-item" data-type="${type}" onclick="openPreview('${file.url}', '${file.name}', '${type}')">
-                <div class="library-thumbnail">
+            <div class="library-item ${isSelected ? 'selected' : ''}" data-type="${type}" data-url="${file.url}">
+                <div class="library-checkbox-container" onclick="event.stopPropagation()">
+                    <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleFileSelection('${file.url}', this.checked)">
+                </div>
+                <div class="library-thumbnail" onclick="openPreview('${file.url}', '${file.name}', '${type}')">
                     ${iconHtml}
                 </div>
-                <div class="library-info">
+                <div class="library-info" onclick="openPreview('${file.url}', '${file.name}', '${type}')">
                     <div class="library-name" title="${file.name}">${file.name}</div>
                     <div class="library-meta">${file.ext.toUpperCase()} • ${sizeKb}</div>
                 </div>
@@ -183,7 +191,113 @@ function renderLibrary(files) {
     }).join('');
 }
 
+window.toggleFileSelection = function(url, isChecked) {
+    if (isChecked) {
+        libSelectedFiles.add(url);
+    } else {
+        libSelectedFiles.delete(url);
+    }
+    
+    // Update item class visually
+    const item = document.querySelector(`.library-item[data-url="${url}"]`);
+    if (item) {
+        if (isChecked) item.classList.add('selected');
+        else item.classList.remove('selected');
+    }
+    
+    updateBatchActionBar();
+};
+
+window.selectAllFiles = function(isChecked) {
+    const gridItems = document.querySelectorAll('.library-item');
+    gridItems.forEach(item => {
+        const url = item.dataset.url;
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            checkbox.checked = isChecked;
+            if (isChecked) {
+                libSelectedFiles.add(url);
+                item.classList.add('selected');
+            } else {
+                libSelectedFiles.delete(url);
+                item.classList.remove('selected');
+            }
+        }
+    });
+    updateBatchActionBar();
+};
+
+function updateBatchActionBar() {
+    const selectedCountSpan = document.getElementById('lib-selected-count');
+    const selectAllCheckbox = document.getElementById('lib-select-all');
+    const deleteBtn = document.getElementById('lib-delete-btn');
+    
+    if (libSelectedFiles.size > 0) {
+        if (selectedCountSpan) selectedCountSpan.textContent = libSelectedFiles.size;
+        if (deleteBtn) deleteBtn.style.display = 'inline-flex';
+        
+        // Sync select all checkbox
+        const currentGridItems = document.querySelectorAll('.library-item');
+        const currentGridSize = currentGridItems.length;
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = (libSelectedFiles.size >= currentGridSize && currentGridSize > 0);
+        }
+    } else {
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+    }
+}
+
+window.deleteSelected = async function() {
+    if (libSelectedFiles.size === 0) return;
+    
+    const count = libSelectedFiles.size;
+    const confirmMsg = count === 1 
+        ? "Czy na pewno chcesz usunąć wybrany dokument?" 
+        : `Czy na pewno chcesz usunąć ${count} wybranych dokumentów?`;
+        
+    if (!confirm(confirmMsg)) return;
+    
+    const urls = Array.from(libSelectedFiles);
+    
+    try {
+        const response = await fetch('/api/library/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log(`Successfully deleted ${result.deleted_count} files`);
+            if (result.errors && result.errors.length > 0) {
+                console.warn('Some files could not be deleted:', result.errors);
+            }
+            
+            // Refresh library
+            libSelectedFiles.clear();
+            loadLibrary();
+        } else {
+            alert('Błąd podczas usuwania: ' + result.error);
+        }
+    } catch (e) {
+        console.error('Delete error:', e);
+        alert('Wystąpił błąd podczas usuwania plików.');
+    }
+};
+
 window.openPreview = function (url, name, type) {
+    if (libIsSelectionMode) {
+        // Toggle selection instead of opening
+        const checkbox = document.querySelector(`.library-item[data-url="${url}"] input[type="checkbox"]`);
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            toggleFileSelection(url, checkbox.checked);
+        }
+        return;
+    }
+
     const modal = document.getElementById('previewModal');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
