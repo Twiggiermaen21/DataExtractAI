@@ -100,16 +100,18 @@
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-zinc-50 border-b border-zinc-100 text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                                    <th class="px-6 py-4 font-bold">Kwota</th>
-                                    <th class="px-6 py-4 font-bold">Nr faktury</th>
                                     <th class="px-6 py-4 font-bold">Sprzedawca</th>
-                                    <th class="px-6 py-4 font-bold">Nabywca</th>
-                                    <th class="px-6 py-4 font-bold">Zgodnosć</th>
+                                    <th class="px-6 py-4 font-bold">Data wystawienia</th>
+                                    <th class="px-6 py-4 font-bold">Wolumen energii</th>
+                                    <th class="px-6 py-4 font-bold">Kwota netto</th>
+                                    <th class="px-6 py-4 font-bold">Kwota brutto</th>
+                                    <th class="px-6 py-4 font-bold">Kwota VAT</th>
+                                    <th class="px-6 py-4 font-bold">Zgodność</th>
                                 </tr>
                             </thead>
                             <tbody id="summary-table-body">
                                 <tr>
-                                    <td colspan="5" class="p-8 text-center text-zinc-400 italic">
+                                    <td colspan="7" class="p-8 text-center text-zinc-400 italic">
                                         Brak danych do wyświetlenia.
                                     </td>
                                 </tr>
@@ -123,10 +125,12 @@
 
     <!-- Ukryte pola do ekstrakcji przez model AI -->
     <div style="display: none;">
-        <input type="hidden" name="kwota_do_zaplaty">
-        <input type="hidden" name="numer_faktury">
         <input type="hidden" name="sprzedawca">
-        <input type="hidden" name="nabywca">
+        <input type="hidden" name="data_wystawienia">
+        <input type="hidden" name="wolumen_energii">
+        <input type="hidden" name="kwota_netto">
+        <input type="hidden" name="kwota_brutto">
+        <input type="hidden" name="kwota_vat">
         <input type="hidden" name="pewnosc_ocr_procent">
     </div>
 

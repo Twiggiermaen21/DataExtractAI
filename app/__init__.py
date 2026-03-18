@@ -21,6 +21,7 @@ def create_app():
     from app.routes.pozew import pozew_bp
     from app.routes.templates import templates_bp
     from app.routes.invoices import invoices_bp
+    from app.routes.excel_export import excel_export_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
@@ -29,5 +30,6 @@ def create_app():
     app.register_blueprint(pozew_bp)
     app.register_blueprint(templates_bp)
     app.register_blueprint(invoices_bp)
+    app.register_blueprint(excel_export_bp)
 
     return app

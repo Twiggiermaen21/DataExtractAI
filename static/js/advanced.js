@@ -267,6 +267,15 @@ if (btnOcrFill) {
 
             if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
             const data = await response.json();
+            
+            // Zachowaj listę przetworzonych plików do eksportu Excela
+            if (data && data.processed) {
+                window.lastProcessedFiles = data.processed;
+                const btnExportExcel = document.getElementById('btnExportExcel');
+                if (btnExportExcel) {
+                    btnExportExcel.disabled = false;
+                }
+            }
 
             if (data.success && data.documents && data.documents.length > 0) {
 
@@ -298,21 +307,25 @@ if (btnOcrFill) {
                             const fields = docData.fields || {};
                             
                             // Ekstrakcja kluczowych danych dla tabeli
-                            const kwotaRaw = fields['kwota_do_zaplaty'] || '0,00 zł';
-                            const nrFaktury = fields['numer_faktury'] || 'brak';
                             const sprzedawca = fields['sprzedawca'] || 'nieznany';
-                            const nabywca = fields['nabywca'] || 'nieznany';
-                            const pewnoscProcent = fields['pewnosc_ocr_procent'] || '0%';
+                            const dataWystawienia = fields['data_wystawienia'] || '-';
+                            const wolumenEnergii = fields['wolumen_energii'] || '-';
+                            const kwotaNetto = fields['kwota_netto'] || 0;
+                            const kwotaBrutto = fields['kwota_brutto'] || 0;
+                            const kwotaVat = fields['kwota_vat'] || 0;
+                            const pewnoscProcent = fields['pewnosc_ocr_procent'] !== undefined ? fields['pewnosc_ocr_procent'] : '0';
                             const komentarzOcr = fields['komentarz_ocr'] || '';
                             
-                            // Przeliczanie kwoty do sumy i ujednolicenie formatu
-                            const numStr = String(kwotaRaw).replace(/[^\d,.-]/g, '').replace(',', '.');
-                            const val = parseFloat(numStr);
+                            // Przeliczanie kwoty do sumy (używamy brutto)
+                            const val = parseFloat(String(kwotaBrutto).replace(',', '.'));
                             if (!isNaN(val)) totalAmount += val;
 
-                            const valFormatted = !isNaN(val) 
-                                ? val.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
-                                : '0,00 zł';
+                            const formatCurrency = (v) => {
+                                const n = parseFloat(String(v).replace(',', '.'));
+                                return !isNaN(n) 
+                                    ? n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
+                                    : '0,00 zł';
+                            };
 
                             // Logika pewności OCR na podstawie procentów
                             const pctValue = parseInt(String(pewnoscProcent).replace('%', ''));
@@ -322,24 +335,27 @@ if (btnOcrFill) {
                             tableHtml += `
                                 <tr class="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
                                     <td class="px-6 py-4">
-                                        <div class="text-base font-semibold text-zinc-900">${valFormatted}</div>
+                                        <div class="text-sm font-medium text-zinc-800">${sprzedawca}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-zinc-800">${nrFaktury}</div>
+                                        <div class="text-sm text-zinc-700">${dataWystawienia}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700 max-w-[200px] truncate" title="${sprzedawca}">${sprzedawca}</div>
+                                        <div class="text-sm text-zinc-700">${wolumenEnergii}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700 max-w-[200px] truncate" title="${nabywca}">${nabywca}</div>
+                                        <div class="text-sm text-zinc-700">${formatCurrency(kwotaNetto)}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-base font-semibold text-zinc-900">${formatCurrency(kwotaBrutto)}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-zinc-700">${formatCurrency(kwotaVat)}</div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="flex items-center gap-3">
                                             <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 text-xs font-semibold whitespace-nowrap">
-                                                ${pewnoscProcent}
-                                            </span>
-                                            <span class="text-xs text-zinc-500 italic truncate max-w-[150px]" title="${komentarzOcr}">
-                                                ${komentarzOcr}
+                                                ${pewnoscProcent}${String(pewnoscProcent).includes('%') ? '' : '%'}
                                             </span>
                                         </div>
                                     </td>
@@ -541,6 +557,11 @@ if (btnOcrFill) {
 
             } else {
                 console.error('OCR Error:', data.error);
+            }
+
+            // Pokaż kartę akcji po zakończeniu przetwarzania (chyba że już jest widoczna)
+            if (advActionsCard) {
+                advActionsCard.classList.remove('hidden');
             }
 
         } catch (error) {

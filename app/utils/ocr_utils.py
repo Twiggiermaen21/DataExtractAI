@@ -72,3 +72,16 @@ def extract_text_from_pdf_pages(path):
     pages = [page.get_text().strip() for page in doc]
     doc.close()
     return pages
+
+
+def extract_text_from_xml(path):
+    """Wyciąga tekst z pliku XML (bez tagów)."""
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        # Usuwamy tagi XML dla czytelności LLM
+        text = re.sub(r'<[^>]+>', ' ', content)
+        return ' '.join(text.split())
+    except Exception as e:
+        log.error("Błąd podczas odczytu XML: %s", e)
+        return ""

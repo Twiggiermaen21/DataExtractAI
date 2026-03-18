@@ -1,6 +1,6 @@
 import os
 import glob
-from app.utils.ocr_utils import get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template
+from app.utils.ocr_utils import get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, extract_text_from_xml
 from app.utils.ocr_result import OCRResult
 
 import subprocess
@@ -11,23 +11,25 @@ from openai import OpenAI
 
 # Usuwamy stare importy llama_cpp
 
-# Schema JSON wysyłany do LLM (structured output)
+# Schema JSON wysyłany do LLM (structured output) dla faktur za energię elektryczną
 RESPONSE_SCHEMA = {
     "type": "json_schema",
     "json_schema": {
-        "name": "ekstrakcja_danych_faktury",
+        "name": "ekstrakcja_danych_faktury_energia",
         "schema": {
             "type": "object",
             "properties": {
-                "nabywca":              {"type": "string"},
+                "sprzedawca":           {"type": "string"},
+                "data_wystawienia":     {"type": "string"},
+                "wolumen_energii":      {"type": "string"},
+                "kwota_netto":          {"type": "number"},
+                "kwota_brutto":         {"type": "number"},
+                "kwota_vat":            {"type": "number"},
                 "pewnosc_ocr_procent":  {"type": "integer"},
-                "kwota_do_zaplaty":     {"type": "number"},
-                "sprzedawca":          {"type": "string"},
-                "numer_faktury":       {"type": "string"},
             },
             "required": [
-                "nabywca", "pewnosc_ocr_procent", "kwota_do_zaplaty",
-                "komentarz_ocr", "sprzedawca", "numer_faktury"
+                "sprzedawca", "data_wystawienia", "wolumen_energii", 
+                "kwota_netto", "kwota_brutto", "kwota_vat", "pewnosc_ocr_procent"
             ],
             "additionalProperties": False,
         },
@@ -59,6 +61,11 @@ class OCRService:
         if ext in ('.docx', '.doc'):
             text = extract_text_from_docx(file_path)
             if text and len(text) >= 50:
+                return [self._predict_text(text, file_path)]
+
+        if ext == '.xml':
+            text = extract_text_from_xml(file_path)
+            if text:
                 return [self._predict_text(text, file_path)]
 
         return [self._predict_image(file_path)]
@@ -112,9 +119,10 @@ class OCRService:
         print(f"[OCR] Wysyłanie zapytania tekstowego do wbudowanego serwera llama.cpp...")
         client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
         
-        system_prompt = "Jesteś bezwzględnym ekstraktorem danych. Oczekuję wyłącznie surowego formatu JSON. Bezwzględny zakaz dodawania procesu myślowego, wstępów i podsumowań."
+        system_prompt = "Jesteś asystentem OCR. Analizujesz faktury za energię elektryczną i wyodrębniasz precyzyjne dane finansowe do wniosków o ulgę. Zwracasz WYŁĄCZNIE kod JSON."
         user_msg = (
-            f"Przeanalizuj poniższy tekst dokumentu i wyodrębnij dane.\n\n"
+            f"Przeanalizuj poniższy tekst faktury za energię elektryczną i wyodrębnij konkretne informacje liczbowe i tekstowe.\n\n"
+            f"Zwróć uwagę, że 'wolumen_energii' określa zazwyczaj ilość zużytej energii czynnej (wyrażoną w kWh lub MWh, np. '1234 kWh'). Zwróć go jako string wraz z jednostką.\n\n"
             f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n"
             f"{self._build_prompt(is_text=True)}"
         )
@@ -162,7 +170,7 @@ class OCRService:
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": "Jesteś asystentem OCR. Wyodrębniasz dane z dokumentów i zwracasz je jako JSON."},
+                {"role": "system", "content": "Jesteś asystentem OCR. Czytasz faktury za energię elektryczną do celów podatkowych i zwracasz czysty JSON. Ignorujesz elementy nieregulowane. Pamiętaj, że wolumen energii (energii czynnej) ma zazwyczaj jednostkę kWh lub MWh."},
                 {"role": "user", "content": [
                     {"type": "text", "text": user_msg},
                     {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
