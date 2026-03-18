@@ -74,43 +74,46 @@ class OCRService:
 
     def _predict_pdf(self, file_path):
         import fitz
+        from app.utils.ocr_utils import extract_text_from_pdf_pages
 
         page_texts = extract_text_from_pdf_pages(file_path)
         num_pages = len(page_texts)
         print(f"[OCR] PDF: {num_pages} stron(y)")
 
-        results = []
-        for idx, page_text in enumerate(page_texts):
-            page_label = f"strona {idx + 1}/{num_pages}"
-            print(f"[OCR] {page_label}")
+        # Łączymy tekst ze wszystkich stron
+        combined_text = "\n\n".join([f"--- STRONA {i+1} ---\n{t}" for i, t in enumerate(page_texts) if t.strip()])
+        
+        # Jeśli mamy wystarczająco dużo tekstu (>100 znaków), wysyłamy wszystko naraz
+        if len(combined_text.strip()) > 100:
+            print(f"[OCR] Przetwarzanie całego PDF jako jeden dokument (tekst).")
+            return [self._predict_text(combined_text, file_path)]
 
-            if page_text and len(page_text) >= 50:
-                results.append(self._predict_text(page_text, file_path, page_info=page_label))
-            else:
-                img_path = f"{file_path}_page{idx + 1}.png"
-                try:
-                    doc = fitz.open(file_path)
-                    doc[idx].get_pixmap(dpi=150).save(img_path)
-                    doc.close()
-                    results.append(self._predict_image(img_path, source_path=file_path))
-                except Exception as e:
-                    print(f"[OCR] Błąd {page_label}: {e}")
-                finally:
-                    try:
-                        os.remove(img_path)
-                    except OSError:
-                        pass
-
-        if not results:
-            raise Exception("Nie udało się przetworzyć żadnej strony PDF.")
-        return results
+        # Jeśli PDF to skan (mało tekstu), przetwarzamy pierwszą stronę jako obraz
+        # (W fakturach za energię pierwsza strona zazwyczaj zawiera podsumowanie)
+        print(f"[OCR] PDF wygląda na skan. Przetwarzanie pierwszej strony jako obraz.")
+        img_path = f"{file_path}_page1.png"
+        try:
+            doc = fitz.open(file_path)
+            if len(doc) > 0:
+                doc[0].get_pixmap(dpi=150).save(img_path)
+            doc.close()
+            return [self._predict_image(img_path, source_path=file_path)]
+        except Exception as e:
+            print(f"[OCR] Błąd przetwarzania obrazu PDF: {e}")
+            # Fallback do tekstu (nawet jeśli krótki)
+            return [self._predict_text(combined_text, file_path)]
+        finally:
+            if os.path.exists(img_path):
+                os.remove(img_path)
 
     # ── tekst → LLM ────────────────────────────────────────────
 
     def _predict_text(self, text_content, file_path, page_info=None):
-        max_chars = 3000
+        max_chars = 15000  # Zwiększamy limit, aby pomieścić multi-page PDF
         if len(text_content) > max_chars:
             text_content = text_content[:max_chars]
+        
+        # Opcjonalnie: skróć środek jeśli za długie (ale tu bierzemy początek)
 
         print(f"[OCR] --- ODPOWIEDŹ Z PLIKU/STRONY ---")
         print(f"{text_content[:1000]}{'...' if len(text_content) > 1000 else ''}")
