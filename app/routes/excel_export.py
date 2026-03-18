@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import pandas as pd
+import openpyxl
 from flask import Blueprint, request, jsonify, current_app, send_file
 from io import BytesIO
 
@@ -17,10 +18,12 @@ def export_excel():
 
     files = data['files']
     output_dir = current_app.config['OUTPUT_FOLDER']
+    log.info(f"Exporting Excel for files: {files}")
 
     extracted_records = []
     
     for filename in files:
+        log.info(f"Processing file: {filename}")
         # Pamiętajmy, że ocr.py domyślnie zapisuje wyniki w głównym folderze OUTPUT_FOLDER, 
         # a invoices.py w OUTPUT_FOLDER/wezwania_faktury.
         
@@ -46,7 +49,8 @@ def export_excel():
                     doc_data = json.load(f)
                     
                     # W zależności od formatu zapisu (ocr.py vs invoices.py), ekstrakcja może być w 'extracted_data' lub na najwyższym poziomie
-                    fields = doc_data.get('extracted_data', doc_data.get('fields', doc_data))
+                    # Sprawdzamy 'extracted_fields' (nowy format), 'extracted_data' lub 'fields'
+                    fields = doc_data.get('extracted_fields', doc_data.get('extracted_data', doc_data.get('fields', doc_data)))
                     
                     # Czasem ocr_result w ocr.py pakuje wszystko w listę 'parsing_res_list' z kluczem 'extracted_data'
                     # Dostosowujemy mapowanie w locie na wypadek różnych struktur zapisu
@@ -63,8 +67,7 @@ def export_excel():
                         'Wolumen Energii': fields.get('wolumen_energii', ''),
                         'Kwota Netto': fields.get('kwota_netto', ''),
                         'Kwota Brutto': fields.get('kwota_brutto', ''),
-                        'Kwota VAT': fields.get('kwota_vat', ''),
-                        'Pewność OCR (%)': fields.get('pewnosc_ocr_procent', '')
+                        'Kwota VAT': fields.get('kwota_vat', '')
                     }
                     extracted_records.append(record)
             except Exception as e:
@@ -72,6 +75,15 @@ def export_excel():
 
     if not extracted_records:
         return jsonify({'success': False, 'error': 'Nie znaleziono poprawnych danych do eksportu'}), 404
+
+    try:
+        import openpyxl
+    except ImportError:
+        log.error("Missing openpyxl dependency. Please install it: pip install openpyxl")
+        return jsonify({
+            'success': False, 
+            'error': 'Błąd serwera: brak biblioteki openpyxl. Uruchom: pip install openpyxl'
+        }), 500
 
     try:
         df = pd.DataFrame(extracted_records)

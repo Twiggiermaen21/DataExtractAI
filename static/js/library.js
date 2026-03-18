@@ -143,6 +143,7 @@ function renderLibrary(files) {
     grid.innerHTML = files.map(file => {
         const isImage = ['.jpg', '.jpeg', '.png', '.webp', '.bmp'].includes(file.ext.toLowerCase());
         const isHtml = file.ext.toLowerCase() === '.html';
+        const isXml = file.ext.toLowerCase() === '.xml';
         
         let iconHtml = '';
         if (isImage) {
@@ -153,6 +154,8 @@ function renderLibrary(files) {
                     <iframe src="${file.url}" scrolling="no"></iframe>
                     <div class="iframe-overlay"></div>
                 </div>`;
+        } else if (isXml) {
+            iconHtml = `<div class="library-pdf-icon" style="color: #007bff; font-weight: bold; font-family: monospace;">&lt;XML&gt;</div>`;
         } else {
             iconHtml = `<div class="library-pdf-icon">📄</div>`;
         }
@@ -161,12 +164,13 @@ function renderLibrary(files) {
         let type = 'pdf';
         if (isImage) type = 'image';
         else if (isHtml) type = 'html';
+        else if (isXml) type = 'xml';
 
         // Show folder label for 'all' view
 
 
         return `
-            <div class="library-item" onclick="openPreview('${file.url}', '${file.name}', '${type}')">
+            <div class="library-item" data-type="${type}" onclick="openPreview('${file.url}', '${file.name}', '${type}')">
                 <div class="library-thumbnail">
                     ${iconHtml}
                 </div>
@@ -193,6 +197,21 @@ window.openPreview = function (url, name, type) {
         const img = document.createElement('img');
         img.src = url;
         modalBody.appendChild(img);
+    } else if (type === 'xml') {
+        // Fetch and show formatted XML
+        modalBody.innerHTML = '<div style="padding: 20px; text-align: center;">Wczytywanie...</div>';
+        fetch(url)
+            .then(res => res.text())
+            .then(text => {
+                const pre = document.createElement('pre');
+                pre.className = 'library-xml-code';
+                pre.textContent = text;
+                modalBody.innerHTML = '';
+                modalBody.appendChild(pre);
+            })
+            .catch(err => {
+                modalBody.innerHTML = `<div style="padding: 20px; color: red;">Błąd wczytywania: ${err}</div>`;
+            });
     } else {
         const iframe = document.createElement('iframe');
         iframe.src = url;
