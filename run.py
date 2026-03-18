@@ -19,8 +19,48 @@ import sys
 import subprocess
 import atexit
 from app import create_app
+class Api:
+    def __init__(self):
+        self._window = None
+
+    def set_window(self, window):
+        self._window = window
+
+    def save_file(self, base64_data, filename):
+        """Otwiera dialog zapisu pliku i zapisuje dane base64."""
+        if not self._window:
+            return {'success': False, 'error': 'Window not initialized'}
+        
+        # Filtry plików dla dialogu zapisu
+        file_types = ('Excel files (*.xlsx)', 'All files (*.*)')
+        save_path = self._window.create_file_dialog(
+            webview.SAVE_DIALOG,
+            directory=os.path.expanduser('~'), 
+            save_filename=filename,
+            file_types=file_types
+        )
+        
+        if save_path and len(save_path) > 0:
+            actual_path = save_path[0]
+            import base64
+            try:
+                # Usunięcie nagłówka data URI jeśli obecny
+                if ',' in base64_data:
+                    base64_data = base64_data.split(',')[1]
+                
+                with open(actual_path, 'wb') as f:
+                    f.write(base64.b64decode(base64_data))
+                
+                print(f"[API] Plik zapisany pomyślnie: {actual_path}")
+                return {'success': True, 'path': actual_path}
+            except Exception as e:
+                print(f"[API] BŁĄD zapisu pliku: {e}")
+                return {'success': False, 'error': str(e)}
+        
+        return {'success': False, 'error': 'Cancelled'}
 
 app = create_app()
+api = Api()
 
 # Zmienna przechowująca nasz niewidzialny proces C++
 _llama_process = None
@@ -123,7 +163,8 @@ def wait_and_redirect(window, port=5000):
 if __name__ == '__main__':
     loading_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'templates', 'loading.html')
     
-    window = webview.create_window('iusfully', f'file://{loading_html}', width=1200, height=800)
+    window = webview.create_window('iusfully', f'file://{loading_html}', width=1200, height=800, js_api=api)
+    api.set_window(window)
     
     def start_flask():
         app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
