@@ -333,7 +333,7 @@ if (btnOcrFill) {
                             if (isLowConfidence) lowConfidenceCount++;
 
                             tableHtml += `
-                                <tr class="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50/50 transition-colors">
+                                <tr class="border-b border-zinc-100 last:border-b-0 ${docData.is_vision ? 'bg-yellow-50' : 'hover:bg-zinc-50/50'} transition-colors">
                                     <td class="px-6 py-4">
                                         <div class="text-sm font-medium text-zinc-800">${sprzedawca}</div>
                                     </td>

@@ -104,7 +104,11 @@ def process_ocr():
                     processed_files.append(os.path.basename(saved))
 
                 if hasattr(res, 'extracted_data') and res.extracted_data:
-                    documents.append({'filename': filename, 'fields': res.extracted_data})
+                    documents.append({
+                        'filename': filename, 
+                        'fields': res.extracted_data,
+                        'is_vision': getattr(res, 'is_vision', False)
+                    })
                     has_data = True
 
             if not has_data:

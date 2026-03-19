@@ -153,7 +153,7 @@ class OCRService:
         print(f"[OCR] --- ODPOWIEDŹ LLM ---")
         print(output_text)
         print(f"[OCR] ---------------------")
-        return OCRResult(output_text, file_path)
+        return OCRResult(output_text, file_path, is_vision=False)
 
     # ── obraz → LLM ────────────────────────────────────────────
 
@@ -188,7 +188,7 @@ class OCRService:
         print(f"[OCR] --- ODPOWIEDŹ LLM (WIZJA) ---")
         print(output_text)
         print(f"[OCR] -----------------------------")
-        return OCRResult(output_text, source_path or image_path)
+        return OCRResult(output_text, source_path or image_path, is_vision=True)
 
     # ── wspólne elementy ────────────────────────────────────────
 

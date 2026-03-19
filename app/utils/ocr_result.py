@@ -8,9 +8,10 @@ log = logging.getLogger(__name__)
 
 class OCRResult:
 
-    def __init__(self, text, input_path):
+    def __init__(self, text, input_path, is_vision=False):
         self.text = text
         self.input_path = input_path
+        self.is_vision = is_vision
         self.extracted_data = self._parse_json(text)
         self.parsing_res_list = [{"block_content": text}]
 
@@ -32,6 +33,7 @@ class OCRResult:
 
         data = {
             "input_path": self.input_path,
+            "is_vision": self.is_vision,
             "parsing_res_list": self.parsing_res_list,
             "full_text": self.text,
             "extracted_fields": self.extracted_data,
