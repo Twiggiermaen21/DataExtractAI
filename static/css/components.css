@@ -13,8 +13,21 @@
     flex-direction: column;
     gap: 28px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 10px;
     height: 100%;
+}
+
+@media (min-width: 1200px) {
+    #tab-advanced {
+        grid-template-columns: 450px 1fr;
+    }
+}
+
+@media (max-width: 1199px) and (min-width: 901px) {
+    #tab-advanced {
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
 }
 
 @media (max-width: 900px) {
@@ -703,9 +716,9 @@ label,
 
 .modal-container {
     position: relative;
-    width: 90%;
-    max-width: 1000px;
-    height: 90vh;
+    width: 95%;
+    max-width: 1600px;
+    height: 92vh;
     background: var(--bg-primary);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);

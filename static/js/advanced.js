@@ -334,27 +334,27 @@ if (btnOcrFill) {
 
                             tableHtml += `
                                 <tr class="border-b border-zinc-100 last:border-b-0 ${docData.is_vision ? 'bg-yellow-50' : 'hover:bg-zinc-50/50'} transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-zinc-800">${sprzedawca}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-xs font-medium text-zinc-800">${sprzedawca}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700">${dataWystawienia}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-xs text-zinc-700">${dataWystawienia}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700">${wolumenEnergii}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-xs text-zinc-700">${wolumenEnergii}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700">${formatCurrency(kwotaNetto)}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-xs text-zinc-700">${formatCurrency(kwotaNetto)}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-base font-semibold text-zinc-900">${formatCurrency(kwotaBrutto)}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-sm font-semibold text-zinc-900">${formatCurrency(kwotaBrutto)}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-zinc-700">${formatCurrency(kwotaVat)}</div>
+                                    <td class="px-4 py-3">
+                                        <div class="text-xs text-zinc-700">${formatCurrency(kwotaVat)}</div>
                                     </td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center gap-3">
-                                            <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-3 py-1 text-xs font-semibold whitespace-nowrap">
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold whitespace-nowrap">
                                                 ${pewnoscProcent}${String(pewnoscProcent).includes('%') ? '' : '%'}
                                             </span>
                                         </div>

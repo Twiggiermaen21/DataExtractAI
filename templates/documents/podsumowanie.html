@@ -35,19 +35,19 @@
     </style>
 </head>
 
-<body class="p-6">
+<body class="p-3 lg:p-4">
 
     <section id="summary-container" class="rounded-3xl bg-white shadow-sm border border-zinc-200 overflow-hidden">
-        <div class="border-b border-zinc-100 px-8 py-6 flex items-center justify-between">
+        <div class="border-b border-zinc-100 px-6 py-4 flex items-center justify-between bg-zinc-50/50">
             <div>
-                <p class="text-sm font-medium text-zinc-500">Wynik końcowy</p>
-                <h1 id="summary-title" class="text-2xl font-semibold tracking-tight mt-1">Analiza pakietu faktur</h1>
+                <p class="text-[10px] uppercase tracking-wider font-bold text-zinc-400">Wynik końcowy</p>
+                <h1 id="summary-title" class="text-xl font-semibold tracking-tight mt-0.5">Analiza pakietu faktur</h1>
             </div>
-            <div id="summary-header-badge" class="rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700">0 faktur • PLN</div>
+            <div id="summary-header-badge" class="rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700">0 faktur • PLN</div>
         </div>
         
-        <div class="p-8">
-            <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6 items-stretch">
+        <div class="p-4 lg:p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-stretch">
                 <!-- Suma Card -->
                 <div class="rounded-[28px] p-7 bg-zinc-950 text-white relative overflow-hidden">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_35%)]"></div>
@@ -64,22 +64,22 @@
                 </div>
 
                 <!-- Szybki kontekst -->
-                <div class="rounded-[28px] border border-zinc-200 bg-zinc-50 p-6">
-                    <p class="text-sm font-medium text-zinc-500">Szybki kontekst</p>
-                    <div class="mt-5 space-y-4">
-                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
-                            <div class="text-sm text-zinc-500">Próg kontrolny</div>
-                            <div id="summary-threshold-value" class="mt-1 text-2xl font-semibold">50 000,00 zł</div>
+                <div class="rounded-[24px] border border-zinc-200 bg-zinc-50 p-4 min-w-[320px]">
+                    <p class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Szybki kontekst</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+                        <div class="rounded-xl bg-white border border-zinc-200 p-3">
+                            <div class="text-[10px] font-bold text-zinc-400 uppercase">Próg kontrolny</div>
+                            <div id="summary-threshold-value" class="mt-0.5 text-lg font-semibold">50 000,00 zł</div>
                         </div>
-                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
-                            <div class="text-sm text-zinc-500">Różnica</div>
-                            <div id="summary-difference-value" class="mt-1 text-2xl font-semibold text-zinc-400">0,00 zł</div>
+                        <div class="rounded-xl bg-white border border-zinc-200 p-3">
+                            <div class="text-[10px] font-bold text-zinc-400 uppercase">Różnica</div>
+                            <div id="summary-difference-value" class="mt-0.5 text-lg font-semibold text-zinc-400">0,00 zł</div>
                         </div>
-                        <div class="rounded-2xl bg-white border border-zinc-200 p-4">
-                            <div class="text-sm text-zinc-500">Jakość OCR</div>
-                            <div id="summary-ocr-status" class="mt-2 flex items-center justify-between">
-                                <span id="summary-ocr-status-text" class="text-base font-medium">Brak danych</span>
-                                <span id="summary-ocr-status-badge" class="rounded-full bg-zinc-100 text-zinc-500 px-3 py-1 text-xs font-semibold">oczekiwanie</span>
+                        <div class="rounded-xl bg-white border border-zinc-200 p-3">
+                            <div class="text-[10px] font-bold text-zinc-400 uppercase">Jakość OCR</div>
+                            <div id="summary-ocr-status" class="mt-1 flex items-center justify-between">
+                                <span id="summary-ocr-status-text" class="text-xs font-medium">Brak danych</span>
+                                <span id="summary-ocr-status-badge" class="rounded-full bg-zinc-100 text-zinc-500 px-2 py-0.5 text-[10px] font-bold">oczekiwanie</span>
                             </div>
                         </div>
                     </div>
@@ -87,26 +87,25 @@
             </div>
 
             <!-- Tabela Faktur -->
-            <div class="mt-8 rounded-[28px] border border-zinc-200 overflow-hidden">
-                <div class="px-6 py-4 bg-white border-b border-zinc-200 flex items-center justify-between">
+            <div class="mt-6 rounded-[24px] border border-zinc-200 overflow-hidden">
+                <div class="px-5 py-3 bg-white border-b border-zinc-200 flex items-center justify-between">
                     <div>
-                        <h2 class="text-lg font-semibold">Szczegóły odczytu</h2>
-                        <p class="text-sm text-zinc-500 mt-1">Lista wszystkich przetworzonych faktur w pakiecie.</p>
+                        <h2 class="text-base font-semibold">Szczegóły odczytu</h2>
+                        <p class="text-xs text-zinc-400 mt-0.5">Lista wszystkich przetworzonych faktur w pakiecie.</p>
                     </div>
-                    <!-- Można tu dodać akcje, np. eksport -->
                 </div>
-                <div class="bg-zinc-50 p-4 md:p-5">
-                    <div class="rounded-[24px] bg-white border border-zinc-200 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
+                <div class="bg-zinc-50 p-3">
+                    <div class="rounded-[20px] bg-white border border-zinc-200 overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
                             <thead>
-                                <tr class="bg-zinc-50 border-b border-zinc-100 text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                                    <th class="px-6 py-4 font-bold">Sprzedawca</th>
-                                    <th class="px-6 py-4 font-bold">Data wystawienia</th>
-                                    <th class="px-6 py-4 font-bold">Wolumen energii</th>
-                                    <th class="px-6 py-4 font-bold">Kwota netto</th>
-                                    <th class="px-6 py-4 font-bold">Kwota brutto</th>
-                                    <th class="px-6 py-4 font-bold">Kwota VAT</th>
-                                    <th class="px-6 py-4 font-bold">Zgodność</th>
+                                <tr class="bg-zinc-50 border-b border-zinc-100 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                    <th class="px-4 py-3 font-bold">Sprzedawca</th>
+                                    <th class="px-4 py-3 font-bold">Data wystawienia</th>
+                                    <th class="px-4 py-3 font-bold">Wolumen energii</th>
+                                    <th class="px-4 py-3 font-bold">Kwota netto</th>
+                                    <th class="px-4 py-3 font-bold">Kwota brutto</th>
+                                    <th class="px-4 py-3 font-bold">Kwota VAT</th>
+                                    <th class="px-4 py-3 font-bold text-right">Zgodność</th>
                                 </tr>
                             </thead>
                             <tbody id="summary-table-body">
