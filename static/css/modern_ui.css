@@ -1,0 +1,279 @@
+/* ==================== MODERN UI SYSTEM (Plain CSS) ==================== */
+
+:root {
+    --bg-dark: #121316;
+    --card-dark: #1e1f24;
+    --card-white: #ffffff;
+    --accent-emerald: #10b981;
+    --accent-emerald-soft: rgba(16, 185, 129, 0.1);
+    --border-soft: rgba(255, 255, 255, 0.05);
+    --text-dim: #a1a1aa;
+    --text-bright: #ffffff;
+    --text-dark: #18181b;
+}
+
+/* Layout */
+.modern-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+@media (min-width: 1280px) {
+    .modern-container {
+        grid-template-columns: 1.4fr 0.9fr;
+    }
+}
+
+.panel-flex {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 8px; /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for Panel */
+.panel-flex::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel-flex::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.panel-flex::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+}
+
+.panel-flex::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-emerald);
+}
+
+/* Cards */
+.card-modern {
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.card-dark {
+    background-color: var(--card-dark);
+}
+
+.card-light {
+    background-color: var(--card-white);
+    color: var(--text-dark);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* Typography */
+.modern-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modern-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+}
+
+/* Checkboxes */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-soft);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.checkbox-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.checkbox-item input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent-emerald);
+    cursor: pointer;
+}
+
+.checkbox-label {
+    font-size: 0.875rem;
+    color: #d1d1d6;
+}
+
+/* Upload Zone */
+.upload-zone-modern {
+    border: 2px dashed rgba(16, 185, 129, 0.2);
+    background: rgba(16, 185, 129, 0.03);
+    border-radius: 24px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-zone-modern:hover {
+    background: rgba(16, 185, 129, 0.07);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.upload-icon-box {
+    width: 64px;
+    height: 64px;
+    background: var(--accent-emerald-soft);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: var(--accent-emerald);
+}
+
+/* Buttons */
+.btn-modern {
+    width: 100%;
+    padding: 14px 24px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn-emerald {
+    background-color: var(--accent-emerald);
+    color: #064e3b;
+}
+
+.btn-dark-modern {
+    background-color: #09090b;
+    color: white;
+    border: 1px solid var(--border-soft);
+}
+
+.btn-gray-modern {
+    background-color: rgba(63, 63, 70, 0.4);
+    color: #d1d1d6;
+    border: 1px solid var(--border-soft);
+}
+
+.btn-emerald:hover { background-color: #34d399; transform: translateY(-1px); }
+.btn-dark-modern:hover { background-color: #18181b; }
+.btn-gray-modern:hover { background-color: rgba(63, 63, 70, 0.8); }
+
+/* Summary Tiles */
+.sum-tile {
+    background: #09090b;
+    border-radius: 28px;
+    padding: 32px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 200px;
+}
+
+.sum-tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle at center, rgba(16, 185, 129, 0.15), transparent 70%);
+}
+
+.sum-amount {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--accent-emerald);
+    letter-spacing: -2px;
+}
+
+.context-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.context-tile {
+    background: #f4f4f5;
+    border-radius: 20px;
+    padding: 24px;
+    border: 1px solid #e4e4e7;
+}
+
+.context-label {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #71717a;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+/* Dynamic Table */
+.table-container-modern {
+    background: rgba(244, 244, 245, 0.3);
+    border: 1px solid #f4f4f5;
+    border-radius: 24px;
+    overflow: auto;
+    flex: 1;
+}
+
+.modern-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modern-table thead th {
+    background: white;
+    padding: 16px;
+    text-align: left;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #71717a;
+    border-bottom: 1px solid #f4f4f5;
+    position: sticky;
+    top: 0;
+}
+
+.modern-table tbody td {
+    padding: 16px;
+    border-bottom: 1px solid #f4f4f5;
+    font-size: 0.9rem;
+}
+
+.hidden { display: none !important; }

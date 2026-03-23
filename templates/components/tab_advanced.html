@@ -1,140 +1,170 @@
-<div id="tab-advanced">
-    <div class="actions-column">
-        <div class="card card-green" style="animation-delay: 0.1s;">
-            <div class="card-title">Importuj dane</div>
+<div id="tab-advanced" class="modern-container">
+    <div class="actions-column panel-flex">
+        <!-- SECTION 1: Importuj dane -->
+        <div class="card-modern card-dark" style="animation-delay: 0.1s; border: 1px solid var(--accent-emerald-soft);">
+            <h3 class="modern-title">
+                <span
+                    style="width: 8px; height: 24px; background: var(--accent-emerald); border-radius: 4px; display: inline-block;"></span>
+                Importuj dane
+            </h3>
 
-            <!-- KROK 1: Wybór szablonu (ukryty bo przeniesiony do Sidebar) -->
+            <!-- Typ dokumentu (hidden) -->
             <div class="step-section hidden" style="display: none;">
-                <label class="step-label">📋 Krok 1: Wybierz typ dokumentu</label>
-                <select id="templateSelect" style="margin-top: 12px; margin-bottom: 12px;">
+                <select id="templateSelect" class="btn-modern btn-dark-modern">
                     <option value="">-- Wybierz szablon --</option>
                 </select>
             </div>
 
-            <hr class="divider-light hidden" id="advDividerStep2">
-
-            <!-- KROK 2: Upload faktury (dla Wezwania do Zapłaty) -->
             <div class="step-section hidden" id="advStepUpload">
-                <div class="upload-zone" id="advUploadZone" style="padding: 32px 20px; margin-top: 12px;">
-                    <div class="upload-icon" style="font-size: 2rem;">📄</div>
-                    <div class="upload-text">Przeciągnij zdjęcie faktury lub kliknij</div>
-                    <div class="upload-hint">JPG, PNG, PDF, XML</div>
+                <div class="upload-zone-modern" id="advUploadZone">
+                    <div class="upload-icon-box">📄</div>
+                    <div class="upload-text" style="color: var(--text-bright); font-weight: 600;">Dodaj pliki faktur
+                    </div>
+                    <div class="modern-subtitle" style="margin-bottom: 0;">Przeciągnij lub kliknij (JPG, PNG, PDF, XML)
+                    </div>
                 </div>
                 <input type="file" id="advFileInput" multiple accept="image/*,.pdf,.xml" style="display:none;">
-                <div class="file-list" id="advFileList"></div>
+                <div class="file-list" id="advFileList" style="margin-top: 16px;"></div>
 
-
-                <button class="btn btn-purple" id="btnOcrFill" disabled style="margin-top: 12px;">
+                <button class="btn-modern btn-emerald" id="btnOcrFill" disabled style="margin-top: 20px;">
                     <span id="btnOcrFillIcon">🚀</span>
-                    <span id="btnOcrFillText">OCR + Uzupełnij szablon</span>
+                    <span id="btnOcrFillText">Rozpocznij analizę</span>
                 </button>
 
-                <div class="progress-bar hidden" id="ocrFillProgressBar">
+                <div class="progress-bar hidden" id="ocrFillProgressBar" style="margin-top: 16px;">
                     <div class="fill" id="ocrFillProgressFill" style="width: 0%"></div>
                 </div>
             </div>
+        </div>
 
-            <!-- Źródło dla Pozwu - przełącznik -->
-            <div class="step-section hidden" id="advStepSourcePozew">
-                <label class="step-label">Źródło danych dla pozwu</label>
-
-                <!-- Opcja 1: Zapisane wezwania -->
-                <div id="pozewSavedSection" style="margin-top: 16px;">
-                    <div class="checkbox-list" id="advWezwaniaList">
-                        <div style="color: var(--text-muted); padding: 16px; text-align: center;">
-                            Ładowanie listy wezwań...
-                        </div>
-                    </div>
-                    <button class="btn btn-sm" id="advRefreshWezwaniaList" style="margin-top: 8px;">
-                        Odśwież listę
-                    </button>
-                </div>
-
-                <!-- Opcja 2: Upload pliku -->
-                <div id="pozewUploadSection" class="hidden" style="margin-top: 16px;">
-                    <div class="upload-zone" id="pozewUploadZone" style="padding: 24px 16px;">
-                        <div class="upload-icon" style="font-size: 1.8rem;">📄</div>
-                        <div class="upload-text">Przeciągnij wezwanie do zapłaty</div>
-                        <div class="upload-hint">JPG, PNG, PDF, Word, XML</div>
-                    </div>
-                    <input type="file" id="pozewFileInput" multiple accept="image/*,.pdf,.docx,.doc,.xml"
-                        style="display:none;">
-                    <div class="file-list" id="pozewFileList"></div>
-
-                    <button class="btn btn-green" id="btnPozewOcr" disabled style="margin-top: 12px;">
-                        <span id="btnPozewOcrIcon">🚀</span>
-                        <span id="btnPozewOcrText">OCR wezwania</span>
-                    </button>
-
-                    <div class="progress-bar hidden" id="pozewOcrProgressBar">
-                        <div class="fill" id="pozewOcrProgressFill" style="width: 0%"></div>
-                    </div>
-                    <div class="status-text hidden" id="pozewOcrStatusText"></div>
-                </div>
+        <!-- SECTION: Dane do odczytu -->
+        <div class="card-modern card-dark hidden" id="podsumowanieSettings">
+            <h3 class="modern-title">Dane do odczytu</h3>
+            <p class="modern-subtitle">Wybierz kolumny do tabeli wyników.</p>
+            <div class="checkbox-group" id="columnToggleList"
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <label class="checkbox-item">
+                    <input type="checkbox" checked data-column="sprzedawca">
+                    <span class="checkbox-label">Sprzedawca</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" checked data-column="data_wystawienia">
+                    <span class="checkbox-label">Data</span>
+                </label>
+                <label class="checkbox-item" style="opacity: 0.6; cursor: not-allowed;">
+                    <input type="checkbox" checked data-column="wolumen_energii">
+                    <span class="checkbox-label">Wolumen</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" checked data-column="kwota_netto">
+                    <span class="checkbox-label">Netto</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" checked data-column="kwota_brutto">
+                    <span class="checkbox-label">Brutto</span>
+                </label>
+                <label class="checkbox-item">
+                    <input type="checkbox" data-column="kwota_vat">
+                    <span class="checkbox-label">VAT</span>
+                </label>
             </div>
+        </div>
 
-            <!-- Krok 3: KRS + Generuj Pozew -->
-            <div class="step-section hidden" id="advStepPozewExtra">
-                <hr class="divider-light" style="margin: 20px 0;">
+        <!-- SECTION: Pozew Source -->
+        <div class="card-modern card-dark hidden" id="advStepSourcePozew">
+            <h3 class="modern-title">Źródło danych</h3>
 
-                <label class="step-label">Wgraj plik KRS powoda</label>
-                <div class="upload-zone" id="krsUploadZone" style="padding: 24px 16px; margin-top: 12px;">
-                    <div class="upload-icon" style="font-size: 1.8rem;">🏢</div>
-                    <div class="upload-text">Przeciągnij plik KRS powoda lub kliknij</div>
-                    <div class="upload-hint">JPG, PNG, PDF, XML</div>
+            <div id="pozewSavedSection">
+                <div class="checkbox-list" id="advWezwaniaList"
+                    style="margin-top: 12px; background: rgba(0,0,0,0.2); border-radius: 16px; padding: 8px;">
+                    <div style="color: var(--text-dim); padding: 24px; text-align: center; font-size: 0.85rem;">
+                        Ładowanie listy...
+                    </div>
                 </div>
-                <input type="file" id="krsFileInput" accept="image/*,.pdf,.xml" style="display:none;">
-                <div class="file-list" id="krsFileList"></div>
-
-                <hr class="divider-light" style="margin: 20px 0;">
-
-                <button class="btn btn-purple btn-lg" id="btnGeneratePozew" disabled
-                    style="width: 100%; padding: 16px;">
-                    <span id="btnGeneratePozewIcon">⚖️</span>
-                    <span id="btnGeneratePozewText">Generuj Pozew</span>
+                <button class="btn-modern btn-gray-modern" id="advRefreshWezwaniaList"
+                    style="margin-top: 12px; padding: 10px;">
+                    Odśwież listę
                 </button>
-                <p class="hint-text" style="text-align: center; margin-top: 8px;">
-                    System: OCR wezwania → OCR KRS → Dane → Wypełnienie szablonu
-                </p>
+            </div>
 
-                <div class="progress-bar hidden" id="pozewProgressBar">
-                    <div class="fill" id="pozewProgressFill" style="width: 0%"></div>
+            <div id="pozewUploadSection" class="hidden" style="margin-top: 16px;">
+                <div class="upload-zone-modern" id="pozewUploadZone">
+                    <div class="upload-icon-box">📄</div>
+                    <div class="upload-text" style="color: var(--text-bright);">Dodaj wezwanie</div>
                 </div>
-                <div class="status-text hidden" id="pozewStatusText"></div>
+                <input type="file" id="pozewFileInput" multiple accept="image/*,.pdf,.docx,.doc,.xml"
+                    style="display:none;">
+                <div class="file-list" id="pozewFileList" style="margin-top: 12px;"></div>
+
+                <button class="btn-modern btn-emerald" id="btnPozewOcr" disabled style="margin-top: 16px;">
+                    <span>OCR wezwania</span>
+                </button>
+
+                <div class="progress-bar hidden" id="pozewOcrProgressBar" style="margin-top: 12px;">
+                    <div class="fill" id="pozewOcrProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="status-text hidden" id="pozewOcrStatusText"
+                    style="margin-top: 8px; font-size: 0.8rem; color: var(--accent-emerald);"></div>
             </div>
         </div>
 
-        <!-- NEW ACTION CARD -->
-        <div class="card card-beige hidden" id="advActionsCard" style="animation-delay: 0.15s;">
-            <div class="card-title">Akcje dokumentu</div>
-            <div class="document-actions" style="display: flex; gap: 12px; align-items: stretch;">
-                <div style="flex: 1;">
-                    <button class="btn btn-dark" id="advBtnSaveToLibrary" style="margin-top: 0; width: 100%; height: 100%;" disabled>
-                        <span>Zapisz w bibliotece</span>
-                    </button>
-                </div>
-                <div style="flex: 1;">
-                    <button class="btn btn-green" id="btnPrintTemplate"
-                        style="margin-top: 0; width: 100%; height: 100%;" disabled>
-                        <span>Pobierz PDF / Drukuj</span>
-                    </button>
-                </div>
-                <div style="flex: 1;">
-                    <button class="btn btn-purple" id="btnExportExcel"
-                        style="margin-top: 0; width: 100%; height: 100%;" disabled>
-                        <span>Pobierz Excel</span>
-                    </button>
-                </div>
+        <!-- SECTION: Pozew KRS Extra -->
+        <div class="card-modern card-dark hidden" id="advStepPozewExtra">
+            <h3 class="modern-title">KRS i Generowanie</h3>
+
+            <div class="upload-zone-modern" id="krsUploadZone">
+                <div class="upload-icon-box" style="background: rgba(255,255,255,0.05); color: #fff;">🏢</div>
+                <div class="upload-text" style="color: #fff;">Plik KRS powoda</div>
+            </div>
+            <input type="file" id="krsFileInput" accept="image/*,.pdf,.xml" style="display:none;">
+            <div class="file-list" id="krsFileList" style="margin-top: 12px;"></div>
+
+            <button class="btn-modern btn-emerald" id="btnGeneratePozew" disabled
+                style="margin-top: 24px; height: 64px; font-size: 1rem;">
+                <span id="btnGeneratePozewIcon">⚖️</span>
+                <span id="btnGeneratePozewText">Generuj Pozew</span>
+            </button>
+
+            <div class="progress-bar hidden" id="pozewProgressBar" style="margin-top: 16px;">
+                <div class="fill" id="pozewProgressFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- SECTION: Akcje dokumentu -->
+        <div class="card-modern card-dark hidden" id="advActionsCard"
+            style="margin-top: auto; margin-bottom: 50px; border-top: 1px solid var(--border-soft);">
+            <h3 class="modern-title">Akcje</h3>
+            <div class="document-actions" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <button class="btn-modern btn-gray-modern" id="advBtnSaveToLibrary" disabled>
+                    <span>Zapisz</span>
+                </button>
+                <button class="btn-modern btn-dark-modern" id="btnPrintTemplate" style="background: #18181b;" disabled>
+                    <span>Drukuj</span>
+                </button>
+                <button class="btn-modern btn-gray-modern" id="btnExportExcel" disabled>
+                    <span>Excel</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Template Preview -->
-    <div class="card card-purple hidden" id="advPreviewCard" style="animation-delay: 0.2s; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-        <div id="templatePreview" style="flex: 1; width: 100%; min-height: 800px; display: flex; align-items: center; justify-content: center;">
-            <div style="padding: 48px; text-align: center; color: var(--text-muted);">
-                Wybierz szablon aby zobaczyć podgląd
+    <!-- RIGHT PANEL: Podgląd -->
+    <div class="preview-column">
+        <div class="card-modern card-light hidden" id="advPreviewCard"
+            style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 220px); border: none;">
+            <div id="templatePreview"
+                style="flex: 1; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fff;">
+                <div style="padding: 48px; text-align: center;">
+                    <div class="upload-icon-box"
+                        style="background: #f4f4f5; color: #a1a1aa; width: 80px; height: 80px; border-radius: 20px;">📄
+                    </div>
+                    <p style="color: #71717a; font-weight: 500;">Wybierz szablon aby zobaczyć podgląd</p>
+                </div>
             </div>
         </div>
     </div>
+</div>
+</div>
+</div>
+</div>
 </div>

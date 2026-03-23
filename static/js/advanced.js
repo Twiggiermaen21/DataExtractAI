@@ -281,155 +281,10 @@ if (btnOcrFill) {
 
                 // === TRYB: Podsumowanie (wiele faktur) ===
                 if (advWorkflowType === 'podsumowanie') {
-                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '60%';
-
-                    if (templateIframe && templateIframe.contentDocument) {
-                        const doc = templateIframe.contentDocument;
-                        
-                        // 1. Podstawowe dane
-                        let totalAmount = 0;
-                        let lowConfidenceCount = 0;
-                        const threshold = 50000;
-
-                        // Kontenery w nowym szablonie
-                        const totalAmountEl = doc.getElementById('summary-total-amount');
-                        const headerBadgeEl = doc.getElementById('summary-header-badge');
-                        const thresholdAlertEl = doc.getElementById('summary-threshold-alert');
-                        const thresholdTextEl = doc.getElementById('summary-threshold-text');
-                        const differenceValueEl = doc.getElementById('summary-difference-value');
-                        const ocrStatusTextEl = doc.getElementById('summary-ocr-status-text');
-                        const ocrStatusBadgeEl = doc.getElementById('summary-ocr-status-badge');
-                        const tableBodyEl = doc.getElementById('summary-table-body');
-
-                        let tableHtml = '';
-
-                        data.documents.forEach((docData, i) => {
-                            const fields = docData.fields || {};
-                            
-                            // Ekstrakcja kluczowych danych dla tabeli
-                            const sprzedawca = fields['sprzedawca'] || 'nieznany';
-                            const dataWystawienia = fields['data_wystawienia'] || '-';
-                            const wolumenEnergii = fields['wolumen_energii'] || '-';
-                            const kwotaNetto = fields['kwota_netto'] || 0;
-                            const kwotaBrutto = fields['kwota_brutto'] || 0;
-                            const kwotaVat = fields['kwota_vat'] || 0;
-                            const pewnoscProcent = fields['pewnosc_ocr_procent'] !== undefined ? fields['pewnosc_ocr_procent'] : '0';
-                            const komentarzOcr = fields['komentarz_ocr'] || '';
-                            
-                            // Przeliczanie kwoty do sumy (używamy brutto)
-                            const val = parseFloat(String(kwotaBrutto).replace(',', '.'));
-                            if (!isNaN(val)) totalAmount += val;
-
-                            const formatCurrency = (v) => {
-                                const n = parseFloat(String(v).replace(',', '.'));
-                                return !isNaN(n) 
-                                    ? n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
-                                    : '0,00 zł';
-                            };
-
-                            // Logika pewności OCR na podstawie procentów
-                            const pctValue = parseInt(String(pewnoscProcent).replace('%', ''));
-                            const isLowConfidence = !isNaN(pctValue) && pctValue < 85; 
-                            if (isLowConfidence) lowConfidenceCount++;
-
-                            tableHtml += `
-                                <tr class="border-b border-zinc-100 last:border-b-0 ${docData.is_vision ? 'bg-yellow-50' : 'hover:bg-zinc-50/50'} transition-colors">
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs font-medium text-zinc-800">${sprzedawca}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs text-zinc-700">${dataWystawienia}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs text-zinc-700">${wolumenEnergii}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs text-zinc-700">${formatCurrency(kwotaNetto)}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-sm font-semibold text-zinc-900">${formatCurrency(kwotaBrutto)}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="text-xs text-zinc-700">${formatCurrency(kwotaVat)}</div>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="flex items-center justify-end gap-2">
-                                            <span class="inline-flex items-center rounded-full ${isLowConfidence ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold whitespace-nowrap">
-                                                ${pewnoscProcent}${String(pewnoscProcent).includes('%') ? '' : '%'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-
-                        // 2. Aktualizacja UI
-                        if (tableBodyEl) tableBodyEl.innerHTML = tableHtml;
-                        if (headerBadgeEl) headerBadgeEl.textContent = `${data.documents.length} faktur • PLN`;
-                        if (totalAmountEl) totalAmountEl.textContent = totalAmount.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
-
-                        // Threshold logic
-                        const diff = totalAmount - threshold;
-                        if (thresholdAlertEl) {
-                            if (totalAmount > threshold) {
-                                thresholdAlertEl.classList.remove('hidden');
-                                if (thresholdTextEl) thresholdTextEl.textContent = `Przekroczono próg ${threshold.toLocaleString()} zł`;
-                            } else {
-                                thresholdAlertEl.classList.add('hidden');
-                            }
-                        }
-
-                        if (differenceValueEl) {
-                            const diffStr = (diff >= 0 ? '+' : '') + diff.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł';
-                            differenceValueEl.textContent = diffStr;
-                            differenceValueEl.className = `mt-1 text-2xl font-semibold ${diff >= 0 ? 'text-emerald-600' : 'text-zinc-400'}`;
-                        }
-
-                        // OCR Status
-                        if (ocrStatusTextEl) {
-                            ocrStatusTextEl.textContent = lowConfidenceCount > 0 ? `${lowConfidenceCount} ${lowConfidenceCount === 1 ? 'faktura wymaga' : 'faktury wymagają'} uwagi` : 'Wszystkie odczyty poprawne';
-                        }
-                        if (ocrStatusBadgeEl) {
-                            if (lowConfidenceCount > 0) {
-                                ocrStatusBadgeEl.className = "rounded-full bg-amber-100 text-amber-700 px-3 py-1 text-xs font-semibold";
-                                ocrStatusBadgeEl.textContent = "niska pewność";
-                            } else {
-                                ocrStatusBadgeEl.className = "rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold";
-                                ocrStatusBadgeEl.textContent = "wysoka pewność";
-                            }
-                        }
-                    }
-
-                    // Zapisz każde wezwanie do JSON
-                    if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
-                    for (let i = 0; i < data.documents.length; i++) {
-                        const fields = data.documents[i].fields || {};
-                        try {
-                            await fetch('/api/wezwania/save', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ fields })
-                            });
-                        } catch (e) {
-                            console.warn('Błąd zapisu wezwania JSON:', e);
-                        }
-                    }
-
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
-
-                    // Pokaż wyekstrahowane dane
-                    if (extractedDataCard && extractedDataContent) {
-                        extractedDataCard.classList.remove('hidden');
-                        extractedDataContent.textContent = JSON.stringify({
-                            dokumenty: data.documents.length,
-                            wszystkie_dane: data.documents
-                        }, null, 2);
-                    }
-
-                    advUploadedFiles = [];
-                    renderAdvFileList();
-                    updateAdvOcrButton();
-
+                    window.lastProcessedDocuments = data.documents;
+                    
+                    renderDynamicTable(data.documents);
                 } else {
                     // === TRYB NORMALNY: Agregacja danych dla wezwania ===
                     if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
@@ -833,6 +688,8 @@ if (templateSelect) {
         const advStepUpload = document.getElementById('advStepUpload');
         const advPreviewCard = document.getElementById('advPreviewCard');
         const advActionsCard = document.getElementById('advActionsCard');
+        const podsumowanieSettings = document.getElementById('podsumowanieSettings');
+        if (podsumowanieSettings) podsumowanieSettings.classList.add('hidden');
         if (advStepSource) advStepSource.classList.add('hidden');
         if (advStepSourcePozew) advStepSourcePozew.classList.add('hidden');
         if (advStepLlm) advStepLlm.classList.add('hidden');
@@ -881,6 +738,9 @@ if (templateSelect) {
             advWorkflowType = 'podsumowanie';
             // Pokaż sekcję upload dla podsumowania
             if (advStepUpload) advStepUpload.classList.remove('hidden');
+            // Pokaż ustawienia kolumn
+            const podsumowanieSettings = document.getElementById('podsumowanieSettings');
+            if (podsumowanieSettings) podsumowanieSettings.classList.remove('hidden');
             // Stylizacja dla podsumowania: wywal fioletowe
             if (advPreviewCard) {
                 advPreviewCard.classList.remove('card-purple');
@@ -1354,3 +1214,120 @@ if (btnGeneratePozew) {
 }
 
 
+
+/**
+ * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxów
+ */
+function renderDynamicTable(documents) {
+    if (!templateIframe || !templateIframe.contentDocument) return;
+    const doc = templateIframe.contentDocument;
+
+    const tableHeaderRow = doc.getElementById('tableHeaderRow');
+    const tableBodyEl = doc.getElementById('summary-table-body');
+    if (!tableHeaderRow || !tableBodyEl) return;
+
+    // Pobierz zaznaczone kolumny z paska bocznego
+    const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
+        .map(cb => cb.dataset.column);
+
+    // 1. Renderuj nagłówki
+    const columnsConfig = [
+        { id: 'sprzedawca', label: 'Sprzedawca' },
+        { id: 'data_wystawienia', label: 'Data wystawienia' },
+        { id: 'wolumen_energii', label: 'Wolumen energii' },
+        { id: 'kwota_netto', label: 'Kwota netto' },
+        { id: 'kwota_brutto', label: 'Kwota brutto' },
+        { id: 'kwota_vat', label: 'Kwota VAT' }
+    ];
+
+    let headerHtml = '';
+    columnsConfig.forEach(col => {
+        if (selectedColumns.includes(col.id)) {
+            headerHtml += `<th class="px-4 py-3 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">${col.label}</th>`;
+        }
+    });
+    headerHtml += `<th class="px-4 py-3 text-right text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Pewność</th>`;
+    tableHeaderRow.innerHTML = headerHtml;
+
+    // 2. Renderuj wiersze
+    let totalBrutto = 0;
+    let lowConfidenceCount = 0;
+    let bodyHtml = '';
+
+    documents.forEach(docData => {
+        const fields = docData.fields || {};
+        
+        // Sumowanie brutto
+        const brutoVal = parseFloat(String(fields['kwota_brutto'] || 0).replace(',', '.'));
+        if (!isNaN(brutoVal)) totalBrutto += brutoVal;
+
+        // Pewność
+        const confidence = parseInt(String(fields['pewnosc_ocr_procent'] || 0).replace('%', ''));
+        if (confidence < 85) lowConfidenceCount++;
+
+        bodyHtml += `<tr class="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors">`;
+        
+        columnsConfig.forEach(col => {
+            if (selectedColumns.includes(col.id)) {
+                let val = fields[col.id] || '-';
+                if (col.id.startsWith('kwota')) val = formatCurrencyHelper(val);
+                
+                const isMain = col.id === 'kwota_brutto';
+                bodyHtml += `
+                    <td class="px-4 py-3">
+                        <div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'}">${val}</div>
+                    </td>`;
+            }
+        });
+
+        // Kolumna pewności
+        bodyHtml += `
+            <td class="px-4 py-3 text-right">
+                <span class="inline-flex items-center rounded-full ${confidence < 85 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold">
+                    ${confidence}%
+                </span>
+            </td>`;
+        
+        bodyHtml += `</tr>`;
+    });
+
+    tableBodyEl.innerHTML = bodyHtml;
+
+    // 3. Aktualizacja podsumowań w nagłówku iframe
+    const summaryTotalEl = doc.getElementById('summary-total-amount');
+    if (summaryTotalEl) summaryTotalEl.textContent = formatCurrencyHelper(totalBrutto);
+
+    const headerBadgeEl = doc.getElementById('summary-header-badge');
+    if (headerBadgeEl) headerBadgeEl.textContent = `${documents.length} faktur • PLN`;
+
+    const statusTextEl = doc.getElementById('summary-ocr-status-text');
+    if (statusTextEl) statusTextEl.textContent = lowConfidenceCount > 0 ? `${lowConfidenceCount} wymaga uwagi` : 'Wszystkie odczyty poprawne';
+
+    // Threshold logic
+    const threshold = 50000;
+    const diff = totalBrutto - threshold;
+    const thresholdAlertEl = doc.getElementById('summary-threshold-alert');
+    if (thresholdAlertEl) {
+        if (totalBrutto > threshold) thresholdAlertEl.classList.remove('hidden');
+        else thresholdAlertEl.classList.add('hidden');
+    }
+    const diffValueEl = doc.getElementById('summary-difference-value');
+    if (diffValueEl) {
+        diffValueEl.textContent = (diff >= 0 ? '+' : '') + formatCurrencyHelper(diff);
+        diffValueEl.className = `mt-1 text-2xl font-semibold ${diff >= 0 ? 'text-emerald-600' : 'text-zinc-400'}`;
+    }
+}
+
+function formatCurrencyHelper(v) {
+    const n = parseFloat(String(v).replace(',', '.'));
+    return !isNaN(n) 
+        ? n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
+        : '0,00 zł';
+}
+
+// Globalny listener dla checkboxów (delegacja)
+document.addEventListener('change', (e) => {
+    if (e.target.closest('#columnToggleList') && window.lastProcessedDocuments) {
+        renderDynamicTable(window.lastProcessedDocuments);
+    }
+});
