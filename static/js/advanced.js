@@ -256,9 +256,12 @@ if (btnOcrFill) {
         if (ocrFillProgressBar) ocrFillProgressBar.classList.remove('hidden');
         if (ocrFillProgressText) {
             ocrFillProgressText.classList.remove('hidden');
-            ocrFillProgressText.textContent = `0 / ${advUploadedFiles.length}`;
+            ocrFillProgressText.textContent = `Przygotowywanie... (0 / ${advUploadedFiles.length})`;
         }
-        if (ocrFillProgressFill) ocrFillProgressFill.style.width = '0%';
+        if (ocrFillProgressFill) {
+            ocrFillProgressFill.style.width = '0%';
+            ocrFillProgressFill.classList.add('animating');
+        }
 
         // Reset actions state
         if (advBtnSaveToLibrary) advBtnSaveToLibrary.disabled = true;
@@ -275,7 +278,7 @@ if (btnOcrFill) {
                 for (let i = 0; i < advUploadedFiles.length; i++) {
                     const file = advUploadedFiles[i];
                     if (ocrFillProgressText) {
-                        ocrFillProgressText.textContent = `${i + 1} / ${advUploadedFiles.length}`;
+                        ocrFillProgressText.textContent = `Przetwarzanie: ${file.name} (${i + 1} / ${advUploadedFiles.length})`;
                     }
 
                     const formData = new FormData();
@@ -316,15 +319,24 @@ if (btnOcrFill) {
                 advUploadedFiles.forEach(file => formData.append('files', file));
                 if (templateName) formData.append('template', templateName);
 
-                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '30%';
+                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '20%';
+                if (ocrFillProgressText) {
+                    ocrFillProgressText.classList.remove('hidden');
+                    ocrFillProgressText.textContent = 'Trwa wysyłanie plików...';
+                }
+
                 const response = await fetch('/api/process_ocr', {
                     method: 'POST',
                     body: formData
                 });
-                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
+                
+                if (ocrFillProgressFill) ocrFillProgressFill.style.width = '70%';
+                if (ocrFillProgressText) ocrFillProgressText.textContent = 'Analizowanie wyników...';
                 
                 const data = await response.json();
+                
                 if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
+                if (ocrFillProgressText) ocrFillProgressText.textContent = 'Zakończono!';
 
                 if (data.success && data.documents) {
                     // This part remains as it was in original advanced.js for 'wezwanie'/'pozew'

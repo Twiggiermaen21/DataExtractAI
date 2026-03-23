@@ -341,18 +341,21 @@
 
 /* Progress */
 .progress-bar {
-    height: 3px;
-    background: var(--bg-hover);
-    border-radius: 2px;
+    height: 10px;
+    background: var(--progress-bg);
+    border-radius: 99px;
     margin-top: 16px;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .progress-bar .fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
-    border-radius: 2px;
-    transition: width 0.4s ease;
+    background: linear-gradient(90deg, var(--accent-emerald), #34d399);
+    border-radius: 99px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
 }
 
 .status-text {

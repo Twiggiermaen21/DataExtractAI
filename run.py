@@ -162,15 +162,15 @@ def wait_and_redirect(window, port=5000):
         print("[RUN] Serwer nie odpowiedział.")
 
 if __name__ == '__main__':
-    # loading_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'templates', 'loading.html')
+    loading_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app', 'templates', 'loading.html')
     
-    # window = webview.create_window('iusfully', f'file://{loading_html}', width=1200, height=800, js_api=api)
-    # api.set_window(window)
+    window = webview.create_window('iusfully', f'file://{loading_html}', width=1200, height=800, js_api=api)
+    api.set_window(window)
     
-    # def start_flask():
+    def start_flask():
         app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
 
-    # threading.Thread(target=start_flask, daemon=True).start()
-    # threading.Thread(target=wait_and_redirect, args=(window, 5000), daemon=True).start()
+    threading.Thread(target=start_flask, daemon=True).start()
+    threading.Thread(target=wait_and_redirect, args=(window, 5000), daemon=True).start()
     
-    # webview.start(private_mode=False)
+    webview.start(private_mode=False)
