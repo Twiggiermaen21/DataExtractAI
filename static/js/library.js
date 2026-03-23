@@ -42,20 +42,10 @@ function initLibrary() {
 
         newNavLibrary.addEventListener('click', (e) => {
             if (e) e.preventDefault();
-            updateHeaderTitle(newNavLibrary.title || "Biblioteka dokumentów");
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            newNavLibrary.classList.add('active');
-            
-            const welcome = document.getElementById('dashboard-welcome');
-            const dashboardAdvanced = document.getElementById('dashboard-advanced');
-            if (welcome) welcome.classList.add('hidden');
-            if (dashboardAdvanced) dashboardAdvanced.classList.add('hidden');
-            if (dashboardLibrary) {
-                dashboardLibrary.classList.remove('hidden');
+            if (typeof switchView === 'function') {
+                switchView('dashboard-library', "Biblioteka dokumentów");
                 loadLibrary();
             }
-            const header = document.querySelector('.dashboard-header');
-            if (header) header.classList.add('header-padded');
         });
     }
 
@@ -91,13 +81,11 @@ function initLibrary() {
 
     const templateNavItems = document.querySelectorAll('#sidebarTemplateNav .nav-item');
     templateNavItems.forEach(item => {
-        if (item.id === 'navLibrary') return;
+        if (item.id === 'navLibrary' || item.id === 'navSettings') return;
         item.addEventListener('click', () => {
-            if (dashboardLibrary) dashboardLibrary.classList.add('hidden');
-            const dashboardAdvanced = document.getElementById('dashboard-advanced');
-            if (dashboardAdvanced) dashboardAdvanced.classList.remove('hidden');
-            const navLib = document.getElementById('navLibrary');
-            if (navLib) navLib.classList.remove('active');
+            if (typeof switchView === 'function') {
+                switchView('dashboard-advanced', item.title || "Zaawansowane");
+            }
         });
     });
 }

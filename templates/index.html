@@ -77,6 +77,10 @@
           </div>
         </div>
       </div>
+
+      <div class="dashboard-content content-padded hidden" id="dashboard-settings">
+        {% include 'components/settings.html' %}
+      </div>
     </div>
   </div>
 
@@ -87,6 +91,7 @@
   <script src="{{ url_for('static', filename='js/pozew-process.js') }}"></script>
   <script src="{{ url_for('static', filename='js/library.js') }}"></script>
   <script src="{{ url_for('static', filename='js/excel_export.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/auth_ui.js') }}"></script>
 
   <!-- Modal Podglądu -->
   <div id="previewModal" class="modal">

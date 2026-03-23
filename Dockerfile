@@ -14,8 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Tworzenie folderów danych
-RUN mkdir -p input output saved
 
 # User non-root
 RUN adduser --disabled-password --no-create-home appuser \

@@ -104,6 +104,55 @@ function updateHeaderTitle(title) {
         headerTitle.textContent = title;
     }
 }
+
+function switchView(viewId, title) {
+    console.log(`Switching to view: ${viewId}`);
+    
+    // Hide all dashboards
+    const views = [
+        'dashboard-welcome',
+        'dashboard-advanced',
+        'dashboard-library',
+        'dashboard-settings'
+    ];
+    
+    views.forEach(v => {
+        const el = document.getElementById(v);
+        if (el) el.classList.add('hidden');
+    });
+
+    // Show target dashboard
+    const target = document.getElementById(viewId);
+    if (target) {
+        target.classList.remove('hidden');
+        if (title) updateHeaderTitle(title);
+    }
+
+    // Update sidebar active state
+    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+    
+    // Find nav item that might be associated with this view
+    let navId = '';
+    if (viewId === 'dashboard-welcome') navId = 'sidebar-logo';
+    else if (viewId === 'dashboard-library') navId = 'navLibrary';
+    else if (viewId === 'dashboard-settings') navId = 'navSettings';
+    else if (viewId === 'dashboard-advanced') {
+        // Advanced is usually activated via data-template items
+    }
+
+    if (navId) {
+        const nav = document.getElementById(navId);
+        if (nav) nav.classList.add('active');
+    }
+
+    // Adjust header padding if needed
+    const header = document.querySelector('.dashboard-header');
+    if (header) {
+        if (viewId === 'dashboard-welcome') header.classList.remove('header-padded');
+        else header.classList.add('header-padded');
+    }
+}
+
 // Dodaj event listener do przełączania sidebaru
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
