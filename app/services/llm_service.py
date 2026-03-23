@@ -27,7 +27,8 @@ def _get_text_from_ocr_json(json_path: str) -> str:
 
 def call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     """Generuje odpowiedź przy użyciu lokalnego serwera llama.cpp na porcie 8080."""
-    client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+    api_url = os.environ.get("LLM_API_URL", "http://localhost:8080/v1")
+    client = OpenAI(base_url=api_url, api_key="local")
     
     messages = []
     if system_prompt:

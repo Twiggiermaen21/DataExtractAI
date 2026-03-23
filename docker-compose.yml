@@ -1,0 +1,15 @@
+services:
+  faktury-app:
+    build: .
+    container_name: backend_faktur
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+      - ./saved:/app/saved
+    environment:
+      - LLM_API_URL=http://host.docker.internal:8080/v1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
