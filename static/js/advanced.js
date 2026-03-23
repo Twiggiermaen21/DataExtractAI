@@ -1234,10 +1234,14 @@ function renderDynamicTable(documents) {
     const columnsConfig = [
         { id: 'sprzedawca', label: 'Sprzedawca' },
         { id: 'data_wystawienia', label: 'Data wystawienia' },
-        { id: 'wolumen_energii', label: 'Wolumen energii' },
+        { id: 'wolumen_energii', label: 'Wolumen' },
         { id: 'kwota_netto', label: 'Kwota netto' },
         { id: 'kwota_brutto', label: 'Kwota brutto' },
-        { id: 'kwota_vat', label: 'Kwota VAT' }
+        { id: 'kwota_vat', label: 'Kwota VAT' },
+        { id: 'sprzedaz_cena_netto', label: 'Sprzedaż (netto)' },
+        { id: 'sprzedaz_cena_brutto', label: 'Sprzedaż (brutto)' },
+        { id: 'dystrybucja_cena_netto', label: 'Dystrybucja (netto)' },
+        { id: 'dystrybucja_cena_brutto', label: 'Dystrybucja (brutto)' }
     ];
 
     let headerHtml = '';
@@ -1270,7 +1274,7 @@ function renderDynamicTable(documents) {
         columnsConfig.forEach(col => {
             if (selectedColumns.includes(col.id)) {
                 let val = fields[col.id] || '-';
-                if (col.id.startsWith('kwota')) val = formatCurrencyHelper(val);
+                if (col.id.includes('kwota') || col.id.includes('cena')) val = formatCurrencyHelper(val);
                 
                 const isMain = col.id === 'kwota_brutto';
                 bodyHtml += `
