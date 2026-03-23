@@ -689,7 +689,9 @@ if (templateSelect) {
         const advPreviewCard = document.getElementById('advPreviewCard');
         const advActionsCard = document.getElementById('advActionsCard');
         const podsumowanieSettings = document.getElementById('podsumowanieSettings');
+        const podsumowanieExtraOptions = document.getElementById('podsumowanieExtraOptions');
         if (podsumowanieSettings) podsumowanieSettings.classList.add('hidden');
+        if (podsumowanieExtraOptions) podsumowanieExtraOptions.classList.add('hidden');
         if (advStepSource) advStepSource.classList.add('hidden');
         if (advStepSourcePozew) advStepSourcePozew.classList.add('hidden');
         if (advStepLlm) advStepLlm.classList.add('hidden');
@@ -740,7 +742,9 @@ if (templateSelect) {
             if (advStepUpload) advStepUpload.classList.remove('hidden');
             // Pokaż ustawienia kolumn
             const podsumowanieSettings = document.getElementById('podsumowanieSettings');
+            const podsumowanieExtraOptions = document.getElementById('podsumowanieExtraOptions');
             if (podsumowanieSettings) podsumowanieSettings.classList.remove('hidden');
+            if (podsumowanieExtraOptions) podsumowanieExtraOptions.classList.remove('hidden');
             // Stylizacja dla podsumowania: wywal fioletowe
             if (advPreviewCard) {
                 advPreviewCard.classList.remove('card-purple');
@@ -1255,6 +1259,12 @@ function renderDynamicTable(documents) {
 
     // 2. Renderuj wiersze
     let totalBrutto = 0;
+    
+    // Dodaj dystrybucję jeśli zaznaczona (3500 zł)
+    const distToggle = document.getElementById('distributionToggle');
+    if (distToggle && distToggle.checked) {
+        totalBrutto += 3500;
+    }
     let lowConfidenceCount = 0;
     let bodyHtml = '';
 
@@ -1331,7 +1341,7 @@ function formatCurrencyHelper(v) {
 
 // Globalny listener dla checkboxów (delegacja)
 document.addEventListener('change', (e) => {
-    if (e.target.closest('#columnToggleList') && window.lastProcessedDocuments) {
+    if ((e.target.closest('#columnToggleList') || e.target.id === 'distributionToggle') && window.lastProcessedDocuments) {
         renderDynamicTable(window.lastProcessedDocuments);
     }
 });
