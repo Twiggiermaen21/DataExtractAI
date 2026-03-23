@@ -78,9 +78,7 @@
         </div>
       </div>
 
-      <div class="dashboard-content content-padded hidden" id="dashboard-settings">
-        {% include 'components/settings.html' %}
-      </div>
+      {% include 'components/settings.html' %}
     </div>
   </div>
 
@@ -105,6 +103,8 @@
         <!-- Zawartość podglądu -->
       </div>
     </div>
+  </div>
+
   <!-- Modal Pomocy -->
   <div id="helpModal" class="modal">
     <div class="modal-overlay" onclick="closeHelpModal()"></div>
@@ -120,11 +120,36 @@
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
         <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 1.05rem;">
-          Więcej informacji, wsparcie techniczne oraz odpowiedzi na najczęściej zadawane pytania eksperckie znajdziesz na naszej stronie internetowej.
+          Pomoc możesz uzyskać na stronie <b>iufuly.pl</b> oraz w naszym centrum wsparcia.
         </p>
-        <a href="https://iusfully.com" target="_blank" class="btn" style="background: var(--accent-yellow); color: #121316; text-decoration: none; width: auto; padding: 12px 30px; border-radius: var(--radius-xl);">
-          Przejdź na iusfully.com
+        <a href="https://iufuly.pl" target="_blank" class="btn" style="background: var(--accent-yellow); color: #121316; text-decoration: none; width: auto; padding: 12px 30px; border-radius: var(--radius-xl); font-weight: 600;">
+          Przejdź do iufuly.pl
         </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Wylogowania -->
+  <div id="logoutModal" class="modal">
+    <div class="modal-overlay" onclick="closeLogoutModal()"></div>
+    <div class="modal-container" style="max-width: 400px; height: auto;">
+      <div class="modal-header">
+        <h3 id="logoutModalTitle">Wylogowanie</h3>
+        <button class="close-btn" onclick="closeLogoutModal()">✕</button>
+      </div>
+      <div class="modal-body" style="flex-direction: column; text-align: center; padding: 30px 20px;">
+        <div style="font-size: 3rem; margin-bottom: 20px;">👋</div>
+        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1rem; font-weight: 500;">
+          Czy na pewno chcesz się wylogować z aplikacji?
+        </p>
+        <div style="display: flex; gap: 12px; width: 100%;">
+          <button class="btn" onclick="closeLogoutModal()" style="background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); flex: 1; margin: 0; box-shadow: none;">
+            Anuluj
+          </button>
+          <a href="/login" class="btn" style="background: #ff453a; color: #fff; text-decoration: none; flex: 1; margin: 0; box-shadow: none; border: none;">
+            Tak, wyloguj
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -136,6 +161,14 @@
     
     function closeHelpModal() {
       document.getElementById('helpModal').classList.remove('active');
+    }
+
+    function openLogoutModal() {
+      document.getElementById('logoutModal').classList.add('active');
+    }
+    
+    function closeLogoutModal() {
+      document.getElementById('logoutModal').classList.remove('active');
     }
   </script>
 </body>
