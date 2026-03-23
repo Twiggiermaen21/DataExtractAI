@@ -56,12 +56,6 @@ function initLibrary() {
     }
 
     if (globalSearch) {
-        globalSearch.addEventListener('focus', () => {
-            if (dashboardLibrary && dashboardLibrary.classList.contains('hidden')) {
-                const navLibrary = document.getElementById('navLibrary');
-                if (navLibrary) navLibrary.click();
-            }
-        });
         globalSearch.addEventListener('input', (e) => {
             libSearchQuery = e.target.value.toLowerCase();
             filterAndRenderLibrary();

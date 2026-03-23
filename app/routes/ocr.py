@@ -118,7 +118,7 @@ def process_ocr():
             log.exception("OCR error for %s", filename)
             errors.append({'file': filename, 'error': str(e)})
 
-    unload_pipeline()
+    # unload_pipeline()
 
     return jsonify({
         'success': True,
