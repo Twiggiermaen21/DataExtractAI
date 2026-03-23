@@ -797,8 +797,8 @@ if (templateSelect) {
 
             const btnPrint = document.getElementById('btnPrintTemplate');
             if (btnPrint) {
-                // For podsumowanie, keep disabled until analysis
-                btnPrint.disabled = (advWorkflowType === 'podsumowanie');
+                // Keep disabled until analysis is complete
+                btnPrint.disabled = true;
                 btnPrint.onclick = function () {
                     if (templateIframe && templateIframe.contentWindow) {
                         templateIframe.contentWindow.focus();
@@ -808,10 +808,10 @@ if (templateSelect) {
             }
 
             const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
-            if (btnSaveLib) btnSaveLib.disabled = (advWorkflowType === 'podsumowanie');
+            if (btnSaveLib) btnSaveLib.disabled = true;
 
             const btnExportExcel = document.getElementById('btnExportExcel');
-            if (btnExportExcel) btnExportExcel.disabled = (advWorkflowType === 'podsumowanie');
+            if (btnExportExcel) btnExportExcel.disabled = true;
 
         } catch (e) {
             if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
