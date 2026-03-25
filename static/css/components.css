@@ -482,7 +482,7 @@ label,
 }
 
 .checkbox-item:last-child {
-    margin-bottom: 0;
+    /* margin-bottom: 0; */
 }
 
 .checkbox-item:hover {
@@ -551,7 +551,8 @@ label,
     backdrop-filter: blur(4px);
     width: 24px;
     height: 24px;
-    display: none; /* Ukryte domyślnie */
+    display: none;
+    /* Ukryte domyślnie */
     align-items: center;
     justify-content: center;
     border-radius: 6px;
@@ -560,7 +561,8 @@ label,
 }
 
 .selection-mode .library-checkbox-container {
-    display: flex; /* Widoczne tylko w trybie usuwania */
+    display: flex;
+    /* Widoczne tylko w trybie usuwania */
 }
 
 .library-item:hover .library-checkbox-container,
@@ -612,7 +614,7 @@ label,
 
 .library-pdf-icon {
     font-size: 3rem;
-    color: #ef4444; 
+    color: #ef4444;
 }
 
 .library-item[data-type="xml"] .library-pdf-icon {
@@ -628,7 +630,7 @@ label,
     font-size: 0.9rem;
     line-height: 1.5;
     border: 1px solid #e2e8f0;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     width: 100%;
     margin: 0;
     white-space: pre-wrap;

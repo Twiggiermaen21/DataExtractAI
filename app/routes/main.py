@@ -9,14 +9,6 @@ def index():
     return render_template('index.html')
 
 
-@main_bp.route('/login')
-def login():
-    return render_template('login.html')
-
-
-@main_bp.route('/register')
-def register():
-    return render_template('register.html')
 
 
 @main_bp.route('/api/slownie/<amount>')

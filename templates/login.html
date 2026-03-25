@@ -7,140 +7,53 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_ui.css') }}">
-    <style>
-        body {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: #09090b;
-            margin: 0;
-            overflow: hidden;
-        }
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 40px;
-            background: rgba(24, 24, 27, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.6s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .logo-section {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-        .logo-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: -0.5px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-label {
-            display: block;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-dim);
-            margin-bottom: 8px;
-        }
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            color: #fff;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-purple);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
-        }
-        .btn-login {
-            width: 100%;
-            padding: 14px;
-            background: var(--accent-purple);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 12px;
-        }
-        .btn-login:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(168, 85, 247, 0.4);
-            filter: brightness(1.1);
-        }
-        .footer-links {
-            margin-top: 24px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-dim);
-        }
-        .footer-links a {
-            color: var(--accent-purple);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .footer-links a:hover {
-            text-decoration: underline;
-        }
-        .blob {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(0,0,0,0) 70%);
-            z-index: -1;
-            filter: blur(60px);
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
-<body>
-    <div class="blob" style="top: -100px; left: -100px;"></div>
-    <div class="blob" style="bottom: -100px; right: -100px;"></div>
+<body class="auth-body">
+    <div class="auth-blob" style="top: -100px; left: -100px;"></div>
+    <div class="auth-blob" style="bottom: -100px; right: -100px;"></div>
 
-    <div class="login-card">
-        <div class="logo-section">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 40px;">
-            <span class="logo-text">iusfully</span>
+    <div class="auth-card">
+        <div class="auth-logo-section">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="auth-logo-img">
+            <span class="auth-logo-text">iusfully</span>
         </div>
         
-        <h2 style="color: #fff; font-size: 1.5rem; margin-bottom: 8px; text-align: center;">Witaj ponownie</h2>
-        <p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; margin-bottom: 32px;">Zaloguj się, aby zarządzać swoimi dokumentami.</p>
+        <h2 class="auth-title">Witaj ponownie</h2>
+        <p class="auth-subtitle">Zaloguj się, aby zarządzać swoimi dokumentami.</p>
 
-        <form onsubmit="event.preventDefault(); window.location.href='/'">
-            <div class="form-group">
-                <label class="form-label">E-mail</label>
-                <input type="email" class="form-input" placeholder="twoj@email.pl" required>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="auth-alert {{ 'auth-alert-danger' if category == 'danger' else 'auth-alert-success' if category == 'success' else 'auth-alert-info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            {{ form.hidden_tag() }}
+            <div class="auth-form-group">
+                <label class="auth-form-label">E-mail</label>
+                <input type="email" name="email" class="auth-form-input" placeholder="twoj@email.pl" value="{{ form.email.data or '' }}" required>
             </div>
             
-            <div class="form-group">
-                <label class="form-label">Hasło</label>
-                <input type="password" class="form-input" placeholder="••••••••" required>
+            <div class="auth-form-group">
+                <label class="auth-form-label">Hasło</label>
+                <input type="password" name="password" class="auth-form-input" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="btn-login">Zaloguj się</button>
+            <div class="auth-remember-me">
+                <label class="auth-remember-me">
+                    <input type="checkbox" name="remember"> Zapamiętaj mnie
+                </label>
+            </div>
+
+            <button type="submit" class="auth-btn">Zaloguj się</button>
         </form>
 
-        <div class="footer-links">
+        <div class="auth-footer-links">
             Nie masz konta? <a href="/register">Zarejestruj się</a>
         </div>
     </div>
