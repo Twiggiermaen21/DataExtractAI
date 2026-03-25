@@ -27,8 +27,12 @@
 
     /* Accents */
     --accent-blue: #6366f1;
+    --accent-purple: #8b5cf6;
     --accent-green: #10b981;
     --accent-yellow: #eecf6d;
+
+    /* Progress Bar */
+    --progress-bg: rgba(0, 0, 0, 0.4);
 
     /* Radii */
     --radius-sm: 10px;

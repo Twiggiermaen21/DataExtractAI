@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarLogo = document.getElementById('sidebar-logo');
 
     // Kliknięcie w logo -> powrót do Welcome
-    if (sidebarLogo) {
-        sidebarLogo.addEventListener('click', () => {
-            if (typeof switchView === 'function') {
-                switchView('dashboard-welcome', 'Witaj');
-            }
-        });
-    }
+    // if (sidebarLogo) {
+    //     sidebarLogo.addEventListener('click', () => {
+    //         if (typeof switchView === 'function') {
+    //             switchView('dashboard-welcome', 'Witaj');
+    //         }
+    //     });
+    // }
 
     // Widok ustawień
     if (navSettings) {

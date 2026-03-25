@@ -80,9 +80,9 @@ def start_background_server():
     server_exe = os.path.join(base_path, "llama", "llama-server.exe")
     
     # Pobieranie nazw plików modeli z .env
-    model_file = os.environ.get("LLM_MODEL_FILE", "Qwen3.5-2B.gguf")
-    mmproj_file = os.environ.get("LLM_MMPROJ_FILE", "mmproj-Qwen3.5-2B.gguf")
-    max_tokens = os.environ.get("LLM_MAX_TOKENS", "8000")
+    model_file = "Qwen3VL-4B-Instruct-Q8_0.gguf"
+    mmproj_file = "mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf"
+    max_tokens = 8000
 
     model_path = os.path.join(base_path, "model", model_file)
     mmproj_path = os.path.join(base_path, "model", mmproj_file)

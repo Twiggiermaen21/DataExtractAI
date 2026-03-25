@@ -187,9 +187,23 @@
     border: 1px solid var(--border-soft);
 }
 
+.btn-danger-modern {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.btn-sm-modern {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    border-radius: 12px;
+    width: auto;
+}
+
 .btn-emerald:hover { background-color: #34d399; transform: translateY(-1px); }
 .btn-dark-modern:hover { background-color: #18181b; }
 .btn-gray-modern:hover { background-color: rgba(63, 63, 70, 0.8); }
+.btn-danger-modern:hover { background-color: rgba(239, 68, 68, 0.2); transform: translateY(-1px); }
 
 /* Summary Tiles */
 .sum-tile {

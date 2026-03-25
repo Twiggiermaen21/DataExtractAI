@@ -5,10 +5,24 @@ main_bp = Blueprint('main', __name__)
 
 
 @main_bp.route('/')
+def login():
+    return render_template('login.html')
+
+
+@main_bp.route('/dashboard')
 def index():
     return render_template('index.html')
 
 
+@main_bp.route('/login')
+def login_alias():
+    from flask import redirect, url_for
+    return redirect(url_for('main.login'))
+
+
+@main_bp.route('/register')
+def register():
+    return render_template('register.html')
 
 
 @main_bp.route('/api/slownie/<amount>')

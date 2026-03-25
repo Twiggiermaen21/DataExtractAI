@@ -114,23 +114,8 @@
             </div>
         </div>
 
-        <!-- SECTION: Opcje dodatkowe -->
-        <div class="card-modern card-dark hidden" id="podsumowanieExtraOptions">
-            <h3 class="modern-title">Opcje dodatkowe</h3>
-            <div
-                style="margin-top: 12px; display: flex; align-items: start; gap: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); padding: 16px;">
-                <input id="distributionToggle" type="checkbox"
-                    style="margin-top: 2px; height: 16px; width: 16px; accent-color: #fff;" checked>
-                <label for="distributionToggle" style="font-size: 0.875rem; color: #e4e4e7; cursor: pointer;">
-                    Uwzględnij <span style="font-weight: 600; color: #fff;">dystrybucję</span>
-                    <span style="display: block; color: #a1a1aa; font-size: 0.75rem; margin-top: 4px;">Po zaznaczeniu do
-                        sumy doliczane koszty dystrybucji</span>
-                </label>
-            </div>
-        </div>
-
         <!-- SECTION: Pozew Source -->
-        <div class="card-modern card-dark hidden" id="advStepSourcePozew">
+        <!-- <div class="card-modern card-dark hidden" id="advStepSourcePozew">
             <h3 class="modern-title">Źródło danych</h3>
 
             <div id="pozewSavedSection">
@@ -165,10 +150,10 @@
                 <div class="status-text hidden" id="pozewOcrStatusText"
                     style="margin-top: 8px; font-size: 0.8rem; color: var(--accent-emerald);"></div>
             </div>
-        </div>
+        </div> -->
 
         <!-- SECTION: Pozew KRS Extra -->
-        <div class="card-modern card-dark hidden" id="advStepPozewExtra">
+        <!-- <div class="card-modern card-dark hidden" id="advStepPozewExtra">
             <h3 class="modern-title">KRS i Generowanie</h3>
 
             <div class="upload-zone-modern" id="krsUploadZone">
@@ -187,7 +172,7 @@
             <div class="progress-bar hidden" id="pozewProgressBar" style="margin-top: 16px;">
                 <div class="fill" id="pozewProgressFill" style="width: 0%"></div>
             </div>
-        </div>
+        </div> -->
 
         <!-- SECTION: Akcje dokumentu -->
         <div class="card-modern card-dark hidden" id="advActionsCard"
@@ -204,7 +189,9 @@
                 <div class="progress-bar hidden" id="ocrFillProgressBar" style="margin-top: 16px;">
                     <div class="fill" id="ocrFillProgressFill" style="width: 0%"></div>
                 </div>
-                <div id="ocrFillProgressText" class="status-text hidden" style="margin-top: 8px; font-size: 0.8rem; color: var(--accent-emerald); font-weight: 600; text-align: center;">0/0</div>
+                <div id="ocrFillProgressText" class="status-text hidden"
+                    style="border-radius: 30px; margin-top: 8px; font-size: 0.8rem; color: var(--accent-emerald); font-weight: 600; text-align: center;">
+                    0/0</div>
             </div>
 
             <div class="document-actions" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">

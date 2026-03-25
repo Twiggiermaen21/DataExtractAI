@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_ui.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
 </head>
+
 <body class="auth-body">
     <div class="auth-blob" style="top: -100px; left: -100px;"></div>
     <div class="auth-blob" style="bottom: -100px; right: -100px;"></div>
@@ -18,27 +20,29 @@
             <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="auth-logo-img">
             <span class="auth-logo-text">iusfully</span>
         </div>
-        
+
         <h2 class="auth-title">Witaj ponownie</h2>
         <p class="auth-subtitle">Zaloguj się, aby zarządzać swoimi dokumentami.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="auth-alert {{ 'auth-alert-danger' if category == 'danger' else 'auth-alert-success' if category == 'success' else 'auth-alert-info' }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div
+            class="auth-alert {{ 'auth-alert-danger' if category == 'danger' else 'auth-alert-success' if category == 'success' else 'auth-alert-info' }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
 
         <form method="POST" action="{{ url_for('auth.login') }}">
             {{ form.hidden_tag() }}
             <div class="auth-form-group">
                 <label class="auth-form-label">E-mail</label>
-                <input type="email" name="email" class="auth-form-input" placeholder="twoj@email.pl" value="{{ form.email.data or '' }}" required>
+                <input type="email" name="email" class="auth-form-input" placeholder="twoj@email.pl"
+                    value="{{ form.email.data or '' }}" required>
             </div>
-            
+
             <div class="auth-form-group">
                 <label class="auth-form-label">Hasło</label>
                 <input type="password" name="password" class="auth-form-input" placeholder="••••••••" required>
@@ -58,4 +62,5 @@
         </div>
     </div>
 </body>
+
 </html>

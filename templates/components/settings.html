@@ -73,20 +73,19 @@
                         <label
                             style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Adres
                             e-mail</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="email" class="btn-modern btn-dark-modern"
-                                style="flex: 1; text-align: left; background: rgba(255,255,255,0.03);"
-                                value="admin@iusfully.com">
-                            <button class="btn-modern btn-gray-modern"
-                                style="padding: 0 15px; width: auto; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1);">Resetuj</button>
-                        </div>
+                        <input type="email" class="btn-modern btn-dark-modern"
+                            style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
+                            value="admin@iusfully.com">
                     </div>
 
-                    <div style="margin-bottom: 10px;">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn-modern btn-emerald" style="width: 100%; margin-bottom: 12px;">
+                            Zapisz ustawienia
+                        </button>
                         <label
                             style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Hasło
                             dostępowe</label>
-                        <button class="btn-modern btn-gray-modern"
+                        <button class="btn-modern btn-gray-modern" onclick="openResetPasswordModal()"
                             style="width: 100%; text-align: center; justify-content: center; border: 1px solid rgba(255,255,255,0.1);">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" style="margin-right: 8px; opacity: 0.7;">
