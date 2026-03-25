@@ -11,39 +11,61 @@ from openai import OpenAI
 
 # Usuwamy stare importy llama_cpp
 
-# Schema JSON wysyłany do LLM (structured output) dla faktur za energię elektryczną
-RESPONSE_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "ekstrakcja_danych_faktury_energia",
-        "schema": {
-            "type": "object",
-            "properties": {
-                "sprzedawca":           {"type": "string"},
-                "data_wystawienia":     {"type": "string"},
-                "wolumen_energii":      {"type": "string"},
-                "kwota_netto":          {"type": "number"},
-                "kwota_brutto":         {"type": "number"},
-                "kwota_vat":            {"type": "number"},
-                "pewnosc_ocr_procent":  {"type": "integer"},
-            },
-            "required": [
-                "sprzedawca", "data_wystawienia", "wolumen_energii", 
-                "kwota_netto", "kwota_brutto", "kwota_vat", "pewnosc_ocr_procent"
-            ],
-            "additionalProperties": False,
-        },
-        "strict": True,
-    },
+# Pełna definicja dostępnych kolumn (id → typ JSON Schema)
+ALL_COLUMNS = {
+    "sprzedawca":              {"type": "string"},
+    "data_wystawienia":        {"type": "string"},
+    "wolumen_energii":         {"type": "string"},
+    "kwota_netto":             {"type": "number"},
+    "kwota_brutto":            {"type": "number"},
+    "kwota_vat":               {"type": "number"},
+    "sprzedaz_cena_netto":     {"type": "number"},
+    "sprzedaz_cena_brutto":    {"type": "number"},
+    "dystrybucja_cena_netto":  {"type": "number"},
+    "dystrybucja_cena_brutto": {"type": "number"},
 }
+
+# Kolumna pewności jest zawsze wymagana
+CONFIDENCE_COL = {"pewnosc_ocr_procent": {"type": "integer"}}
+
+# Domyślne kolumny (gdy frontend nie poda wyboru)
+DEFAULT_COLUMNS = ["sprzedawca", "data_wystawienia", "wolumen_energii",
+                   "kwota_netto", "kwota_brutto", "kwota_vat"]
+
+
+def build_response_schema(selected_columns=None):
+    """Buduje RESPONSE_SCHEMA dynamicznie na podstawie zaznaczonych checkboxów."""
+    columns = selected_columns if selected_columns else DEFAULT_COLUMNS
+    properties = {}
+    for col_id in columns:
+        if col_id in ALL_COLUMNS:
+            properties[col_id] = ALL_COLUMNS[col_id]
+    # Pewność OCR jest zawsze dodawana
+    properties.update(CONFIDENCE_COL)
+
+    return {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "ekstrakcja_danych_faktury_energia",
+            "schema": {
+                "type": "object",
+                "properties": properties,
+                "required": list(properties.keys()),
+                "additionalProperties": False,
+            },
+            "strict": True,
+        },
+    }
 
 
 # Usunięto lokalne uruchamianie serwera - teraz zarządza nim run.py globalnie
 
 class OCRService:
 
-    def __init__(self, api_url=None, model=None):
+    def __init__(self, api_url=None, model=None, selected_columns=None):
         self.fields = []
+        self.selected_columns = selected_columns
+        self.response_schema = build_response_schema(selected_columns)
 
     # ── public API ──────────────────────────────────────────────
 
@@ -140,7 +162,7 @@ class OCRService:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_msg}
             ],
-            response_format=RESPONSE_SCHEMA,
+            response_format=self.response_schema,
             temperature=0.99,
             max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
             extra_body={
@@ -179,7 +201,7 @@ class OCRService:
                     {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
                 ]}
             ],
-            response_format=RESPONSE_SCHEMA,
+            response_format=self.response_schema,
             temperature=0.99,
             max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000))
         )

@@ -75,8 +75,13 @@ def process_ocr():
     template_path = os.path.join(current_app.root_path, '..', 'templates', 'documents', template_name)
     model_name = request.form.get('model')
 
+    # Odczytaj wybrane kolumny (z checkboxów "Dane do odczytu")
+    columns_raw = request.form.get('selected_columns', '')
+    selected_columns = [c.strip() for c in columns_raw.split(',') if c.strip()] or None
+
     try:
-        pipeline = get_pipeline(template_path if os.path.exists(template_path) else None, model=model_name)
+        pipeline = get_pipeline(template_path if os.path.exists(template_path) else None,
+                                model=model_name, selected_columns=selected_columns)
         if pipeline is None:
             return jsonify({'success': False, 'error': 'Nie można połączyć z LM Studio'}), 500
     except Exception as e:

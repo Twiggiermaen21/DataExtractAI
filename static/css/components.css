@@ -484,9 +484,9 @@ label,
     border: 1px solid transparent;
 }
 
-.checkbox-item:last-child {
-    /* margin-bottom: 0; */
-}
+/* .checkbox-item:last-child {
+     margin-bottom: 0; 
+} */
 
 .checkbox-item:hover {
     background: var(--bg-hover);

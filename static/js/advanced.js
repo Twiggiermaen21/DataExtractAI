@@ -274,6 +274,10 @@ if (btnOcrFill) {
 
         try {
             if (advWorkflowType === 'podsumowanie') {
+                // Pobierz zaznaczone kolumny z checkboxów "Dane do odczytu"
+                const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
+                    .map(cb => cb.dataset.column);
+
                 // SEQUENTIAL PROCESSING FOR PODSUMOWANIE (Real Progress Bar)
                 for (let i = 0; i < advUploadedFiles.length; i++) {
                     const file = advUploadedFiles[i];
@@ -284,6 +288,7 @@ if (btnOcrFill) {
                     const formData = new FormData();
                     formData.append('files', file);
                     if (templateName) formData.append('template', templateName);
+                    formData.append('selected_columns', selectedColumns.join(','));
 
                     try {
                         const response = await fetch('/api/process_ocr', {
