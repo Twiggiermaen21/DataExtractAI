@@ -1,0 +1,26 @@
+{% extends "emails/email_base.html" %}
+
+{% block message %}
+Otrzymaliśmy prośbę o zmianę adresu e-mail Twojego konta na „<strong style="color: #60a5fa;">{{ new_email }}</strong>".
+Kliknij poniższy przycisk, aby potwierdzić nowy adres e-mail:
+{% endblock %}
+
+{% block action %}
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <a href="{{ confirm_url }}"
+                style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); color: #fff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.95rem;">
+                Potwierdź nowy e-mail
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding-top: 16px;">
+            <p style="margin: 0; color: #71717a; font-size: 0.8rem; word-break: break-all;">
+                Lub skopiuj ten link: <span style="color: #60a5fa;">{{ confirm_url }}</span>
+            </p>
+        </td>
+    </tr>
+</table>
+{% endblock %}

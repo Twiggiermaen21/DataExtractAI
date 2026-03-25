@@ -17,4 +17,4 @@ models/*
 !models/.gitkeep
 venv/*
 llama/*
-!model/*
+model/*

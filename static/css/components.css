@@ -169,7 +169,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    background: white;
+    background: rgba(255, 255, 255, 0.03);
     border-radius: var(--radius-sm);
     margin-bottom: 8px;
     font-size: 0.9rem;

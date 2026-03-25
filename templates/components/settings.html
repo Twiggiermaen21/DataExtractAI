@@ -2,56 +2,6 @@
     <div class="modern-container">
         <!-- Panel lewy: Ustawienia -->
         <div class="actions-column panel-flex" style="max-height: calc(100vh - 220px);">
-            <!-- Karta: Dane firmy -->
-            <!-- <div class="card-modern card-dark">
-                <h3 class="modern-title">
-                    <span
-                        style="width: 8px; height: 24px; background: var(--accent-emerald); border-radius: 4px; display: inline-block;"></span>
-                    Dane administratora
-                </h3>
-                <p class="modern-subtitle">Te dane będą automatycznie wstawiane do generowanych dokumentów.</p>
-
-                <div class="checkbox-group">
-                    <div style="margin-bottom: 20px;">
-                        <label
-                            style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Nazwa
-                            firmy / Adresat</label>
-                        <input type="text" class="btn-modern btn-dark-modern"
-                            style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
-                            placeholder="Np. Jan Kowalski Usługi IT">
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label
-                            style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">NIP</label>
-                        <input type="text" class="btn-modern btn-dark-modern"
-                            style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
-                            placeholder="000-000-00-00">
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label
-                            style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Adres</label>
-                        <textarea class="btn-modern btn-dark-modern"
-                            style="width: 100%; text-align: left; background: rgba(255,255,255,0.03); min-height: 80px; resize: vertical;"
-                            placeholder="ul. Przykładowa 1/2, 00-000 Miasto"></textarea>
-                    </div>
-
-                    <div style="margin-bottom: 20px;">
-                        <label
-                            style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Numer
-                            konta bankowego</label>
-                        <input type="text" class="btn-modern btn-dark-modern"
-                            style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
-                            placeholder="00 0000 0000 0000 0000 0000 0000">
-                    </div>
-
-                    <button class="btn-modern btn-emerald" style="width: 100%; margin-top: 10px;">
-                        Zapisz ustawienia
-                    </button>
-                </div>
-            </div> -->
-
             <!-- Karta: Bezpieczeństwo -->
             <div class="card-modern card-dark">
                 <h3 class="modern-title">
@@ -64,22 +14,25 @@
                         <label
                             style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Nazwa
                             konta</label>
-                        <input type="text" class="btn-modern btn-dark-modern"
+                        <input type="text" id="settings-username" class="btn-modern btn-dark-modern"
                             style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
-                            value="Administrator" placeholder="Np. Jan Kowalski">
+                            placeholder="Np. Jan Kowalski">
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <label
                             style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase;">Adres
                             e-mail</label>
-                        <input type="email" class="btn-modern btn-dark-modern"
+                        <input type="email" id="settings-email" class="btn-modern btn-dark-modern"
                             style="width: 100%; text-align: left; background: rgba(255,255,255,0.03);"
-                            value="admin@iusfully.com">
+                            placeholder="twoj@email.pl">
                     </div>
 
+                    <!-- Status toast -->
+                    <div id="settings-status" style="display: none; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 500;"></div>
+
                     <div style="margin-bottom: 20px;">
-                        <button class="btn-modern btn-emerald" style="width: 100%; margin-bottom: 12px;">
+                        <button class="btn-modern btn-emerald" id="settings-save-btn" style="width: 100%; margin-bottom: 12px;">
                             Zapisz ustawienia
                         </button>
                         <label
@@ -98,27 +51,5 @@
                 </div>
             </div>
         </div>
-
-        <!-- Panel prawy: Podgląd / Info -->
-        <!-- <div class="preview-column">
-            <div class="card-modern card-purple"
-                style="height: calc(100vh - 220px); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 40px;">
-                <div style="font-size: 4rem; margin-bottom: 24px;">⚙️</div>
-                <h2 style="font-size: 1.75rem; font-weight: 700; color: #fff; margin-bottom: 16px;">Konfiguracja
-                    iusfully</h2>
-                <p style="color: rgba(255,255,255,0.7); max-width: 400px; line-height: 1.6;">
-                    W tej sekcji możesz zarządzać danymi swojej firmy, które będą widoczne na generowanych wezwaniach do
-                    zapłaty i pozwach.
-                </p>
-                <div
-                    style="margin-top: 32px; padding: 20px; border-radius: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); width: 100%;">
-                    <div
-                        style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 600; margin-bottom: 8px;">
-                        WSKAZÓWKA</div>
-                    <p style="font-size: 0.8rem; color: #a1a1aa; margin: 0;">Dane te są przechowywane lokalnie i
-                        szyfrowane w celu zapewnienia bezpieczeństwa Twoich informacji.</p>
-                </div>
-            </div>
-        </div> -->
     </div>
 </div>

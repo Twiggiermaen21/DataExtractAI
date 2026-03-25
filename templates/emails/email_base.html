@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background: #121316; font-family: 'Segoe UI', Tahoma, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: #121316; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table width="520" cellpadding="0" cellspacing="0"
+                    style="background: #1a1b23; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="padding: 32px 40px 24px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06);">
+                            <span style="font-size: 1.4rem; font-weight: 700; color: #fff; letter-spacing: -0.5px;">
+                                iusfully
+                            </span>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="margin: 0 0 16px; color: #fff; font-size: 1.3rem; font-weight: 600;">
+                                {{ title|default('Potwierdzenie') }}
+                            </h2>
+                            <p style="margin: 0 0 8px; color: #a1a1aa; font-size: 0.95rem; line-height: 1.6;">
+                                Cześć, <strong style="color: #fff;">{{ user.username }}</strong>!
+                            </p>
+                            <p style="margin: 0 0 28px; color: #a1a1aa; font-size: 0.95rem; line-height: 1.6;">
+                                {% block message %}{% endblock %}
+                            </p>
+                            {% block action %}{% endblock %}
+                            <p style="margin: 24px 0 0; color: #71717a; font-size: 0.8rem; line-height: 1.5;">
+                                Ten link jest ważny przez 1 godzinę. Jeśli nie wykonywałeś tej akcji, zignoruj tę wiadomość.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 20px 40px; text-align: center; border-top: 1px solid rgba(255,255,255,0.06);">
+                            <p style="margin: 0; color: #52525b; font-size: 0.75rem;">
+                                © 2026 iusfully. Wiadomość wygenerowana automatycznie.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -12,6 +12,16 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+    # ── Konfiguracja e-mail ────────────────────────────────────────────
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', '')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@iusfully.com')
+    app.config['MAIL_SUPPRESS_SEND'] = os.environ.get('MAIL_SUPPRESS_SEND', 'True').lower() in ('true', '1', 'yes')
+    app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
+
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, "input")
     app.config['OUTPUT_FOLDER'] = os.path.join(BASE_DIR, "output")
     app.config['SAVED_FOLDER'] = os.path.join(BASE_DIR, "saved")
@@ -22,10 +32,11 @@ def create_app():
         os.makedirs(folder, exist_ok=True)
 
     # ── Inicjalizacja rozszerzeń ───────────────────────────────────────
-    from app.extensions import db, login_manager, limiter
+    from app.extensions import db, login_manager, limiter, mail
     db.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
+    mail.init_app(app)
 
     # Import modeli, aby SQLAlchemy znało tabele
     from app import models  # noqa: F401
@@ -43,6 +54,7 @@ def create_app():
     from app.routes.invoices import invoices_bp
     from app.routes.excel_export import excel_export_bp
     from app.routes.auth import auth_bp
+    from app.routes.settings import settings_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
@@ -53,5 +65,6 @@ def create_app():
     app.register_blueprint(invoices_bp)
     app.register_blueprint(excel_export_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(settings_bp)
 
     return app

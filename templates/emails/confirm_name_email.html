@@ -1,0 +1,26 @@
+{% extends "emails/email_base.html" %}
+
+{% block message %}
+Otrzymaliśmy prośbę o zmianę nazwy Twojego konta z „<strong style="color: #fff;">{{ user.username }}</strong>" na „<strong style="color: #34d399;">{{ new_name }}</strong>".
+Kliknij poniższy przycisk, aby potwierdzić tę zmianę:
+{% endblock %}
+
+{% block action %}
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <a href="{{ confirm_url }}"
+                style="display: inline-block; padding: 14px 36px; background: linear-gradient(135deg, #34d399 0%, #059669 100%); color: #fff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 0.95rem;">
+                Akceptuję zmianę
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding-top: 16px;">
+            <p style="margin: 0; color: #71717a; font-size: 0.8rem; word-break: break-all;">
+                Lub skopiuj ten link: <span style="color: #34d399;">{{ confirm_url }}</span>
+            </p>
+        </td>
+    </tr>
+</table>
+{% endblock %}

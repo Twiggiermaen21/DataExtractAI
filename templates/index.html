@@ -178,15 +178,15 @@
         <button class="close-btn" onclick="closeResetPasswordModal()">✕</button>
       </div>
       <div class="modal-body" style="flex-direction: column; text-align: center; padding: 30px 20px;">
-        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1rem; font-weight: 500;">
-          Czy na pewno chcesz zresetować hasło? Na Twój adres e-mail zostanie wysłana wiadomość z instrukcją.
+        <p id="resetModalMessage" style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1rem; font-weight: 500;">
+          Czy na pewno chcesz zresetować hasło? Na Twój adres e-mail zostanie wysłana wiadomość z linkiem.
         </p>
-        <div style="display: flex; gap: 12px; width: 100%;">
+        <div id="resetModalButtons" style="display: flex; gap: 12px; width: 100%;">
           <button class="btn" onclick="closeResetPasswordModal()"
             style="background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); flex: 1; margin: 0; box-shadow: none;">
             Anuluj
           </button>
-          <button class="btn" onclick="confirmResetPassword()"
+          <button class="btn" id="resetConfirmBtn" onclick="confirmResetPassword()"
             style="background: var(--accent-purple); color: #fff; flex: 1; margin: 0; box-shadow: none; border: none;">
             Tak, resetuj
           </button>
@@ -213,6 +213,11 @@
     }
 
     function openResetPasswordModal() {
+      // Reset modal state
+      document.getElementById('resetModalMessage').textContent =
+        'Czy na pewno chcesz zresetować hasło? Na Twój adres e-mail zostanie wysłana wiadomość z linkiem.';
+      document.getElementById('resetModalButtons').style.display = 'flex';
+      document.getElementById('resetConfirmBtn').disabled = false;
       document.getElementById('resetPasswordModal').classList.add('active');
     }
 
@@ -220,9 +225,29 @@
       document.getElementById('resetPasswordModal').classList.remove('active');
     }
 
-    function confirmResetPassword() {
-      alert('🔒 Instrukcja resetowania hasła została wysłana na Twój e-mail!');
-      closeResetPasswordModal();
+    async function confirmResetPassword() {
+      const btn = document.getElementById('resetConfirmBtn');
+      const msgEl = document.getElementById('resetModalMessage');
+      btn.disabled = true;
+      btn.textContent = 'Wysyłanie...';
+
+      try {
+        const resp = await fetch('/api/settings/request-password-reset', { method: 'POST' });
+        const data = await resp.json();
+        if (data.success) {
+          msgEl.innerHTML = '✅ ' + data.message;
+          document.getElementById('resetModalButtons').style.display = 'none';
+          setTimeout(() => closeResetPasswordModal(), 3000);
+        } else {
+          msgEl.innerHTML = '❌ ' + (data.error || 'Nieznany błąd.');
+          btn.disabled = false;
+          btn.textContent = 'Tak, resetuj';
+        }
+      } catch (e) {
+        msgEl.innerHTML = '❌ Błąd połączenia z serwerem.';
+        btn.disabled = false;
+        btn.textContent = 'Tak, resetuj';
+      }
     }
   </script>
 </body>
