@@ -226,7 +226,8 @@ body {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    padding: 24px 40px 24px 0px; /* Default: no left padding */
+    padding: 24px 40px 24px 0px;
+    /* Default: no left padding */
     height: 90px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.02);
     transition: padding 0.3s ease;
@@ -265,7 +266,6 @@ body {
     background: var(--bg-secondary);
     border-radius: var(--radius-xl);
     padding: 0 16px;
-    width: 600px;
     max-width: 100%;
     justify-self: center;
     height: 44px;
@@ -437,7 +437,8 @@ body {
 .dashboard-content {
     flex: 1;
     overflow-y: hidden;
-    padding: 0; /* Default: no padding */
+    padding: 0;
+    /* Default: no padding */
     display: flex;
     flex-direction: column;
     animation: fadeInUp 0.5s ease-out forwards;

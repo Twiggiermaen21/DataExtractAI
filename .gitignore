@@ -18,3 +18,4 @@ models/*
 venv/*
 llama/*
 model/*
+.env
