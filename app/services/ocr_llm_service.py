@@ -137,29 +137,34 @@ class OCRService:
         "Jesteś ekspertem OCR specjalizującym się w polskich fakturach za energię elektryczną "
         "(PGE, Tauron, Enea, Energa, E.ON i innych operatorów). "
         "Każdy operator stosuje inne nazewnictwo i układ tabel. "
-        "Twoim zadaniem jest znalezienie konkretnych wartości niezależnie od układu dokumentu. "
-        "Wartości numeryczne zwracaj jako czyste liczby z kropką jako separatorem dziesiętnym "
-        "(bez symboli walut, jednostek i spacji). "
-        "Jeśli nie możesz z pewnością ustalić wartości, zwróć null. "
-        "Zwróć WYŁĄCZNIE czysty obiekt JSON — bez żadnego dodatkowego tekstu."
+        "Twoim zadaniem jest znalezienie konkretnych wartości niezależnie od układu dokumentu.\n\n"
+        "ZASADY BEZWZGLĘDNE — MUSISZ ICH PRZESTRZEGAĆ:\n"
+        "1. Przepisuj WYŁĄCZNIE wartości widoczne w dokumencie. "
+        "NIE wolno Ci niczego obliczać, szacować, interpolować ani domyślać się.\n"
+        "2. Jeśli danej wartości NIE MA w dokumencie lub nie możesz jej jednoznacznie odczytać — "
+        "zwróć null. Nigdy nie wstawiaj 0, pustego stringa ani własnej oceny.\n"
+        "3. NIE wolno Ci 'poprawiać' ani 'uzupełniać' danych na podstawie wiedzy o typowych fakturach.\n"
+        "4. Wartości numeryczne przepisuj dokładnie tak jak stoją w dokumencie, "
+        "zamieniając tylko separator dziesiętny na kropkę i usuwając symbole walut/jednostek.\n"
+        "5. Zwróć WYŁĄCZNIE czysty obiekt JSON — bez żadnego komentarza, wyjaśnienia ani markdown."
     )
 
     FIELD_INSTRUCTIONS = (
-        "Instrukcje dla poszczególnych pól:\n"
-        '1. "sprzedawca": Nazwa firmy wystawiającej fakturę (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
-        '2. "data_wystawienia": Szukaj "Data wystawienia", "Wystawiono w dniu". Format YYYY-MM-DD.\n'
-        '3. "data_sprzedazy": Data sprzedaży lub ostatni dzień okresu rozliczeniowego. Szukaj "Data sprzedaży", "Miesiąc sprzedaży", końcowa data w "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
-        '4. "wolumen_energii": Całkowite zużycie w kWh. Szukaj w podsumowaniach zużycia, kolumnach "Ilość", "Wolumen", sumie tabeli odczytów licznika. Tylko liczba (bez jednostki).\n'
-        '5. "naleznos_netto": Całkowita należność netto (przed VAT, przed uwzględnieniem sald z poprzednich miesięcy).\n'
-        '6. "naleznos_brutto": Ostateczna kwota wymagana od klienta. Szukaj "Do zapłaty", "Razem do zapłaty", "Należność ogółem".\n'
-        '7. "kwota_netto": Suma netto z głównego podsumowania faktury lub tabeli stawek VAT za bieżący okres.\n'
-        '8. "kwota_brutto": Suma brutto z głównego podsumowania faktury lub tabeli stawek VAT za bieżący okres.\n'
-        '9. "kwota_vat": Łączna wartość podatku VAT za bieżący okres ("Kwota VAT", "Podatek", "Suma VAT").\n'
-        '10. "sprzedaz_cena_netto": Suma netto kosztów sekcji SPRZEDAŻY energii (energia czynna, opłata handlowa). Szukaj tabeli "Sprzedaż energii elektrycznej".\n'
-        '11. "sprzedaz_cena_brutto": Odpowiednik brutto kosztów sprzedaży energii.\n'
-        '12. "dystrybucja_cena_netto": Suma netto kosztów sekcji DYSTRYBUCJI (opłata sieciowa, przesyłowa, jakościowa, przejściowa, abonamentowa). Szukaj tabeli "Dystrybucja" lub "Usługi dystrybucyjne".\n'
-        '13. "dystrybucja_cena_brutto": Odpowiednik brutto usług dystrybucyjnych.\n'
-        '14. "pewnosc_ocr_procent": Twoja szacunkowa pewność odczytu jako liczba całkowita 0-100.'
+        "Gdzie szukać poszczególnych pól (jeśli NIE ZNAJDZIESZ — zwróć null):\n"
+        '1. "sprzedawca": Nazwa firmy wystawiającej fakturę widoczna w nagłówku lub stopce (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
+        '2. "data_wystawienia": Frazy: "Data wystawienia", "Wystawiono dnia". Format YYYY-MM-DD.\n'
+        '3. "data_sprzedazy": Frazy: "Data sprzedaży", "Miesiąc sprzedaży", lub końcowa data z "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
+        '4. "wolumen_energii": Całkowite zużycie energii czynnej. Frazy: "Ilość", "Wolumen", suma tabeli odczytów licznika. Tylko liczba bez jednostki.\n'
+        '5. "naleznos_netto": Całkowita należność netto przed VAT. Nie mylić z kwotą bieżącej faktury.\n'
+        '6. "naleznos_brutto": Kwota ostateczna do zapłaty przez klienta. Frazy: "Do zapłaty", "Razem do zapłaty", "Należność ogółem", "Kwota do zapłaty".\n'
+        '7. "kwota_netto": Suma netto z tabeli stawek VAT lub głównego podsumowania za bieżący okres rozliczeniowy.\n'
+        '8. "kwota_brutto": Suma brutto z tabeli stawek VAT lub głównego podsumowania za bieżący okres.\n'
+        '9. "kwota_vat": Podatek VAT za bieżący okres. Frazy: "Kwota VAT", "Podatek VAT", "Suma VAT".\n'
+        '10. "sprzedaz_cena_netto": Suma netto sekcji SPRZEDAŻY (energia czynna, opłata handlowa). Frazy: "Sprzedaż energii elektrycznej".\n'
+        '11. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
+        '12. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI (opłata sieciowa, przesyłowa, jakościowa, abonamentowa). Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
+        '13. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
+        '14. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
     )
 
     # ── tekst → LLM ────────────────────────────────────────────

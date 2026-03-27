@@ -87,7 +87,7 @@ def extract_pdf_text():
 
 
 @ocr_bp.route('/api/process_ocr', methods=['POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("100 per minute") # Ograniczenie do 100 żądań na minutę
 def process_ocr():
     """OCR — przetwarza pliki i zwraca wyekstrahowane dane."""
     if 'files' not in request.files:
