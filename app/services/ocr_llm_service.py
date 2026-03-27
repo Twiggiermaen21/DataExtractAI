@@ -142,7 +142,8 @@ class OCRService:
         print(f"[OCR] ---------------------------------")
 
         print(f"[OCR] Wysyłanie zapytania tekstowego do wbudowanego serwera llama.cpp...")
-        client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+        llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
+        client = OpenAI(base_url=llama_url, api_key="local")
         
         system_prompt = "Jesteś asystentem OCR. Analizujesz faktury za energię elektryczną i wyodrębniasz precyzyjne dane finansowe do wniosków o ulgę. Zwracasz WYŁĄCZNIE kod JSON."
         user_msg = (
@@ -181,7 +182,8 @@ class OCRService:
 
     def _predict_image(self, image_path, source_path=None):
         print(f"[OCR] Wysyłanie zapytania graficznego do wbudowanego serwera llama.cpp...")
-        client = OpenAI(base_url="http://localhost:8080/v1", api_key="local")
+        llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
+        client = OpenAI(base_url=llama_url, api_key="local")
         
         print(f"[OCR] Przetwarzanie obrazu: {image_path}")
         image_base64 = image_to_base64(image_path)

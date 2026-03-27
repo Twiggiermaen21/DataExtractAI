@@ -1,6 +1,7 @@
 import os
 from flask import Blueprint, render_template, jsonify, current_app, request
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 
 main_bp = Blueprint('main', __name__)
 
@@ -137,8 +138,15 @@ def delete_from_library():
                 
                 if prefix in folder_map:
                     base_folder = folder_map[prefix]
-                    filepath = os.path.join(base_folder, filename)
-                    
+                    safe_name = secure_filename(filename)
+                    if not safe_name:
+                        errors.append(f"Nieprawidłowa nazwa pliku: {filename}")
+                        continue
+                    filepath = os.path.realpath(os.path.join(base_folder, safe_name))
+                    if not filepath.startswith(os.path.realpath(base_folder)):
+                        errors.append(f"Niedozwolona ścieżka: {filename}")
+                        continue
+
                     if os.path.exists(filepath):
                         os.remove(filepath)
                         deleted_count += 1

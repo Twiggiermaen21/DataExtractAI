@@ -1,4 +1,5 @@
 import os
+import secrets
 from flask import Flask
 
 
@@ -8,7 +9,14 @@ def create_app():
     # ── Konfiguracja bezpieczeństwa i bazy danych ──────────────────────
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'zmien-mnie-na-losowy-klucz-w-produkcji')
+    secret_key = os.environ.get('SECRET_KEY')
+    if not secret_key:
+        raise RuntimeError(
+            "Brak SECRET_KEY w zmiennych środowiskowych. "
+            "Wygeneruj klucz (np. python -c \"import secrets; print(secrets.token_hex(32))\") "
+            "i dodaj go do pliku .env jako SECRET_KEY=<twój_klucz>."
+        )
+    app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

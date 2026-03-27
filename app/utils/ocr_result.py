@@ -22,7 +22,8 @@ class OCRResult:
                 lines = clean.split("\n")
                 clean = "\n".join(lines[1:-1])
             return json.loads(clean)
-        except Exception:
+        except Exception as e:
+            log.warning("Nie udało się sparsować odpowiedzi LLM jako JSON: %s | Tekst: %.200s", e, text)
             return {}
 
     def save_to_json(self, save_path):

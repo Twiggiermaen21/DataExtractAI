@@ -19,6 +19,7 @@ import sys
 import subprocess
 import atexit
 from app import create_app
+
 class Api:
     def __init__(self):
         self._window = None
@@ -78,11 +79,11 @@ def start_background_server():
 
     # Ścieżki synchronizowane z .env
     server_exe = os.path.join(base_path, "llama", "llama-server.exe")
-    
+
     # Pobieranie nazw plików modeli z .env
-    model_file = "Qwen3VL-4B-Instruct-Q8_0.gguf"
-    mmproj_file = "mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf"
-    max_tokens = "8000"
+    model_file = os.environ.get("MODEL_FILE", "Qwen3VL-4B-Instruct-Q8_0.gguf")
+    mmproj_file = os.environ.get("MMPROJ_FILE", "mmproj-Qwen3VL-4B-Instruct-Q8_0.gguf")
+    max_tokens = os.environ.get("LLAMA_CONTEXT_SIZE", "8000")
 
     model_path = os.path.join(base_path, "model", model_file)
     mmproj_path = os.path.join(base_path, "model", mmproj_file)

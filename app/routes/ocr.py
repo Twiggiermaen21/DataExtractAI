@@ -1,16 +1,33 @@
 import os
 import json
-import traceback
 import logging
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from werkzeug.utils import secure_filename
 
 from app.services.ocr_pipeline import get_pipeline, unload_pipeline
+from app.extensions import limiter
 
 log = logging.getLogger(__name__)
 
 ocr_bp = Blueprint('ocr', __name__)
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}
+ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | {'.pdf', '.docx', '.doc', '.xml'}
+MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
+
+
+def _safe_upload_path(folder, filename):
+    """Zwraca bezpieczną ścieżkę pliku i weryfikuje brak path traversal."""
+    filename = secure_filename(filename)
+    if not filename:
+        return None, "Nieprawidłowa nazwa pliku"
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return None, f"Niedozwolone rozszerzenie: {ext}"
+    path = os.path.realpath(os.path.join(folder, filename))
+    if not path.startswith(os.path.realpath(folder)):
+        return None, "Niedozwolona ścieżka pliku"
+    return path, None
 
 
 @ocr_bp.route('/api/extract_pdf_text', methods=['POST'])
@@ -23,8 +40,16 @@ def extract_pdf_text():
     if file.filename == '':
         return jsonify({'success': False, 'error': 'Pusta nazwa pliku'}), 400
 
-    filename = file.filename
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+    file.stream.seek(0, 2)
+    size = file.stream.tell()
+    file.stream.seek(0)
+    if size > MAX_UPLOAD_SIZE:
+        return jsonify({'success': False, 'error': 'Plik za duży (max 20 MB)'}), 413
+
+    filepath, err = _safe_upload_path(current_app.config['UPLOAD_FOLDER'], file.filename)
+    if err:
+        return jsonify({'success': False, 'error': err}), 400
+    filename = os.path.basename(filepath)
 
     try:
         file.save(filepath)
@@ -62,6 +87,7 @@ def extract_pdf_text():
 
 
 @ocr_bp.route('/api/process_ocr', methods=['POST'])
+@limiter.limit("10 per minute")
 def process_ocr():
     """OCR — przetwarza pliki i zwraca wyekstrahowane dane."""
     if 'files' not in request.files:
@@ -85,6 +111,7 @@ def process_ocr():
         if pipeline is None:
             return jsonify({'success': False, 'error': 'Nie można połączyć z LM Studio'}), 500
     except Exception as e:
+        log.exception("Błąd inicjalizacji pipeline")
         return jsonify({'success': False, 'error': f'Błąd: {str(e)}'}), 500
 
     processed_files = []
@@ -95,8 +122,18 @@ def process_ocr():
         if file.filename == '':
             continue
 
-        filename = file.filename
-        original_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        file.stream.seek(0, 2)
+        size = file.stream.tell()
+        file.stream.seek(0)
+        if size > MAX_UPLOAD_SIZE:
+            errors.append({'file': file.filename, 'error': 'Plik za duży (max 20 MB)'})
+            continue
+
+        original_path, err = _safe_upload_path(current_app.config['UPLOAD_FOLDER'], file.filename)
+        if err:
+            errors.append({'file': file.filename, 'error': err})
+            continue
+        filename = os.path.basename(original_path)
 
         try:
             file.save(original_path)
@@ -150,12 +187,21 @@ def get_results():
 @ocr_bp.route('/api/get_result/<filename>')
 def get_result(filename):
     """Zwraca zawartość pliku JSON."""
+    safe_name = secure_filename(filename)
+    if not safe_name or not safe_name.endswith('.json'):
+        return jsonify({'error': 'Nieprawidłowa nazwa pliku'}), 400
+    output_folder = current_app.config['OUTPUT_FOLDER']
+    path = os.path.realpath(os.path.join(output_folder, safe_name))
+    if not path.startswith(os.path.realpath(output_folder)):
+        return jsonify({'error': 'Niedozwolona ścieżka'}), 400
     try:
-        path = os.path.join(current_app.config['OUTPUT_FOLDER'], filename)
         with open(path, 'r', encoding='utf-8') as f:
             return jsonify(json.load(f))
+    except FileNotFoundError:
+        return jsonify({'error': 'Nie znaleziono pliku'}), 404
     except Exception as e:
-        return jsonify({'error': str(e)}), 404
+        log.exception("Błąd odczytu JSON: %s", safe_name)
+        return jsonify({'error': str(e)}), 500
 
 
 @ocr_bp.route('/input/<filename>')
