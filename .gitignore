@@ -1,22 +1,51 @@
-# Ignoruj wszystko w folderze input...
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Środowisko wirtualne ───────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Dane aplikacji (pliki użytkownika) ─────────────────────────
 input/*
-# ...ale nie ignoruj pliku .gitkeep (który musisz tam utworzyć)
 !input/.gitkeep
 
-# To samo dla output
 output/*
-pom/
 !output/.gitkeep
-templates_db/*
-!templates_db/.gitkeep
-zpom/*
-app/gotowe_dokumenty/*
-!app/gotowe_dokumenty/.gitkeep
-llama.md
-models/*
-!models/.gitkeep
-venv/*
-llama/*
-model/*
+
+saved/*
+!saved/.gitkeep
+
+# ── Baza danych ────────────────────────────────────────────────
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Konfiguracja i sekrety ─────────────────────────────────────
 .env
+.env.local
+
+# ── Model AI i binarki llama ───────────────────────────────────
+model/*
+llama/*
+
+# ── Logi ──────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Build / dystrybucja (PyInstaller) ─────────────────────────
+build/
+dist/
+*.spec
+*.egg-info/
+
+# ── Narzędzia deweloperskie ────────────────────────────────────
 .claude/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
