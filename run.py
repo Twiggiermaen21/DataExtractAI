@@ -34,7 +34,7 @@ class Api:
         # Filtry plików dla dialogu zapisu
         file_types = ('Excel files (*.xlsx)', 'All files (*.*)')
         save_path = self._window.create_file_dialog(
-            webview.SAVE_DIALOG,
+            webview.FileDialog.SAVE,
             directory=os.path.expanduser('~'), 
             save_filename=filename,
             file_types=file_types
