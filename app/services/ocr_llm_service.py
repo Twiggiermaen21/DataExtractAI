@@ -131,90 +131,112 @@ class OCRService:
             if os.path.exists(img_path):
                 os.remove(img_path)
 
+    # ── Wspólny prompt systemowy ────────────────────────────────
+
+    SYSTEM_PROMPT = (
+        "Jesteś ekspertem OCR specjalizującym się w polskich fakturach za energię elektryczną "
+        "(PGE, Tauron, Enea, Energa, E.ON i innych operatorów). "
+        "Każdy operator stosuje inne nazewnictwo i układ tabel. "
+        "Twoim zadaniem jest znalezienie konkretnych wartości niezależnie od układu dokumentu. "
+        "Wartości numeryczne zwracaj jako czyste liczby z kropką jako separatorem dziesiętnym "
+        "(bez symboli walut, jednostek i spacji). "
+        "Jeśli nie możesz z pewnością ustalić wartości, zwróć null. "
+        "Zwróć WYŁĄCZNIE czysty obiekt JSON — bez żadnego dodatkowego tekstu."
+    )
+
+    FIELD_INSTRUCTIONS = (
+        "Instrukcje dla poszczególnych pól:\n"
+        '1. "sprzedawca": Nazwa firmy wystawiającej fakturę (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
+        '2. "data_wystawienia": Szukaj "Data wystawienia", "Wystawiono w dniu". Format YYYY-MM-DD.\n'
+        '3. "data_sprzedazy": Data sprzedaży lub ostatni dzień okresu rozliczeniowego. Szukaj "Data sprzedaży", "Miesiąc sprzedaży", końcowa data w "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
+        '4. "wolumen_energii": Całkowite zużycie w kWh. Szukaj w podsumowaniach zużycia, kolumnach "Ilość", "Wolumen", sumie tabeli odczytów licznika. Tylko liczba (bez jednostki).\n'
+        '5. "naleznos_netto": Całkowita należność netto (przed VAT, przed uwzględnieniem sald z poprzednich miesięcy).\n'
+        '6. "naleznos_brutto": Ostateczna kwota wymagana od klienta. Szukaj "Do zapłaty", "Razem do zapłaty", "Należność ogółem".\n'
+        '7. "kwota_netto": Suma netto z głównego podsumowania faktury lub tabeli stawek VAT za bieżący okres.\n'
+        '8. "kwota_brutto": Suma brutto z głównego podsumowania faktury lub tabeli stawek VAT za bieżący okres.\n'
+        '9. "kwota_vat": Łączna wartość podatku VAT za bieżący okres ("Kwota VAT", "Podatek", "Suma VAT").\n'
+        '10. "sprzedaz_cena_netto": Suma netto kosztów sekcji SPRZEDAŻY energii (energia czynna, opłata handlowa). Szukaj tabeli "Sprzedaż energii elektrycznej".\n'
+        '11. "sprzedaz_cena_brutto": Odpowiednik brutto kosztów sprzedaży energii.\n'
+        '12. "dystrybucja_cena_netto": Suma netto kosztów sekcji DYSTRYBUCJI (opłata sieciowa, przesyłowa, jakościowa, przejściowa, abonamentowa). Szukaj tabeli "Dystrybucja" lub "Usługi dystrybucyjne".\n'
+        '13. "dystrybucja_cena_brutto": Odpowiednik brutto usług dystrybucyjnych.\n'
+        '14. "pewnosc_ocr_procent": Twoja szacunkowa pewność odczytu jako liczba całkowita 0-100.'
+    )
+
     # ── tekst → LLM ────────────────────────────────────────────
 
     def _predict_text(self, text_content, file_path, page_info=None):
-        max_chars = 15000  # Zwiększamy limit, aby pomieścić multi-page PDF
+        max_chars = 15000
         if len(text_content) > max_chars:
             text_content = text_content[:max_chars]
-        
-        # Opcjonalnie: skróć środek jeśli za długie (ale tu bierzemy początek)
 
-        print(f"[OCR] --- ODPOWIEDŹ Z PLIKU/STRONY ---")
-        print(f"{text_content[:1000]}{'...' if len(text_content) > 1000 else ''}")
-        print(f"[OCR] ---------------------------------")
+        log = __import__('logging').getLogger(__name__)
+        log.info("[OCR] Tekst dokumentu (pierwsze 500 znaków): %s", text_content[:500])
 
-        print(f"[OCR] Wysyłanie zapytania tekstowego do wbudowanego serwera llama.cpp...")
         llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
         client = OpenAI(base_url=llama_url, api_key="local")
-        
-        system_prompt = "Jesteś asystentem OCR. Analizujesz faktury za energię elektryczną i wyodrębniasz precyzyjne dane finansowe do wniosków o ulgę. Zwracasz WYŁĄCZNIE kod JSON."
+
         user_msg = (
-            f"Przeanalizuj poniższy tekst faktury za energię elektryczną i wyodrębnij konkretne informacje liczbowe i tekstowe.\n\n"
-            f"Zwróć uwagę, że 'wolumen_energii' określa zazwyczaj ilość zużytej energii czynnej (wyrażoną w kWh lub MWh, np. '1234 kWh'). Zwróć go jako string wraz z jednostką.\n\n"
-            f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---\n\n"
-            f"{self._build_prompt(is_text=True)}"
+            "Przeanalizuj poniższy tekst faktury za energię elektryczną.\n\n"
+            f"{self.FIELD_INSTRUCTIONS}\n\n"
+            f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---"
         )
-        
-        print(f"[OCR] --- PROMPT DO LLM ---")
-        print(user_msg)
-        print(f"[OCR] ----------------------")
-        
+
+        log.debug("[OCR] Prompt (tekst): %s", user_msg[:800])
+
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_msg}
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user",   "content": user_msg},
             ],
             response_format=self.response_schema,
-            temperature=0.99,
+            temperature=0.0,
             max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
             extra_body={
-        "top_k": 20,
-        "chat_template_kwargs": {"enable_thinking": False},
-    }, 
+                "top_k": 1,
+                "chat_template_kwargs": {"enable_thinking": False},
+            },
         )
-        
+
         output_text = response.choices[0].message.content
-        print(f"[OCR] --- ODPOWIEDŹ LLM ---")
-        print(output_text)
-        print(f"[OCR] ---------------------")
+        log.info("[OCR] Odpowiedź LLM (tekst): %s", output_text)
         return OCRResult(output_text, file_path, is_vision=False)
 
     # ── obraz → LLM ────────────────────────────────────────────
 
     def _predict_image(self, image_path, source_path=None):
-        print(f"[OCR] Wysyłanie zapytania graficznego do wbudowanego serwera llama.cpp...")
+        log = __import__('logging').getLogger(__name__)
+        log.info("[OCR] Przetwarzanie obrazu: %s", image_path)
+
         llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
         client = OpenAI(base_url=llama_url, api_key="local")
-        
-        print(f"[OCR] Przetwarzanie obrazu: {image_path}")
+
         image_base64 = image_to_base64(image_path)
         mime_type = get_mime_type(image_path)
-        user_msg = self._build_prompt(is_text=False)
 
-        print(f"[OCR] --- PROMPT DO LLM (WIZJA) ---")
-        print(user_msg)
-        print(f"[OCR] -------------------------------")
+        user_msg = (
+            "Przeanalizuj załączoną fakturę za energię elektryczną.\n\n"
+            f"{self.FIELD_INSTRUCTIONS}"
+        )
+
+        log.debug("[OCR] Prompt (wizja): %s", user_msg[:800])
 
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": "Jesteś asystentem OCR. Czytasz faktury za energię elektryczną do celów podatkowych i zwracasz czysty JSON. Ignorujesz elementy nieregulowane. Pamiętaj, że wolumen energii (energii czynnej) ma zazwyczaj jednostkę kWh lub MWh."},
+                {"role": "system", "content": self.SYSTEM_PROMPT},
                 {"role": "user", "content": [
-                    {"type": "text", "text": user_msg},
-                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}}
-                ]}
+                    {"type": "text",      "text": user_msg},
+                    {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}},
+                ]},
             ],
             response_format=self.response_schema,
-            temperature=0.99,
-            max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000))
+            temperature=0.0,
+            max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
         )
-        
+
         output_text = response.choices[0].message.content
-        print(f"[OCR] --- ODPOWIEDŹ LLM (WIZJA) ---")
-        print(output_text)
-        print(f"[OCR] -----------------------------")
+        log.info("[OCR] Odpowiedź LLM (wizja): %s", output_text)
         return OCRResult(output_text, source_path or image_path, is_vision=True)
 
     # ── wspólne elementy ────────────────────────────────────────
@@ -229,7 +251,7 @@ class OCRService:
             return (
                 f"{action} i wyodrębnij dane. Zwróć TYLKO obiekt JSON (bez markdown).\n\n"
                 f"Pola do ekstrakcji:\n{fields_list}\n\n"
-                "WAŻNE: Dla pól  pewnosc_ocr_procent podaj szacunkową pewność odczytu jako tekst z procentem.\n"
+                "WAŻNE: Dla pól pewnosc_ocr_procent podaj szacunkową pewność odczytu jako liczbę 0-100.\n"
                 "Jeśli wartości nie ma, użyj null."
             )
         return (
