@@ -38,10 +38,9 @@
             <div id="columnToggleList">
                 <!-- Grupa: Dane podstawowe -->
                 <div style="margin-bottom: 16px;">
-                    <div
-                        style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
+                    <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Dane podstawowe</div>
-                    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
                             <input type="checkbox" checked data-column="sprzedawca">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Sprzedawca</span>
@@ -51,24 +50,43 @@
                             <span class="checkbox-label" style="font-size: 0.8rem;">Data wystawienia</span>
                         </label>
                         <label class="checkbox-item">
+                            <input type="checkbox" checked data-column="data_sprzedazy">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Data sprzedaży</span>
+                        </label>
+                        <label class="checkbox-item">
                             <input type="checkbox" checked data-column="wolumen_energii">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Wolumen energii</span>
                         </label>
                     </div>
                 </div>
 
+                <!-- Grupa: Należność całkowita -->
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
+                        Należność całkowita</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-column="naleznos_netto">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Netto</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-column="naleznos_brutto">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Brutto</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Grupa: Finanse -->
                 <div style="margin-bottom: 16px;">
-                    <div
-                        style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
+                    <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Kwoty główne</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="kwota_netto">
+                            <input type="checkbox" data-column="kwota_netto">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Kwota netto</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="kwota_brutto">
+                            <input type="checkbox" data-column="kwota_brutto">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Kwota brutto</span>
                         </label>
                         <label class="checkbox-item">
@@ -80,8 +98,7 @@
 
                 <!-- Grupa: Sprzedaż -->
                 <div style="margin-bottom: 16px;">
-                    <div
-                        style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
+                    <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Sprzedaż energii elektrycznej</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
@@ -97,8 +114,7 @@
 
                 <!-- Grupa: Dystrybucja -->
                 <div style="margin-bottom: 8px;">
-                    <div
-                        style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
+                    <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Świadczone usługi dystrybucji</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">

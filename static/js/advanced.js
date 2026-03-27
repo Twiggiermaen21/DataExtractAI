@@ -1256,16 +1256,19 @@ function renderDynamicTable(documents) {
 
     // 1. Renderuj nagłówki
     const columnsConfig = [
-        { id: 'sprzedawca', label: 'Sprzedawca' },
-        { id: 'data_wystawienia', label: 'Data wystawienia' },
-        { id: 'wolumen_energii', label: 'Wolumen' },
-        { id: 'kwota_netto', label: 'Kwota netto' },
-        { id: 'kwota_brutto', label: 'Kwota brutto' },
-        { id: 'kwota_vat', label: 'Kwota VAT' },
-        { id: 'sprzedaz_cena_netto', label: 'Sprzedaż (netto)' },
-        { id: 'sprzedaz_cena_brutto', label: 'Sprzedaż (brutto)' },
-        { id: 'dystrybucja_cena_netto', label: 'Dystrybucja (netto)' },
-        { id: 'dystrybucja_cena_brutto', label: 'Dystrybucja (brutto)' }
+        { id: 'sprzedawca',              label: 'Sprzedawca',            numeric: false },
+        { id: 'data_wystawienia',        label: 'Data wystawienia',      numeric: false },
+        { id: 'data_sprzedazy',          label: 'Data sprzedaży',        numeric: false },
+        { id: 'wolumen_energii',         label: 'Wolumen',               numeric: true  },
+        { id: 'naleznos_netto',          label: 'Należność netto',       numeric: true  },
+        { id: 'naleznos_brutto',         label: 'Należność brutto',      numeric: true  },
+        { id: 'kwota_netto',             label: 'Kwota netto',           numeric: true  },
+        { id: 'kwota_brutto',            label: 'Kwota brutto',          numeric: true  },
+        { id: 'kwota_vat',               label: 'Kwota VAT',             numeric: true  },
+        { id: 'sprzedaz_cena_netto',     label: 'Sprzedaż (netto)',      numeric: true  },
+        { id: 'sprzedaz_cena_brutto',    label: 'Sprzedaż (brutto)',     numeric: true  },
+        { id: 'dystrybucja_cena_netto',  label: 'Dystrybucja (netto)',   numeric: true  },
+        { id: 'dystrybucja_cena_brutto', label: 'Dystrybucja (brutto)',  numeric: true  },
     ];
 
     let headerHtml = '';
@@ -1290,23 +1293,35 @@ function renderDynamicTable(documents) {
 
     documents.forEach(docData => {
         const fields = docData.fields || {};
-        
+        const isScan = !!docData.is_vision;
+
         // Sumowanie brutto
         const brutoVal = parseFloat(String(fields['kwota_brutto'] || 0).replace(',', '.'));
         if (!isNaN(brutoVal)) totalBrutto += brutoVal;
 
         // Pewność
         const confidence = parseInt(String(fields['pewnosc_ocr_procent'] || 0).replace('%', ''));
-        if (confidence < 85) lowConfidenceCount++;
+        if (confidence < 85 || isScan) lowConfidenceCount++;
 
-        bodyHtml += `<tr class="border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors">`;
-        
+        const rowClass = isScan
+            ? 'border-b border-zinc-100 last:border-b-0 bg-yellow-50 hover:bg-yellow-100 transition-colors'
+            : 'border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors';
+
+        bodyHtml += `<tr class="${rowClass}" title="${isScan ? '⚠ Skan – wyższe ryzyko błędu OCR' : ''}">`;
+
         columnsConfig.forEach(col => {
             if (selectedColumns.includes(col.id)) {
-                let val = fields[col.id] || '-';
-                if (col.id.includes('kwota') || col.id.includes('cena')) val = formatCurrencyHelper(val);
-                
-                const isMain = col.id === 'kwota_brutto';
+                let raw = fields[col.id];
+                let val;
+                if (raw == null || raw === '') {
+                    val = '-';
+                } else if (col.numeric) {
+                    val = formatCurrencyHelper(raw);
+                } else {
+                    val = String(raw);
+                }
+
+                const isMain = col.id === 'naleznos_brutto' || col.id === 'kwota_brutto';
                 bodyHtml += `
                     <td class="px-4 py-3">
                         <div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'}">${val}</div>
@@ -1314,14 +1329,17 @@ function renderDynamicTable(documents) {
             }
         });
 
-        // Kolumna pewności
+        // Kolumna pewności + ikona skanu
+        const scanBadge = isScan
+            ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold mr-1" title="Skan">📷</span>`
+            : '';
         bodyHtml += `
             <td class="px-4 py-3 text-right">
-                <span class="inline-flex items-center rounded-full ${confidence < 85 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold">
+                ${scanBadge}<span class="inline-flex items-center rounded-full ${confidence < 85 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold">
                     ${confidence}%
                 </span>
             </td>`;
-        
+
         bodyHtml += `</tr>`;
     });
 

@@ -13,44 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
             btnExportExcel.innerHTML = '<span class="spinner">⏳</span> Generowanie...';
 
             try {
+                const selectedColumns = Array.from(
+                    document.querySelectorAll('#columnToggleList input:checked')
+                ).map(cb => cb.dataset.column);
+
                 const response = await fetch('/api/export_excel', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ files: window.lastProcessedFiles })
+                    body: JSON.stringify({
+                        files: window.lastProcessedFiles,
+                        selected_columns: selectedColumns.length ? selectedColumns : null
+                    })
                 });
 
                 if (response.ok) {
                     const blob = await response.blob();
                     const fileName = 'raport_faktury_energia.xlsx';
-
-                    // Sprawdzamy czy działamy w pywebview
-                    if (window.pywebview && window.pywebview.api && window.pywebview.api.save_file) {
-                        try {
-                            const reader = new FileReader();
-                            reader.onloadend = async () => {
-                                try {
-                                    const base64Data = reader.result;
-                                    const result = await window.pywebview.api.save_file(base64Data, fileName);
-                                    if (result.success) {
-                                        console.log('File saved via pywebview:', result.path);
-                                    } else if (result && result.error !== 'Cancelled') {
-                                        alert('Błąd zapisu pliku: ' + (result.error || 'Nieznany błąd'));
-                                    }
-                                } catch (apiErr) {
-                                    console.error('JS API Call Error:', apiErr);
-                                    alert('Wystąpił błąd podczas komunikacji z aplikacją.');
-                                }
-                            };
-                            reader.readAsDataURL(blob);
-                        } catch (err) {
-                            console.error('Pywebview Save Error:', err);
-                            // Fallback do standardowej metody jeśli coś pójdzie nie tak
-                            triggerBrowserDownload(blob, fileName);
-                        }
-                    } else {
-                        // Standardowa metoda przeglądarkowa
-                        triggerBrowserDownload(blob, fileName);
-                    }
+                    triggerBrowserDownload(blob, fileName);
                 } else {
                     const errData = await response.json();
                     alert(errData.error || 'Błąd podczas generowania pliku Excel.');

@@ -15,7 +15,8 @@ from openai import OpenAI
 ALL_COLUMNS = {
     "sprzedawca":              {"type": "string"},
     "data_wystawienia":        {"type": "string"},
-    "wolumen_energii":         {"type": "string"},
+    "data_sprzedazy":          {"type": "string"},
+    "wolumen_energii":         {"type": "number"},
     "kwota_netto":             {"type": "number"},
     "kwota_brutto":            {"type": "number"},
     "kwota_vat":               {"type": "number"},
@@ -23,14 +24,16 @@ ALL_COLUMNS = {
     "sprzedaz_cena_brutto":    {"type": "number"},
     "dystrybucja_cena_netto":  {"type": "number"},
     "dystrybucja_cena_brutto": {"type": "number"},
+    "naleznos_netto":          {"type": "number"},
+    "naleznos_brutto":         {"type": "number"},
 }
 
 # Kolumna pewności jest zawsze wymagana
 CONFIDENCE_COL = {"pewnosc_ocr_procent": {"type": "integer"}}
 
 # Domyślne kolumny (gdy frontend nie poda wyboru)
-DEFAULT_COLUMNS = ["sprzedawca", "data_wystawienia", "wolumen_energii",
-                   "kwota_netto", "kwota_brutto", "kwota_vat"]
+DEFAULT_COLUMNS = ["sprzedawca", "data_wystawienia", "data_sprzedazy",
+                   "wolumen_energii", "kwota_netto", "kwota_brutto", "kwota_vat"]
 
 
 def build_response_schema(selected_columns=None):
