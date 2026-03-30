@@ -49,3 +49,5 @@ dist/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+iusfully_prezentacja.pdf
+generate_presentation.py

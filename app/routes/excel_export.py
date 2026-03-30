@@ -25,6 +25,8 @@ COLUMN_DEFS = [
     ("sprzedaz_cena_brutto",    "Sprzedaż brutto [zł]",       True),
     ("dystrybucja_cena_netto",  "Dystrybucja netto [zł]",     True),
     ("dystrybucja_cena_brutto", "Dystrybucja brutto [zł]",    True),
+    ("oplata_oze",              "Opłata OZE [zł]",            True),
+    ("oplata_kogeneracyjna",    "Opłata kogeneracyjna [zł]",  True),
     ("naleznos_netto",          "Należność netto [zł]",       True),
     ("naleznos_brutto",         "Należność brutto [zł]",      True),
 ]

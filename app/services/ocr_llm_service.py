@@ -24,6 +24,8 @@ ALL_COLUMNS = {
     "sprzedaz_cena_brutto":    {"type": "number"},
     "dystrybucja_cena_netto":  {"type": "number"},
     "dystrybucja_cena_brutto": {"type": "number"},
+    "oplata_oze":              {"type": "number"},
+    "oplata_kogeneracyjna":    {"type": "number"},
     "naleznos_netto":          {"type": "number"},
     "naleznos_brutto":         {"type": "number"},
 }
@@ -164,7 +166,9 @@ class OCRService:
         '11. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
         '12. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI (opłata sieciowa, przesyłowa, jakościowa, abonamentowa). Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
         '13. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
-        '14. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
+        '14. "oplata_oze": Opłata OZE — osobna pozycja na fakturze. Frazy: "Opłata OZE", "OZE". Tylko wartość liczbowa netto.\n'
+        '15. "oplata_kogeneracyjna": Opłata kogeneracyjna — osobna pozycja na fakturze. Frazy: "Opłata kogeneracyjna", "kogeneracja". Tylko wartość liczbowa netto.\n'
+        '16. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
     )
 
     # ── tekst → LLM ────────────────────────────────────────────
