@@ -274,9 +274,15 @@ if (btnOcrFill) {
 
         try {
             if (advWorkflowType === 'podsumowanie') {
-                // Pobierz zaznaczone kolumny z checkboxów "Dane do odczytu" (obsługa data-columns z przecinkiem)
+                // Pobierz zaznaczone kolumny z checkboxów (obsługa data-columns + switch netto)
+                const _nettoSw = document.getElementById('nettoSwitch');
+                const _nettoOn = !_nettoSw || _nettoSw.checked;
                 const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
-                    .flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
+                    .flatMap(cb => {
+                        const cols = (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean);
+                        if (!_nettoOn && cols.length === 2) return [cols[1]];
+                        return cols;
+                    });
 
                 // SEQUENTIAL PROCESSING FOR PODSUMOWANIE (Real Progress Bar)
                 for (let i = 0; i < advUploadedFiles.length; i++) {
@@ -1252,9 +1258,16 @@ function renderDynamicTable(documents) {
     const tableBodyEl = doc.getElementById('summary-table-body');
     if (!tableHeaderRow1 || !tableBodyEl) return;
 
-    // Zbierz zaznaczone kolumny (obsługa data-columns z przecinkiem)
+    // Zbierz zaznaczone kolumny (obsługa data-columns z przecinkiem + switch netto)
+    const nettoSwitch = document.getElementById('nettoSwitch');
+    const nettoEnabled = !nettoSwitch || nettoSwitch.checked;
     const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
-        .flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
+        .flatMap(cb => {
+            const cols = (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean);
+            // Jeśli switch netto wyłączony i to para (netto,brutto) → tylko brutto
+            if (!nettoEnabled && cols.length === 2) return [cols[1]];
+            return cols;
+        });
 
     // Definicja grup kolumn — każda group ma label i listę podkolumn (cols)
     // Grupy z 1 col → pojedyncza kolumna; grupy z 2 cols → nagłówek grupujący + Netto/Brutto
@@ -1291,33 +1304,39 @@ function renderDynamicTable(documents) {
                                             { id: 'oplata_mocowa_brutto',        sub: 'Brutto',numeric: true  }] },
     ];
 
-    // Aktywne grupy — group aktywna gdy jej pierwsza kolumna jest w selectedColumns
-    const activeGroups = columnsConfig.filter(g => selectedColumns.includes(g.cols[0].id));
+    // Aktywne grupy — group aktywna gdy co najmniej jedna jej kolumna jest w selectedColumns
+    const activeGroups = columnsConfig
+        .filter(g => g.cols.some(c => selectedColumns.includes(c.id)))
+        .map(g => ({
+            ...g,
+            // activeCols = tylko te kolumny grupy które są w selectedColumns
+            activeCols: g.cols.filter(c => selectedColumns.includes(c.id)),
+        }));
 
-    // Czy którakolwiek aktywna grupa ma sub-nagłówki?
-    const hasSubHeaders = activeGroups.some(g => g.cols.length > 1);
+    // Czy którakolwiek aktywna grupa ma 2 aktywne podkolumny (netto + brutto oba widoczne)?
+    const hasSubHeaders = activeGroups.some(g => g.activeCols.length > 1);
 
     const thBase = 'px-3 py-2 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider';
 
     // 1a. Wiersz 1 nagłówka (etykiety grup)
     let header1Html = '';
     activeGroups.forEach(g => {
-        if (g.cols.length === 1) {
+        if (g.activeCols.length === 1) {
             header1Html += `<th class="${thBase}" ${hasSubHeaders ? 'rowspan="2"' : ''}>${g.label}</th>`;
         } else {
-            header1Html += `<th class="${thBase} text-center border-l border-zinc-200" colspan="${g.cols.length}">${g.label}</th>`;
+            header1Html += `<th class="${thBase} text-center border-l border-zinc-200" colspan="${g.activeCols.length}">${g.label}</th>`;
         }
     });
     header1Html += `<th class="${thBase} text-right" ${hasSubHeaders ? 'rowspan="2"' : ''}>Pewność</th>`;
     tableHeaderRow1.innerHTML = header1Html;
 
-    // 1b. Wiersz 2 nagłówka (Netto / Brutto pod grupą)
+    // 1b. Wiersz 2 nagłówka (Netto / Brutto pod grupą — tylko gdy oba widoczne)
     if (tableHeaderRow2) {
         if (hasSubHeaders) {
             let header2Html = '';
             activeGroups.forEach(g => {
-                if (g.cols.length > 1) {
-                    g.cols.forEach(c => {
+                if (g.activeCols.length > 1) {
+                    g.activeCols.forEach(c => {
                         header2Html += `<th class="px-3 py-1 text-center text-[9px] font-semibold text-zinc-400 border-b border-zinc-200 border-l border-zinc-200">${c.sub}</th>`;
                     });
                 }
@@ -1356,19 +1375,23 @@ function renderDynamicTable(documents) {
         bodyHtml += `<tr class="${rowClass}" title="${isScan ? '⚠ Skan – wyższe ryzyko błędu OCR' : ''}">`;
 
         activeGroups.forEach(g => {
-            g.cols.forEach((c, ci) => {
+            g.activeCols.forEach((c, ci) => {
                 let raw = fields[c.id];
                 let val;
                 if (raw == null || raw === '') {
                     val = '-';
+                } else if (c.id === 'wolumen_energii') {
+                    // kWh — bez "zł", bez miejsc dziesiętnych
+                    const n = parseFloat(String(raw).replace(',', '.'));
+                    val = !isNaN(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : String(raw);
                 } else if (c.numeric) {
                     val = formatCurrencyHelper(raw);
                 } else {
                     val = String(raw);
                 }
                 const isMain = c.id === 'naleznos_brutto' || c.id === 'kwota_brutto';
-                const borderLeft = (g.cols.length > 1 && ci === 0) ? 'border-l border-zinc-100' : '';
-                bodyHtml += `<td class="px-3 py-3 ${borderLeft}"><div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'} ${g.cols.length > 1 ? 'text-center' : ''}">${val}</div></td>`;
+                const borderLeft = (g.activeCols.length > 1 && ci === 0) ? 'border-l border-zinc-100' : '';
+                bodyHtml += `<td class="px-3 py-3 ${borderLeft}"><div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'} ${g.activeCols.length > 1 ? 'text-center' : ''}">${val}</div></td>`;
             });
         });
 
@@ -1419,9 +1442,24 @@ function formatCurrencyHelper(v) {
         : '0,00 zł';
 }
 
-// Globalny listener dla checkboxów (delegacja)
+// Globalny listener dla checkboxów i switcha netto (delegacja)
 document.addEventListener('change', (e) => {
-    if ((e.target.closest('#columnToggleList') || e.target.id === 'distributionToggle') && window.lastProcessedDocuments) {
+    if ((e.target.closest('#columnToggleList') || e.target.id === 'distributionToggle' || e.target.id === 'nettoSwitch') && window.lastProcessedDocuments) {
         renderDynamicTable(window.lastProcessedDocuments);
+    }
+});
+
+// Animacja kciuka switcha netto
+document.addEventListener('change', (e) => {
+    if (e.target.id !== 'nettoSwitch') return;
+    const thumb = document.getElementById('nettoSwitchThumb');
+    const track = thumb && thumb.parentElement;
+    if (!thumb || !track) return;
+    if (e.target.checked) {
+        thumb.style.transform = 'translateX(0)';
+        track.style.background = 'var(--accent-emerald)';
+    } else {
+        thumb.style.transform = 'translateX(16px)';
+        track.style.background = '#4B5563';
     }
 });

@@ -13,9 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btnExportExcel.innerHTML = '<span class="spinner">⏳</span> Generowanie...';
 
             try {
+                const _nettoSw = document.getElementById('nettoSwitch');
+                const _nettoOn = !_nettoSw || _nettoSw.checked;
                 const selectedColumns = Array.from(
                     document.querySelectorAll('#columnToggleList input:checked')
-                ).flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
+                ).flatMap(cb => {
+                    const cols = (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean);
+                    if (!_nettoOn && cols.length === 2) return [cols[1]];
+                    return cols;
+                });
 
                 const response = await fetch('/api/export_excel', {
                     method: 'POST',

@@ -110,7 +110,7 @@ class OCRService:
 
         return [self._predict_image(file_path)]
 
-    # ── PDF (strona po stronie) ─────────────────────────────────
+    # ── PDF (wszystkie strony) ──────────────────────────────────
 
     def _predict_pdf(self, file_path):
         import fitz
@@ -121,30 +121,38 @@ class OCRService:
         print(f"[OCR] PDF: {num_pages} stron(y)")
 
         # Łączymy tekst ze wszystkich stron
-        combined_text = "\n\n".join([f"--- STRONA {i+1} ---\n{t}" for i, t in enumerate(page_texts) if t.strip()])
-        
-        # Jeśli mamy wystarczająco dużo tekstu (>100 znaków), wysyłamy wszystko naraz
+        combined_text = "\n\n".join(
+            [f"--- STRONA {i+1} ---\n{t}" for i, t in enumerate(page_texts) if t.strip()]
+        )
+
+        # Jeśli PDF ma wystarczająco dużo tekstu — wysyłamy jako tekst (wszystkie strony)
         if len(combined_text.strip()) > 100:
-            print(f"[OCR] Przetwarzanie całego PDF jako jeden dokument (tekst).")
+            print(f"[OCR] Przetwarzanie całego PDF jako tekst ({num_pages} stron).")
             return [self._predict_text(combined_text, file_path)]
 
-        # Jeśli PDF to skan (mało tekstu), przetwarzamy pierwszą stronę jako obraz
-        # (W fakturach za energię pierwsza strona zazwyczaj zawiera podsumowanie)
-        print(f"[OCR] PDF wygląda na skan. Przetwarzanie pierwszej strony jako obraz.")
-        img_path = f"{file_path}_page1.png"
+        # PDF jest skanem — renderujemy WSZYSTKIE strony jako obrazy
+        print(f"[OCR] PDF wygląda na skan. Renderowanie wszystkich {num_pages} stron jako obrazy.")
+        img_paths = []
         try:
             doc = fitz.open(file_path)
-            if len(doc) > 0:
-                doc[0].get_pixmap(dpi=150).save(img_path)
+            for i in range(len(doc)):
+                img_path = f"{file_path}_page{i+1}.png"
+                doc[i].get_pixmap(dpi=150).save(img_path)
+                img_paths.append(img_path)
             doc.close()
-            return [self._predict_image(img_path, source_path=file_path)]
+
+            if not img_paths:
+                return [self._predict_text(combined_text, file_path)]
+
+            # Wysyłamy wszystkie strony w jednym wywołaniu LLM
+            return [self._predict_images(img_paths, source_path=file_path)]
         except Exception as e:
-            print(f"[OCR] Błąd przetwarzania obrazu PDF: {e}")
-            # Fallback do tekstu (nawet jeśli krótki)
+            print(f"[OCR] Błąd renderowania stron PDF: {e}")
             return [self._predict_text(combined_text, file_path)]
         finally:
-            if os.path.exists(img_path):
-                os.remove(img_path)
+            for p in img_paths:
+                if os.path.exists(p):
+                    os.remove(p)
 
     # ── Wspólny prompt systemowy ────────────────────────────────
 
@@ -275,6 +283,47 @@ class OCRService:
         output_text = response.choices[0].message.content
         log.info("[OCR] Odpowiedź LLM (wizja): %s", output_text)
         return OCRResult(output_text, source_path or image_path, is_vision=True)
+
+    # ── wiele obrazów (skany wielostronicowe) → LLM ────────────
+
+    def _predict_images(self, image_paths, source_path=None):
+        """Wysyła wiele obrazów stron w jednym wywołaniu LLM (dla skanowanych PDF)."""
+        log = __import__('logging').getLogger(__name__)
+        log.info("[OCR] Przetwarzanie %d stron jako obrazów: %s", len(image_paths), source_path)
+
+        llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
+        client = OpenAI(base_url=llama_url, api_key="local")
+
+        user_msg = (
+            f"Przeanalizuj poniższy dokument składający się z {len(image_paths)} stron "
+            f"(każdy obraz to jedna strona faktury za energię elektryczną).\n\n"
+            f"{self.FIELD_INSTRUCTIONS}"
+        )
+
+        # Buduj content: tekst + wszystkie obrazy
+        content = [{"type": "text", "text": user_msg}]
+        for img_path in image_paths:
+            image_base64 = image_to_base64(img_path)
+            mime_type = get_mime_type(img_path)
+            content.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}
+            })
+
+        response = client.chat.completions.create(
+            model="local-model",
+            messages=[
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user",   "content": content},
+            ],
+            response_format=self.response_schema,
+            temperature=0.0,
+            max_tokens=int(os.environ.get("LLM_MAX_TOKENS", 1000)),
+        )
+
+        output_text = response.choices[0].message.content
+        log.info("[OCR] Odpowiedź LLM (multi-wizja): %s", output_text)
+        return OCRResult(output_text, source_path or image_paths[0], is_vision=True)
 
     # ── wspólne elementy ────────────────────────────────────────
 
