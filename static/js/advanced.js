@@ -274,9 +274,9 @@ if (btnOcrFill) {
 
         try {
             if (advWorkflowType === 'podsumowanie') {
-                // Pobierz zaznaczone kolumny z checkboxów "Dane do odczytu"
+                // Pobierz zaznaczone kolumny z checkboxów "Dane do odczytu" (obsługa data-columns z przecinkiem)
                 const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
-                    .map(cb => cb.dataset.column);
+                    .flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
 
                 // SEQUENTIAL PROCESSING FOR PODSUMOWANIE (Real Progress Bar)
                 for (let i = 0; i < advUploadedFiles.length; i++) {
@@ -1240,54 +1240,102 @@ if (btnGeneratePozew) {
 
 
 /**
- * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxów
+ * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxów.
+ * Obsługuje grupy netto/brutto — jeden checkbox → dwie kolumny obok siebie z nagłówkiem grupującym.
  */
 function renderDynamicTable(documents) {
     if (!templateIframe || !templateIframe.contentDocument) return;
     const doc = templateIframe.contentDocument;
 
-    const tableHeaderRow = doc.getElementById('tableHeaderRow');
+    const tableHeaderRow1 = doc.getElementById('tableHeaderRow1');
+    const tableHeaderRow2 = doc.getElementById('tableHeaderRow2');
     const tableBodyEl = doc.getElementById('summary-table-body');
-    if (!tableHeaderRow || !tableBodyEl) return;
+    if (!tableHeaderRow1 || !tableBodyEl) return;
 
-    // Pobierz zaznaczone kolumny z paska bocznego
+    // Zbierz zaznaczone kolumny (obsługa data-columns z przecinkiem)
     const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
-        .map(cb => cb.dataset.column);
+        .flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
 
-    // 1. Renderuj nagłówki
+    // Definicja grup kolumn — każda group ma label i listę podkolumn (cols)
+    // Grupy z 1 col → pojedyncza kolumna; grupy z 2 cols → nagłówek grupujący + Netto/Brutto
     const columnsConfig = [
-        { id: 'sprzedawca',              label: 'Sprzedawca',            numeric: false },
-        { id: 'data_wystawienia',        label: 'Data wystawienia',      numeric: false },
-        { id: 'data_sprzedazy',          label: 'Data sprzedaży',        numeric: false },
-        { id: 'wolumen_energii',         label: 'Wolumen',               numeric: true  },
-        { id: 'naleznos_netto',          label: 'Należność netto',       numeric: true  },
-        { id: 'naleznos_brutto',         label: 'Należność brutto',      numeric: true  },
-        { id: 'kwota_netto',             label: 'Kwota netto',           numeric: true  },
-        { id: 'kwota_brutto',            label: 'Kwota brutto',          numeric: true  },
-        { id: 'kwota_vat',               label: 'Kwota VAT',             numeric: true  },
-        { id: 'sprzedaz_cena_netto',     label: 'Sprzedaż (netto)',      numeric: true  },
-        { id: 'sprzedaz_cena_brutto',    label: 'Sprzedaż (brutto)',     numeric: true  },
-        { id: 'dystrybucja_cena_netto',  label: 'Dystrybucja (netto)',   numeric: true  },
-        { id: 'dystrybucja_cena_brutto', label: 'Dystrybucja (brutto)',  numeric: true  },
+        { label: 'Nr faktury',       cols: [{ id: 'numer_faktury',              sub: null,    numeric: false }] },
+        { label: 'Sprzedawca',       cols: [{ id: 'sprzedawca',                sub: null,    numeric: false }] },
+        { label: 'Data wystawienia', cols: [{ id: 'data_wystawienia',           sub: null,    numeric: false }] },
+        { label: 'Data sprzedaży',   cols: [{ id: 'data_sprzedazy',            sub: null,    numeric: false }] },
+        { label: 'Wolumen [kWh]',    cols: [{ id: 'wolumen_energii',            sub: null,    numeric: true  }] },
+        { label: 'Należność',        cols: [{ id: 'naleznos_netto',             sub: 'Netto', numeric: true  },
+                                            { id: 'naleznos_brutto',            sub: 'Brutto',numeric: true  }] },
+        { label: 'Kwoty',            cols: [{ id: 'kwota_netto',                sub: 'Netto', numeric: true  },
+                                            { id: 'kwota_brutto',               sub: 'Brutto',numeric: true  }] },
+        { label: 'VAT',              cols: [{ id: 'kwota_vat',                  sub: null,    numeric: true  }] },
+        { label: 'Sprzedaż energii', cols: [{ id: 'sprzedaz_cena_netto',        sub: 'Netto', numeric: true  },
+                                            { id: 'sprzedaz_cena_brutto',       sub: 'Brutto',numeric: true  }] },
+        { label: 'Dystrybucja',      cols: [{ id: 'dystrybucja_cena_netto',     sub: 'Netto', numeric: true  },
+                                            { id: 'dystrybucja_cena_brutto',    sub: 'Brutto',numeric: true  }] },
+        { label: 'Abonamentowa',     cols: [{ id: 'oplata_abonamentowa',        sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_abonamentowa_brutto', sub: 'Brutto',numeric: true  }] },
+        { label: 'Sieciowa stała',   cols: [{ id: 'oplata_sieciowa_stala',      sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_sieciowa_stala_brutto',sub:'Brutto',numeric: true  }] },
+        { label: 'Sieciowa zmienna', cols: [{ id: 'oplata_sieciowa_zmienna',    sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_sieciowa_zmienna_brutto',sub:'Brutto',numeric:true }] },
+        { label: 'Jakościowa',       cols: [{ id: 'oplata_jakosciowa',           sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_jakosciowa_brutto',    sub: 'Brutto',numeric: true  }] },
+        { label: 'OZE',              cols: [{ id: 'oplata_oze',                  sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_oze_brutto',           sub: 'Brutto',numeric: true  }] },
+        { label: 'Kogeneracyjna',    cols: [{ id: 'oplata_kogeneracyjna',        sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_kogeneracyjna_brutto', sub: 'Brutto',numeric: true  }] },
+        { label: 'Przejściowa',      cols: [{ id: 'oplata_przejsciowa',          sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_przejsciowa_brutto',   sub: 'Brutto',numeric: true  }] },
+        { label: 'Mocowa',           cols: [{ id: 'oplata_mocowa',               sub: 'Netto', numeric: true  },
+                                            { id: 'oplata_mocowa_brutto',        sub: 'Brutto',numeric: true  }] },
     ];
 
-    let headerHtml = '';
-    columnsConfig.forEach(col => {
-        if (selectedColumns.includes(col.id)) {
-            headerHtml += `<th class="px-4 py-3 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider">${col.label}</th>`;
+    // Aktywne grupy — group aktywna gdy jej pierwsza kolumna jest w selectedColumns
+    const activeGroups = columnsConfig.filter(g => selectedColumns.includes(g.cols[0].id));
+
+    // Czy którakolwiek aktywna grupa ma sub-nagłówki?
+    const hasSubHeaders = activeGroups.some(g => g.cols.length > 1);
+
+    const thBase = 'px-3 py-2 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider';
+
+    // 1a. Wiersz 1 nagłówka (etykiety grup)
+    let header1Html = '';
+    activeGroups.forEach(g => {
+        if (g.cols.length === 1) {
+            header1Html += `<th class="${thBase}" ${hasSubHeaders ? 'rowspan="2"' : ''}>${g.label}</th>`;
+        } else {
+            header1Html += `<th class="${thBase} text-center border-l border-zinc-200" colspan="${g.cols.length}">${g.label}</th>`;
         }
     });
-    headerHtml += `<th class="px-4 py-3 text-right text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Pewność</th>`;
-    tableHeaderRow.innerHTML = headerHtml;
+    header1Html += `<th class="${thBase} text-right" ${hasSubHeaders ? 'rowspan="2"' : ''}>Pewność</th>`;
+    tableHeaderRow1.innerHTML = header1Html;
 
-    // 2. Renderuj wiersze
-    let totalBrutto = 0;
-    
-    // Dodaj dystrybucję jeśli zaznaczona (3500 zł)
-    const distToggle = document.getElementById('distributionToggle');
-    if (distToggle && distToggle.checked) {
-        totalBrutto += 3500;
+    // 1b. Wiersz 2 nagłówka (Netto / Brutto pod grupą)
+    if (tableHeaderRow2) {
+        if (hasSubHeaders) {
+            let header2Html = '';
+            activeGroups.forEach(g => {
+                if (g.cols.length > 1) {
+                    g.cols.forEach(c => {
+                        header2Html += `<th class="px-3 py-1 text-center text-[9px] font-semibold text-zinc-400 border-b border-zinc-200 border-l border-zinc-200">${c.sub}</th>`;
+                    });
+                }
+            });
+            tableHeaderRow2.innerHTML = header2Html;
+            tableHeaderRow2.style.display = '';
+        } else {
+            tableHeaderRow2.innerHTML = '';
+            tableHeaderRow2.style.display = 'none';
+        }
     }
+
+    // 2. Renderuj wiersze danych
+    let totalBrutto = 0;
+
+    const distToggle = document.getElementById('distributionToggle');
+    if (distToggle && distToggle.checked) totalBrutto += 3500;
+
     let lowConfidenceCount = 0;
     let bodyHtml = '';
 
@@ -1295,11 +1343,9 @@ function renderDynamicTable(documents) {
         const fields = docData.fields || {};
         const isScan = !!docData.is_vision;
 
-        // Sumowanie brutto
         const brutoVal = parseFloat(String(fields['kwota_brutto'] || 0).replace(',', '.'));
         if (!isNaN(brutoVal)) totalBrutto += brutoVal;
 
-        // Pewność
         const confidence = parseInt(String(fields['pewnosc_ocr_procent'] || 0).replace('%', ''));
         if (confidence < 85 || isScan) lowConfidenceCount++;
 
@@ -1309,27 +1355,23 @@ function renderDynamicTable(documents) {
 
         bodyHtml += `<tr class="${rowClass}" title="${isScan ? '⚠ Skan – wyższe ryzyko błędu OCR' : ''}">`;
 
-        columnsConfig.forEach(col => {
-            if (selectedColumns.includes(col.id)) {
-                let raw = fields[col.id];
+        activeGroups.forEach(g => {
+            g.cols.forEach((c, ci) => {
+                let raw = fields[c.id];
                 let val;
                 if (raw == null || raw === '') {
                     val = '-';
-                } else if (col.numeric) {
+                } else if (c.numeric) {
                     val = formatCurrencyHelper(raw);
                 } else {
                     val = String(raw);
                 }
-
-                const isMain = col.id === 'naleznos_brutto' || col.id === 'kwota_brutto';
-                bodyHtml += `
-                    <td class="px-4 py-3">
-                        <div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'}">${val}</div>
-                    </td>`;
-            }
+                const isMain = c.id === 'naleznos_brutto' || c.id === 'kwota_brutto';
+                const borderLeft = (g.cols.length > 1 && ci === 0) ? 'border-l border-zinc-100' : '';
+                bodyHtml += `<td class="px-3 py-3 ${borderLeft}"><div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'} ${g.cols.length > 1 ? 'text-center' : ''}">${val}</div></td>`;
+            });
         });
 
-        // Kolumna pewności + ikona skanu
         const scanBadge = isScan
             ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold mr-1" title="Skan">📷</span>`
             : '';

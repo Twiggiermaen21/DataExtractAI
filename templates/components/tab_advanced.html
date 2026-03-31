@@ -42,19 +42,23 @@
                         Dane podstawowe</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="sprzedawca">
+                            <input type="checkbox" checked data-columns="numer_faktury">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Nr faktury</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="sprzedawca">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Sprzedawca</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="data_wystawienia">
+                            <input type="checkbox" checked data-columns="data_wystawienia">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Data wystawienia</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="data_sprzedazy">
+                            <input type="checkbox" checked data-columns="data_sprzedazy">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Data sprzedaży</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="wolumen_energii">
+                            <input type="checkbox" checked data-columns="wolumen_energii">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Wolumen energii</span>
                         </label>
                     </div>
@@ -64,14 +68,10 @@
                 <div style="margin-bottom: 16px;">
                     <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Należność całkowita</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="naleznos_netto">
-                            <span class="checkbox-label" style="font-size: 0.8rem;">Netto</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" checked data-column="naleznos_brutto">
-                            <span class="checkbox-label" style="font-size: 0.8rem;">Brutto</span>
+                            <input type="checkbox" checked data-columns="naleznos_netto,naleznos_brutto">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Należność (netto + brutto)</span>
                         </label>
                     </div>
                 </div>
@@ -82,15 +82,11 @@
                         Kwoty główne</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="kwota_netto">
-                            <span class="checkbox-label" style="font-size: 0.8rem;">Kwota netto</span>
+                            <input type="checkbox" data-columns="kwota_netto,kwota_brutto">
+                            <span class="checkbox-label" style="font-size: 0.8rem;">Kwoty (netto + brutto)</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="kwota_brutto">
-                            <span class="checkbox-label" style="font-size: 0.8rem;">Kwota brutto</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" data-column="kwota_vat">
+                            <input type="checkbox" data-columns="kwota_vat">
                             <span class="checkbox-label" style="font-size: 0.8rem;">Kwota VAT</span>
                         </label>
                     </div>
@@ -100,14 +96,10 @@
                 <div style="margin-bottom: 16px;">
                     <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Sprzedaż energii elektrycznej</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="sprzedaz_cena_netto">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Cena netto</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" data-column="sprzedaz_cena_brutto">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Cena brutto</span>
+                            <input type="checkbox" data-columns="sprzedaz_cena_netto,sprzedaz_cena_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Sprzedaż (netto + brutto)</span>
                         </label>
                     </div>
                 </div>
@@ -116,14 +108,10 @@
                 <div style="margin-bottom: 16px;">
                     <div style="font-size: 0.7rem; color: var(--accent-emerald); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; opacity: 0.8;">
                         Świadczone usługi dystrybucji</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="dystrybucja_cena_netto">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Cena netto</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" data-column="dystrybucja_cena_brutto">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Cena brutto</span>
+                            <input type="checkbox" data-columns="dystrybucja_cena_netto,dystrybucja_cena_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Dystrybucja (netto + brutto)</span>
                         </label>
                     </div>
                 </div>
@@ -134,12 +122,36 @@
                         Opłaty dodatkowe</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="oplata_oze">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Opłata OZE</span>
+                            <input type="checkbox" data-columns="oplata_abonamentowa,oplata_abonamentowa_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Abonamentowa</span>
                         </label>
                         <label class="checkbox-item">
-                            <input type="checkbox" data-column="oplata_kogeneracyjna">
-                            <span class="checkbox-label" style="font-size: 0.75rem;">Opłata kogeneracyjna</span>
+                            <input type="checkbox" data-columns="oplata_sieciowa_stala,oplata_sieciowa_stala_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Sieciowa stała</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_sieciowa_zmienna,oplata_sieciowa_zmienna_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Sieciowa zmienna</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_jakosciowa,oplata_jakosciowa_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Jakościowa</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_oze,oplata_oze_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">OZE</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_kogeneracyjna,oplata_kogeneracyjna_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Kogeneracyjna</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_przejsciowa,oplata_przejsciowa_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Przejściowa</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_mocowa,oplata_mocowa_brutto">
+                            <span class="checkbox-label" style="font-size: 0.75rem;">Mocowa</span>
                         </label>
                     </div>
                 </div>

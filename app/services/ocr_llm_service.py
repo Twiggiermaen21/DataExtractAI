@@ -13,21 +13,36 @@ from openai import OpenAI
 
 # Pełna definicja dostępnych kolumn (id → typ JSON Schema)
 ALL_COLUMNS = {
-    "sprzedawca":              {"type": "string"},
-    "data_wystawienia":        {"type": "string"},
-    "data_sprzedazy":          {"type": "string"},
-    "wolumen_energii":         {"type": "number"},
-    "kwota_netto":             {"type": "number"},
-    "kwota_brutto":            {"type": "number"},
-    "kwota_vat":               {"type": "number"},
-    "sprzedaz_cena_netto":     {"type": "number"},
-    "sprzedaz_cena_brutto":    {"type": "number"},
-    "dystrybucja_cena_netto":  {"type": "number"},
-    "dystrybucja_cena_brutto": {"type": "number"},
-    "oplata_oze":              {"type": "number"},
-    "oplata_kogeneracyjna":    {"type": "number"},
-    "naleznos_netto":          {"type": "number"},
-    "naleznos_brutto":         {"type": "number"},
+    "numer_faktury":            {"type": "string"},
+    "sprzedawca":               {"type": "string"},
+    "data_wystawienia":         {"type": "string"},
+    "data_sprzedazy":           {"type": "string"},
+    "wolumen_energii":          {"type": "number"},
+    "kwota_netto":              {"type": "number"},
+    "kwota_brutto":             {"type": "number"},
+    "kwota_vat":                {"type": "number"},
+    "sprzedaz_cena_netto":      {"type": "number"},
+    "sprzedaz_cena_brutto":     {"type": "number"},
+    "dystrybucja_cena_netto":   {"type": "number"},
+    "dystrybucja_cena_brutto":  {"type": "number"},
+    "oplata_abonamentowa":             {"type": "number"},
+    "oplata_abonamentowa_brutto":      {"type": "number"},
+    "oplata_sieciowa_stala":           {"type": "number"},
+    "oplata_sieciowa_stala_brutto":    {"type": "number"},
+    "oplata_sieciowa_zmienna":         {"type": "number"},
+    "oplata_sieciowa_zmienna_brutto":  {"type": "number"},
+    "oplata_jakosciowa":               {"type": "number"},
+    "oplata_jakosciowa_brutto":        {"type": "number"},
+    "oplata_oze":                      {"type": "number"},
+    "oplata_oze_brutto":               {"type": "number"},
+    "oplata_kogeneracyjna":            {"type": "number"},
+    "oplata_kogeneracyjna_brutto":     {"type": "number"},
+    "oplata_przejsciowa":              {"type": "number"},
+    "oplata_przejsciowa_brutto":       {"type": "number"},
+    "oplata_mocowa":                   {"type": "number"},
+    "oplata_mocowa_brutto":            {"type": "number"},
+    "naleznos_netto":           {"type": "number"},
+    "naleznos_brutto":          {"type": "number"},
 }
 
 # Kolumna pewności jest zawsze wymagana
@@ -39,12 +54,10 @@ DEFAULT_COLUMNS = ["sprzedawca", "data_wystawienia", "data_sprzedazy",
 
 
 def build_response_schema(selected_columns=None):
-    """Buduje RESPONSE_SCHEMA dynamicznie na podstawie zaznaczonych checkboxów."""
-    columns = selected_columns if selected_columns else DEFAULT_COLUMNS
-    properties = {}
-    for col_id in columns:
-        if col_id in ALL_COLUMNS:
-            properties[col_id] = ALL_COLUMNS[col_id]
+    """Buduje RESPONSE_SCHEMA — zawsze wyciąga WSZYSTKIE dostępne pola.
+    Parametr selected_columns jest ignorowany przy ekstrakcji; filtrowanie
+    do podglądu i Excela odbywa się po stronie frontendu / excel_export."""
+    properties = dict(ALL_COLUMNS)
     # Pewność OCR jest zawsze dodawana
     properties.update(CONFIDENCE_COL)
 
@@ -153,22 +166,37 @@ class OCRService:
 
     FIELD_INSTRUCTIONS = (
         "Gdzie szukać poszczególnych pól (jeśli NIE ZNAJDZIESZ — zwróć null):\n"
-        '1. "sprzedawca": Nazwa firmy wystawiającej fakturę widoczna w nagłówku lub stopce (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
-        '2. "data_wystawienia": Frazy: "Data wystawienia", "Wystawiono dnia". Format YYYY-MM-DD.\n'
-        '3. "data_sprzedazy": Frazy: "Data sprzedaży", "Miesiąc sprzedaży", lub końcowa data z "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
-        '4. "wolumen_energii": Całkowite zużycie energii czynnej. Frazy: "Ilość", "Wolumen", suma tabeli odczytów licznika. Tylko liczba bez jednostki.\n'
-        '5. "naleznos_netto": Całkowita należność netto przed VAT. Nie mylić z kwotą bieżącej faktury.\n'
-        '6. "naleznos_brutto": Kwota ostateczna do zapłaty przez klienta. Frazy: "Do zapłaty", "Razem do zapłaty", "Należność ogółem", "Kwota do zapłaty".\n'
-        '7. "kwota_netto": Suma netto z tabeli stawek VAT lub głównego podsumowania za bieżący okres rozliczeniowy.\n'
-        '8. "kwota_brutto": Suma brutto z tabeli stawek VAT lub głównego podsumowania za bieżący okres.\n'
-        '9. "kwota_vat": Podatek VAT za bieżący okres. Frazy: "Kwota VAT", "Podatek VAT", "Suma VAT".\n'
-        '10. "sprzedaz_cena_netto": Suma netto sekcji SPRZEDAŻY (energia czynna, opłata handlowa). Frazy: "Sprzedaż energii elektrycznej".\n'
-        '11. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
-        '12. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI (opłata sieciowa, przesyłowa, jakościowa, abonamentowa). Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
-        '13. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
-        '14. "oplata_oze": Opłata OZE — osobna pozycja na fakturze. Frazy: "Opłata OZE", "OZE". Tylko wartość liczbowa netto.\n'
-        '15. "oplata_kogeneracyjna": Opłata kogeneracyjna — osobna pozycja na fakturze. Frazy: "Opłata kogeneracyjna", "kogeneracja". Tylko wartość liczbowa netto.\n'
-        '16. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
+        '1. "numer_faktury": Numer faktury. Frazy: "Nr faktury", "Numer faktury", "Faktura VAT nr", "FV/", "FA/". Przepisz dokładnie z dokumentu.\n'
+        '2. "sprzedawca": Nazwa firmy wystawiającej fakturę widoczna w nagłówku lub stopce (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
+        '3. "data_wystawienia": Frazy: "Data wystawienia", "Wystawiono dnia". Format YYYY-MM-DD.\n'
+        '4. "data_sprzedazy": Frazy: "Data sprzedaży", "Miesiąc sprzedaży", lub końcowa data z "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
+        '5. "wolumen_energii": Całkowite zużycie energii czynnej. Frazy: "Ilość", "Wolumen", suma tabeli odczytów licznika. Tylko liczba bez jednostki.\n'
+        '6. "naleznos_netto": Całkowita należność netto przed VAT. Nie mylić z kwotą bieżącej faktury.\n'
+        '7. "naleznos_brutto": Kwota ostateczna do zapłaty przez klienta. Frazy: "Do zapłaty", "Razem do zapłaty", "Należność ogółem", "Kwota do zapłaty".\n'
+        '8. "kwota_netto": Suma netto z tabeli stawek VAT lub głównego podsumowania za bieżący okres rozliczeniowy.\n'
+        '9. "kwota_brutto": Suma brutto z tabeli stawek VAT lub głównego podsumowania za bieżący okres.\n'
+        '10. "kwota_vat": Podatek VAT za bieżący okres. Frazy: "Kwota VAT", "Podatek VAT", "Suma VAT".\n'
+        '11. "sprzedaz_cena_netto": Suma netto sekcji SPRZEDAŻY (energia czynna, opłata handlowa). Frazy: "Sprzedaż energii elektrycznej".\n'
+        '12. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
+        '13. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI. Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
+        '14. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
+        '15. "oplata_abonamentowa": Frazy: "Opłata abonamentowa", "abonament". Wartość netto tej pozycji.\n'
+        '16. "oplata_abonamentowa_brutto": Wartość brutto opłaty abonamentowej (z VAT). Jeśli nie widoczna osobno — null.\n'
+        '17. "oplata_sieciowa_stala": Frazy: "Opłata sieciowa stała", "składnik stały stawki sieciowej". Wartość netto.\n'
+        '18. "oplata_sieciowa_stala_brutto": Wartość brutto opłaty sieciowej stałej. Jeśli nie widoczna — null.\n'
+        '19. "oplata_sieciowa_zmienna": Frazy: "Opłata sieciowa zmienna całodobowa", "składnik zmienny stawki sieciowej". Wartość netto.\n'
+        '20. "oplata_sieciowa_zmienna_brutto": Wartość brutto opłaty sieciowej zmiennej. Jeśli nie widoczna — null.\n'
+        '21. "oplata_jakosciowa": Frazy: "Opłata jakościowa". Wartość netto.\n'
+        '22. "oplata_jakosciowa_brutto": Wartość brutto opłaty jakościowej. Jeśli nie widoczna — null.\n'
+        '23. "oplata_oze": Frazy: "Opłata OZE", "OZE". Wartość netto.\n'
+        '24. "oplata_oze_brutto": Wartość brutto opłaty OZE. Jeśli nie widoczna — null.\n'
+        '25. "oplata_kogeneracyjna": Frazy: "Opłata kogeneracyjna", "kogeneracja". Wartość netto.\n'
+        '26. "oplata_kogeneracyjna_brutto": Wartość brutto opłaty kogeneracyjnej. Jeśli nie widoczna — null.\n'
+        '27. "oplata_przejsciowa": Frazy: "Opłata przejściowa". Wartość netto.\n'
+        '28. "oplata_przejsciowa_brutto": Wartość brutto opłaty przejściowej. Jeśli nie widoczna — null.\n'
+        '29. "oplata_mocowa": Frazy: "Opłata mocowa", "rynek mocy". Wartość netto.\n'
+        '30. "oplata_mocowa_brutto": Wartość brutto opłaty mocowej. Jeśli nie widoczna — null.\n'
+        '31. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
     )
 
     # ── tekst → LLM ────────────────────────────────────────────

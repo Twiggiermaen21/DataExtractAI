@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const selectedColumns = Array.from(
                     document.querySelectorAll('#columnToggleList input:checked')
-                ).map(cb => cb.dataset.column);
+                ).flatMap(cb => (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean));
 
                 const response = await fetch('/api/export_excel', {
                     method: 'POST',
