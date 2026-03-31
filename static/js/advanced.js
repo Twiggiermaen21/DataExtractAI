@@ -1381,9 +1381,15 @@ function renderDynamicTable(documents) {
                 if (raw == null || raw === '') {
                     val = '-';
                 } else if (c.id === 'wolumen_energii') {
-                    // kWh — bez "zł", bez miejsc dziesiętnych
                     const n = parseFloat(String(raw).replace(',', '.'));
                     val = !isNaN(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : String(raw);
+                } else if (c.numeric && String(raw).includes('|')) {
+                    // Wiele wartości (np. opłata pojawia się 2x w fakturze) — wypisz jedną pod drugą
+                    val = String(raw).split('|')
+                        .map(v => v.trim())
+                        .filter(v => v)
+                        .map(v => formatCurrencyHelper(v))
+                        .join('<br>');
                 } else if (c.numeric) {
                     val = formatCurrencyHelper(raw);
                 } else {

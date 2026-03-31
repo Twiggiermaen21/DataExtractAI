@@ -25,22 +25,23 @@ ALL_COLUMNS = {
     "sprzedaz_cena_brutto":     {"type": "number"},
     "dystrybucja_cena_netto":   {"type": "number"},
     "dystrybucja_cena_brutto":  {"type": "number"},
-    "oplata_abonamentowa":             {"type": "number"},
-    "oplata_abonamentowa_brutto":      {"type": "number"},
-    "oplata_sieciowa_stala":           {"type": "number"},
-    "oplata_sieciowa_stala_brutto":    {"type": "number"},
-    "oplata_sieciowa_zmienna":         {"type": "number"},
-    "oplata_sieciowa_zmienna_brutto":  {"type": "number"},
-    "oplata_jakosciowa":               {"type": "number"},
-    "oplata_jakosciowa_brutto":        {"type": "number"},
-    "oplata_oze":                      {"type": "number"},
-    "oplata_oze_brutto":               {"type": "number"},
-    "oplata_kogeneracyjna":            {"type": "number"},
-    "oplata_kogeneracyjna_brutto":     {"type": "number"},
-    "oplata_przejsciowa":              {"type": "number"},
-    "oplata_przejsciowa_brutto":       {"type": "number"},
-    "oplata_mocowa":                   {"type": "number"},
-    "oplata_mocowa_brutto":            {"type": "number"},
+    # Opłaty dodatkowe — typ string: LLM zwraca liczbę lub wiele wartości rozdzielonych "|"
+    "oplata_abonamentowa":             {"type": "string"},
+    "oplata_abonamentowa_brutto":      {"type": "string"},
+    "oplata_sieciowa_stala":           {"type": "string"},
+    "oplata_sieciowa_stala_brutto":    {"type": "string"},
+    "oplata_sieciowa_zmienna":         {"type": "string"},
+    "oplata_sieciowa_zmienna_brutto":  {"type": "string"},
+    "oplata_jakosciowa":               {"type": "string"},
+    "oplata_jakosciowa_brutto":        {"type": "string"},
+    "oplata_oze":                      {"type": "string"},
+    "oplata_oze_brutto":               {"type": "string"},
+    "oplata_kogeneracyjna":            {"type": "string"},
+    "oplata_kogeneracyjna_brutto":     {"type": "string"},
+    "oplata_przejsciowa":              {"type": "string"},
+    "oplata_przejsciowa_brutto":       {"type": "string"},
+    "oplata_mocowa":                   {"type": "string"},
+    "oplata_mocowa_brutto":            {"type": "string"},
     "naleznos_netto":           {"type": "number"},
     "naleznos_brutto":          {"type": "number"},
 }
@@ -188,8 +189,12 @@ class OCRService:
         '12. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
         '13. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI. Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
         '14. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
-        '15. "oplata_abonamentowa": Frazy: "Opłata abonamentowa", "abonament". Wartość netto tej pozycji.\n'
-        '16. "oplata_abonamentowa_brutto": Wartość brutto opłaty abonamentowej (z VAT). Jeśli nie widoczna osobno — null.\n'
+        'WAŻNE dla opłat dodatkowych (pola 15–30): Jeśli dana opłata pojawia się w dokumencie WIELOKROTNIE '
+        '(np. dwa wiersze tabeli z tą samą nazwą opłaty), zwróć WSZYSTKIE wartości oddzielone znakiem "|" '
+        '(np. "12.34|56.78"). Jeśli pojawia się raz — zwróć samą liczbę jako string (np. "12.34"). '
+        'Jeśli nie ma jej w dokumencie — zwróć null.\n'
+        '15. "oplata_abonamentowa": Frazy: "Opłata abonamentowa", "abonament". Wartość(i) netto.\n'
+        '16. "oplata_abonamentowa_brutto": Wartość(i) brutto opłaty abonamentowej. Jeśli nie widoczna — null.\n'
         '17. "oplata_sieciowa_stala": Frazy: "Opłata sieciowa stała", "składnik stały stawki sieciowej". Wartość netto.\n'
         '18. "oplata_sieciowa_stala_brutto": Wartość brutto opłaty sieciowej stałej. Jeśli nie widoczna — null.\n'
         '19. "oplata_sieciowa_zmienna": Frazy: "Opłata sieciowa zmienna całodobowa", "składnik zmienny stawki sieciowej". Wartość netto.\n'
@@ -210,12 +215,13 @@ class OCRService:
     # ── tekst → LLM ────────────────────────────────────────────
 
     def _predict_text(self, text_content, file_path, page_info=None):
-        max_chars = 15000
+        max_chars = int(os.environ.get("LLM_MAX_CHARS", 800000))
         if len(text_content) > max_chars:
+            print(f"[OCR] Tekst za długi ({len(text_content)} znaków), przycinanie do {max_chars}.")
             text_content = text_content[:max_chars]
 
         log = __import__('logging').getLogger(__name__)
-        log.info("[OCR] Tekst dokumentu (pierwsze 500 znaków): %s", text_content[:500])
+        log.info("[OCR] Tekst dokumentu (pierwsze 500 znaków): %s", text_content)
 
         llama_url = os.environ.get("LLAMA_SERVER_URL", "http://127.0.0.1:8080/v1")
         client = OpenAI(base_url=llama_url, api_key="local")

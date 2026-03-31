@@ -123,12 +123,13 @@ def export_excel():
     if not active_cols:
         return jsonify({'success': False, 'error': 'Nie wybrano żadnych kolumn'}), 400
 
-    records = []  # lista (dict_of_values, is_vision)
+    records = []  # lista (dict_of_values, is_vision, error_msg_or_None)
 
     for filename in files:
         json_path = _find_json(output_dir, filename)
         if not json_path:
             log.warning("Nie znaleziono JSON dla: %s", filename)
+            records.append(({'_source': filename}, False, f'Brak pliku wyników (JSON) dla: {filename}'))
             continue
         try:
             with open(json_path, 'r', encoding='utf-8') as f:
@@ -141,20 +142,28 @@ def export_excel():
                 except Exception:
                     fields = {}
 
+            # Wykryj błąd parsowania LLM zapisany przez OCRResult
+            parse_error = fields.get('_parse_error') if isinstance(fields, dict) else None
+
             is_vision = doc.get('is_vision', False)
             source = doc.get('source_file', filename)
 
             row = {'_source': source}
             for col_id, _, is_numeric in active_cols:
                 raw = fields.get(col_id)
-                if is_numeric:
+                if raw is None:
+                    row[col_id] = None
+                elif is_numeric and '|' in str(raw):
+                    row[col_id] = str(raw)
+                elif is_numeric:
                     row[col_id] = _to_number(raw)
                 else:
                     row[col_id] = str(raw) if raw is not None else ''
 
-            records.append((row, is_vision))
-        except Exception:
+            records.append((row, is_vision, parse_error))
+        except Exception as exc:
             log.exception("Błąd odczytu JSON: %s", json_path)
+            records.append(({'_source': filename}, False, str(exc)))
 
     if not records:
         return jsonify({'success': False, 'error': 'Nie znaleziono poprawnych danych do eksportu'}), 404
@@ -168,6 +177,8 @@ def export_excel():
     header_fill = PatternFill(fill_type='solid', fgColor='1F2937')   # ciemny nagłówek
     header_font = Font(bold=True, color='FFFFFF', size=10)
     scan_fill   = PatternFill(fill_type='solid', fgColor='FFF9C4')   # żółty dla skanów
+    alt_fill    = PatternFill(fill_type='solid', fgColor='F3F4F6')   # szary co 2. rekord
+    error_fill  = PatternFill(fill_type='solid', fgColor='FEE2E2')   # czerwony dla błędów
     sum_fill    = PatternFill(fill_type='solid', fgColor='D1FAE5')   # zielony dla SUM
     sum_font    = Font(bold=True, size=10)
     center      = Alignment(horizontal='center', vertical='center')
@@ -270,37 +281,93 @@ def export_excel():
             col_position[col_id] = pos
             pos += 1
 
-    for row_idx, (row, is_vision) in enumerate(records, data_row_start):
-        fill = scan_fill if is_vision else None
+    def _split_multi(val):
+        """Zwraca listę wartości (float lub None). Jeśli brak "|" → lista jednoelementowa."""
+        if isinstance(val, str) and '|' in val:
+            return [_to_number(v.strip()) for v in val.split('|') if v.strip()]
+        return [val]
 
-        c = ws.cell(row=row_idx, column=1, value=row.get('_source', ''))
-        c.border = border
-        c.alignment = Alignment(vertical='center')
-        if fill:
-            c.fill = fill
+    current_row = data_row_start
+
+    for rec_idx, (row, is_vision, parse_error) in enumerate(records):
+        # Wiersz błędu — czerwone tło, komunikat przez całą szerokość
+        if parse_error:
+            err_font = Font(bold=True, color='991B1B', size=9)
+            c = ws.cell(row=current_row, column=1, value=f'⚠ BŁĄD — {row.get("_source", "?")}')
+            c.fill = error_fill; c.font = err_font; c.border = border
+            c2 = ws.cell(row=current_row, column=2, value=f'Błąd parsowania odpowiedzi LLM: {parse_error}')
+            c2.fill = error_fill; c2.font = Font(color='991B1B', size=8, italic=True); c2.border = border
+            if skan_col > 2:
+                ws.merge_cells(start_row=current_row, start_column=2,
+                               end_row=current_row, end_column=skan_col)
+            current_row += 1
+            continue
+
+        fill = scan_fill if is_vision else (alt_fill if rec_idx % 2 == 1 else None)
+
+        # Ustal ile pod-wierszy potrzeba (max liczba wartości w kolumnach multi)
+        sub_count = max(
+            (len(_split_multi(row.get(col_id))) for col_id, _, _ in active_cols),
+            default=1
+        )
+        end_row = current_row + sub_count - 1
+
+        def _write_cell(r, col, value, is_num=False, align_center=False):
+            c = ws.cell(row=r, column=col, value=value)
+            if align_center:
+                c.alignment = center
+            else:
+                c.alignment = Alignment(
+                    horizontal='right' if is_num else 'left', vertical='center'
+                )
+            if is_num and value is not None:
+                c.number_format = '#,##0.00'
+            c.border = border
+            if fill:
+                c.fill = fill
+            return c
+
+        def _merge_if_multi(col):
+            """Scal komórki pionowo gdy rekord zajmuje kilka wierszy."""
+            if sub_count > 1:
+                ws.merge_cells(
+                    start_row=current_row, start_column=col,
+                    end_row=end_row, end_column=col
+                )
+                c = ws.cell(row=current_row, column=col)
+                c.alignment = Alignment(vertical='center', wrap_text=False)
+
+        # Kolumna "Plik źródłowy" — scalona
+        _write_cell(current_row, 1, row.get('_source', ''))
+        _merge_if_multi(1)
 
         for col_id, _, is_numeric in active_cols:
             col_offset = col_position.get(col_id)
             if col_offset is None:
                 continue
-            val = row.get(col_id)
-            c = ws.cell(row=row_idx, column=col_offset, value=val)
-            c.border = border
-            c.alignment = Alignment(horizontal='right' if is_numeric else 'left', vertical='center')
-            if fill:
-                c.fill = fill
-            if is_numeric and val is not None:
-                c.number_format = '#,##0.00'
+            vals = _split_multi(row.get(col_id))
 
-        c = ws.cell(row=row_idx, column=skan_col, value='TAK' if is_vision else '')
-        c.border = border
-        c.alignment = center
-        if fill:
-            c.fill = fill
+            if len(vals) > 1:
+                # Każda wartość w osobnym wierszu — prawdziwe liczby
+                for sub_i, v in enumerate(vals):
+                    num = v if isinstance(v, float) else _to_number(v)
+                    _write_cell(current_row + sub_i, col_offset, num, is_num=is_numeric)
+                # Puste komórki w wierszach gdzie brak wartości
+                for sub_i in range(len(vals), sub_count):
+                    _write_cell(current_row + sub_i, col_offset, None, is_num=is_numeric)
+            else:
+                val = vals[0]
+                _write_cell(current_row, col_offset, val, is_num=is_numeric)
+                _merge_if_multi(col_offset)
+
+        # Kolumna "Skan?" — scalona
+        _write_cell(current_row, skan_col, 'TAK' if is_vision else '', align_center=True)
+        _merge_if_multi(skan_col)
+
+        current_row += sub_count
 
     # ── Wiersz SUM ──────────────────────────────────────────────────
-    data_rows = len(records)
-    sum_row = data_rows + data_row_start
+    sum_row = current_row
 
     ws.cell(row=sum_row, column=1, value='SUMA').font = sum_font
 
@@ -311,7 +378,7 @@ def export_excel():
         c = ws.cell(row=sum_row, column=col_offset)
         if is_numeric:
             col_letter = get_column_letter(col_offset)
-            c.value = f'=SUM({col_letter}{data_row_start}:{col_letter}{data_rows + data_row_start - 1})'
+            c.value = f'=SUM({col_letter}{data_row_start}:{col_letter}{sum_row - 1})'
             c.number_format = '#,##0.00'
             c.font = sum_font
         c.fill = sum_fill
@@ -321,7 +388,7 @@ def export_excel():
     ws.cell(row=sum_row, column=skan_col).fill = sum_fill
 
     # ── Ostrzeżenie o skanach ────────────────────────────────────────
-    scan_count = sum(1 for _, is_vision in records if is_vision)
+    scan_count = sum(1 for _, is_vision, _ in records if is_vision)
     if scan_count > 0:
         note_row = sum_row + 2
         note = ws.cell(
@@ -338,8 +405,9 @@ def export_excel():
     for col_idx in range(1, skan_col + 1):
         col_letter = get_column_letter(col_idx)
         max_len = max(
-            len(str(ws.cell(row=r, column=col_idx).value or ''))
-            for r in range(1, data_rows + data_row_start)
+            (len(str(ws.cell(row=r, column=col_idx).value or ''))
+             for r in range(1, sum_row)),
+            default=5
         )
         ws.column_dimensions[col_letter].width = min(max_len + 3, 40)
 

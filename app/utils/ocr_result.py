@@ -24,7 +24,7 @@ class OCRResult:
             return json.loads(clean)
         except Exception as e:
             log.warning("Nie udało się sparsować odpowiedzi LLM jako JSON: %s | Tekst: %.200s", e, text)
-            return {}
+            return {"_parse_error": str(e)}
 
     def save_to_json(self, save_path):
         filename = os.path.basename(self.input_path)
