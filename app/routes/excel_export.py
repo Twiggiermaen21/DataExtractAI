@@ -49,6 +49,23 @@ COLUMN_DEFS = [
 # Indeksy (key → (label, is_numeric))
 COLUMN_MAP = {k: (label, numeric) for k, label, numeric in COLUMN_DEFS}
 
+# Pary netto/brutto → scalone nagłówki grupujące w Excelu
+# klucz: id_netto, wartość: (etykieta grupy, id_brutto)
+COLUMN_PAIRS = {
+    "naleznos_netto":         ("Należność",         "naleznos_brutto"),
+    "kwota_netto":            ("Kwoty",              "kwota_brutto"),
+    "sprzedaz_cena_netto":    ("Sprzedaż energii",   "sprzedaz_cena_brutto"),
+    "dystrybucja_cena_netto": ("Dystrybucja",        "dystrybucja_cena_brutto"),
+    "oplata_abonamentowa":    ("Abonamentowa",       "oplata_abonamentowa_brutto"),
+    "oplata_sieciowa_stala":  ("Sieciowa stała",     "oplata_sieciowa_stala_brutto"),
+    "oplata_sieciowa_zmienna":("Sieciowa zmienna",   "oplata_sieciowa_zmienna_brutto"),
+    "oplata_jakosciowa":      ("Jakościowa",         "oplata_jakosciowa_brutto"),
+    "oplata_oze":             ("OZE",                "oplata_oze_brutto"),
+    "oplata_kogeneracyjna":   ("Kogeneracyjna",      "oplata_kogeneracyjna_brutto"),
+    "oplata_przejsciowa":     ("Przejściowa",        "oplata_przejsciowa_brutto"),
+    "oplata_mocowa":          ("Mocowa",             "oplata_mocowa_brutto"),
+}
+
 
 def _to_number(value):
     """Zwraca float z wartości która może zawierać jednostki (kWh, zł itp.)."""
@@ -157,28 +174,115 @@ def export_excel():
     thin        = Side(style='thin', color='D1D5DB')
     border      = Border(left=thin, right=thin, top=thin, bottom=thin)
 
+    # ── Grupowanie kolumn (pary netto/brutto → scalony nagłówek) ────
+    active_ids = {k for k, _, _ in active_cols}
+
+    # Buduj listę grup zachowując kolejność COLUMN_DEFS; pomijaj brutto które już
+    # są wchłonięte przez odpowiednią grupę netto
+    brutto_absorbed = set()
+    header_groups = []
+    for col_id, label, is_numeric in active_cols:
+        if col_id in brutto_absorbed:
+            continue
+        if col_id in COLUMN_PAIRS and COLUMN_PAIRS[col_id][1] in active_ids:
+            group_label, brutto_id = COLUMN_PAIRS[col_id]
+            brutto_absorbed.add(brutto_id)
+            header_groups.append({
+                'label': group_label,
+                'cols': [(col_id, 'Netto', is_numeric), (brutto_id, 'Brutto', True)],
+                'paired': True,
+            })
+        else:
+            header_groups.append({
+                'label': label,
+                'cols': [(col_id, None, is_numeric)],
+                'paired': False,
+            })
+
+    has_pairs = any(g['paired'] for g in header_groups)
+    data_row_start = 3 if has_pairs else 2
+    total_data_cols = sum(len(g['cols']) for g in header_groups)
+    skan_col = total_data_cols + 2  # +1 dla "Plik źródłowy", +1 za skan
+
+    sub_fill   = PatternFill(fill_type='solid', fgColor='374151')  # nieco jaśniejszy nagłówek sub
+    sub_font   = Font(bold=True, color='D1D5DB', size=9)
+
     # ── Nagłówek ────────────────────────────────────────────────────
-    headers = ['Plik źródłowy'] + [label for _, label, _ in active_cols] + ['Skan?']
-    for col_idx, h in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_idx, value=h)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = center
-        cell.border = border
-    ws.row_dimensions[1].height = 22
+    if has_pairs:
+        ws.row_dimensions[1].height = 20
+        ws.row_dimensions[2].height = 16
+
+        # Komórka "Plik źródłowy" — scalona pionowo (wiersze 1–2)
+        ws.merge_cells(start_row=1, start_column=1, end_row=2, end_column=1)
+        c = ws.cell(row=1, column=1, value='Plik źródłowy')
+        c.fill = header_fill; c.font = header_font; c.alignment = center; c.border = border
+
+        col_pos = 2
+        for g in header_groups:
+            if g['paired']:
+                end_pos = col_pos + len(g['cols']) - 1
+                # Wiersz 1 — scalona etykieta grupy
+                ws.merge_cells(start_row=1, start_column=col_pos, end_row=1, end_column=end_pos)
+                c = ws.cell(row=1, column=col_pos, value=g['label'])
+                c.fill = header_fill; c.font = header_font
+                c.alignment = Alignment(horizontal='center', vertical='center')
+                c.border = border
+                # Wiersz 2 — Netto / Brutto
+                for i, (_, sub_label, _) in enumerate(g['cols']):
+                    c2 = ws.cell(row=2, column=col_pos + i, value=sub_label)
+                    c2.fill = sub_fill; c2.font = sub_font
+                    c2.alignment = center; c2.border = border
+                col_pos += len(g['cols'])
+            else:
+                # Pojedyncza kolumna — scalona pionowo (wiersze 1–2)
+                ws.merge_cells(start_row=1, start_column=col_pos, end_row=2, end_column=col_pos)
+                c = ws.cell(row=1, column=col_pos, value=g['label'])
+                c.fill = header_fill; c.font = header_font; c.alignment = center; c.border = border
+                col_pos += 1
+
+        # "Skan?" — scalona pionowo
+        ws.merge_cells(start_row=1, start_column=skan_col, end_row=2, end_column=skan_col)
+        c = ws.cell(row=1, column=skan_col, value='Skan?')
+        c.fill = header_fill; c.font = header_font; c.alignment = center; c.border = border
+    else:
+        col_pos = 2
+        ws.cell(row=1, column=1, value='Plik źródłowy')
+        ws.cell(row=1, column=1).fill = header_fill
+        ws.cell(row=1, column=1).font = header_font
+        ws.cell(row=1, column=1).alignment = center
+        ws.cell(row=1, column=1).border = border
+        for g in header_groups:
+            c = ws.cell(row=1, column=col_pos, value=g['label'])
+            c.fill = header_fill; c.font = header_font; c.alignment = center; c.border = border
+            col_pos += 1
+        ws.cell(row=1, column=skan_col, value='Skan?').fill = header_fill
+        ws.cell(row=1, column=skan_col).font = header_font
+        ws.cell(row=1, column=skan_col).alignment = center
+        ws.cell(row=1, column=skan_col).border = border
+        ws.row_dimensions[1].height = 22
 
     # ── Dane ────────────────────────────────────────────────────────
-    for row_idx, (row, is_vision) in enumerate(records, 2):
+    # Buduj mapę col_id → pozycja kolumny (uwzględnia pary)
+    col_position = {}
+    pos = 2
+    for g in header_groups:
+        for col_id, _, _ in g['cols']:
+            col_position[col_id] = pos
+            pos += 1
+
+    for row_idx, (row, is_vision) in enumerate(records, data_row_start):
         fill = scan_fill if is_vision else None
 
-        # Plik źródłowy
         c = ws.cell(row=row_idx, column=1, value=row.get('_source', ''))
         c.border = border
         c.alignment = Alignment(vertical='center')
         if fill:
             c.fill = fill
 
-        for col_offset, (col_id, _, is_numeric) in enumerate(active_cols, 2):
+        for col_id, _, is_numeric in active_cols:
+            col_offset = col_position.get(col_id)
+            if col_offset is None:
+                continue
             val = row.get(col_id)
             c = ws.cell(row=row_idx, column=col_offset, value=val)
             c.border = border
@@ -188,8 +292,6 @@ def export_excel():
             if is_numeric and val is not None:
                 c.number_format = '#,##0.00'
 
-        # Kolumna "Skan?"
-        skan_col = len(active_cols) + 2
         c = ws.cell(row=row_idx, column=skan_col, value='TAK' if is_vision else '')
         c.border = border
         c.alignment = center
@@ -198,23 +300,24 @@ def export_excel():
 
     # ── Wiersz SUM ──────────────────────────────────────────────────
     data_rows = len(records)
-    sum_row = data_rows + 2
+    sum_row = data_rows + data_row_start
 
     ws.cell(row=sum_row, column=1, value='SUMA').font = sum_font
 
-    for col_offset, (col_id, _, is_numeric) in enumerate(active_cols, 2):
+    for col_id, _, is_numeric in active_cols:
+        col_offset = col_position.get(col_id)
+        if col_offset is None:
+            continue
         c = ws.cell(row=sum_row, column=col_offset)
         if is_numeric:
             col_letter = get_column_letter(col_offset)
-            c.value = f'=SUM({col_letter}2:{col_letter}{data_rows + 1})'
+            c.value = f'=SUM({col_letter}{data_row_start}:{col_letter}{data_rows + data_row_start - 1})'
             c.number_format = '#,##0.00'
             c.font = sum_font
         c.fill = sum_fill
         c.border = border
         c.alignment = Alignment(horizontal='right', vertical='center')
 
-    # SUM w ostatniej kolumnie (Skan?) — puste
-    skan_col = len(active_cols) + 2
     ws.cell(row=sum_row, column=skan_col).fill = sum_fill
 
     # ── Ostrzeżenie o skanach ────────────────────────────────────────
@@ -228,20 +331,19 @@ def export_excel():
         note.font = Font(color='B45309', italic=True, size=9)
         ws.merge_cells(
             start_row=note_row, start_column=1,
-            end_row=note_row, end_column=len(headers)
+            end_row=note_row, end_column=skan_col
         )
 
     # ── Autodopasowanie szerokości ───────────────────────────────────
-    for col_idx in range(1, len(headers) + 1):
+    for col_idx in range(1, skan_col + 1):
         col_letter = get_column_letter(col_idx)
-        max_len = len(str(ws.cell(row=1, column=col_idx).value or ''))
-        for row_idx in range(2, data_rows + 2):
-            val = ws.cell(row=row_idx, column=col_idx).value
-            if val is not None:
-                max_len = max(max_len, len(str(val)))
+        max_len = max(
+            len(str(ws.cell(row=r, column=col_idx).value or ''))
+            for r in range(1, data_rows + data_row_start)
+        )
         ws.column_dimensions[col_letter].width = min(max_len + 3, 40)
 
-    ws.freeze_panes = 'A2'
+    ws.freeze_panes = f'A{data_row_start}'
 
     # ── Zapis do pamięci i wysyłka ───────────────────────────────────
     output = BytesIO()
