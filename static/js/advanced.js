@@ -1387,7 +1387,7 @@ function renderDynamicTable(documents) {
                     // Wiele wartości (np. opłata pojawia się 2x w fakturze) — wypisz jedną pod drugą
                     val = String(raw).split('|')
                         .map(v => v.trim())
-                        .filter(v => v)
+                        .filter(v => v !== '')
                         .map(v => formatCurrencyHelper(v))
                         .join('<br>');
                 } else if (c.numeric) {

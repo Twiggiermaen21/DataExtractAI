@@ -165,8 +165,9 @@ class OCRService:
         "ZASADY BEZWZGLĘDNE — MUSISZ ICH PRZESTRZEGAĆ:\n"
         "1. Przepisuj WYŁĄCZNIE wartości widoczne w dokumencie. "
         "NIE wolno Ci niczego obliczać, szacować, interpolować ani domyślać się.\n"
-        "2. Jeśli danej wartości NIE MA w dokumencie lub nie możesz jej jednoznacznie odczytać — "
-        "zwróć null. Nigdy nie wstawiaj 0, pustego stringa ani własnej oceny.\n"
+        "2. Jeśli danej LICZBOWEJ wartości NIE MA w dokumencie — zwróć null. "
+        "Jeśli danej TEKSTOWEJ (string) wartości NIE MA w dokumencie — zwróć pusty string ''. "
+        "Nigdy nie wstawiaj własnych szacunków ani 0 zamiast pustego stringa.\n"
         "3. NIE wolno Ci 'poprawiać' ani 'uzupełniać' danych na podstawie wiedzy o typowych fakturach.\n"
         "4. Wartości numeryczne przepisuj dokładnie tak jak stoją w dokumencie, "
         "zamieniając tylko separator dziesiętny na kropkę i usuwając symbole walut/jednostek.\n"
@@ -174,7 +175,15 @@ class OCRService:
     )
 
     FIELD_INSTRUCTIONS = (
-        "Gdzie szukać poszczególnych pól (jeśli NIE ZNAJDZIESZ — zwróć null):\n"
+        "KRYTYCZNA ZASADA — TABELE Z OPŁATAMI:\n"
+        "Faktury za energię mają tabele z kolumnami: Lp. | Nazwa | Ilość | Cena jed. netto | Wartość netto | Wartość brutto.\n"
+        "- ZAWSZE bierz wartość z kolumny 'Wartość netto' (nie z 'Cena jed.', 'Stawka', 'zł/kWh').\n"
+        "- Kolumna 'Cena jed. netto' to cena za 1 kWh/kW/mc — to NIE jest kwota do zapłaty.\n"
+        "- Kolumna 'Wartość netto' to kwota do zapłaty — tej szukasz.\n"
+        "- Jeśli opłata ma kilka wierszy (strefy, dni, taryfy) — zwróć WSZYSTKIE wartości oddzielone '|', np. '0.00|115.21'.\n"
+        "- WAŻNE: Zwracaj WSZYSTKIE wiersze tej samej opłaty — nawet jeśli wartość wynosi 0.00. "
+        "Wiersze z zerem to osobne pozycje rozliczeniowe (np. inna taryfa lub mnożnik), nie brak opłaty.\n\n"
+        "Gdzie szukać poszczególnych pól (jeśli NIE ZNAJDZIESZ — zwróć null dla liczb, '' dla stringów):\n"
         '1. "numer_faktury": Numer faktury. Frazy: "Nr faktury", "Numer faktury", "Faktura VAT nr", "FV/", "FA/". Przepisz dokładnie z dokumentu.\n'
         '2. "sprzedawca": Nazwa firmy wystawiającej fakturę widoczna w nagłówku lub stopce (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
         '3. "data_wystawienia": Frazy: "Data wystawienia", "Wystawiono dnia". Format YYYY-MM-DD.\n'
@@ -189,26 +198,27 @@ class OCRService:
         '12. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
         '13. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI. Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
         '14. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
-        'WAŻNE dla opłat dodatkowych (pola 15–30): Jeśli dana opłata pojawia się w dokumencie WIELOKROTNIE '
-        '(np. dwa wiersze tabeli z tą samą nazwą opłaty), zwróć WSZYSTKIE wartości oddzielone znakiem "|" '
-        '(np. "12.34|56.78"). Jeśli pojawia się raz — zwróć samą liczbę jako string (np. "12.34"). '
-        'Jeśli nie ma jej w dokumencie — zwróć null.\n'
-        '15. "oplata_abonamentowa": Frazy: "Opłata abonamentowa", "abonament". Wartość(i) netto.\n'
-        '16. "oplata_abonamentowa_brutto": Wartość(i) brutto opłaty abonamentowej. Jeśli nie widoczna — null.\n'
-        '17. "oplata_sieciowa_stala": Frazy: "Opłata sieciowa stała", "składnik stały stawki sieciowej". Wartość netto.\n'
-        '18. "oplata_sieciowa_stala_brutto": Wartość brutto opłaty sieciowej stałej. Jeśli nie widoczna — null.\n'
-        '19. "oplata_sieciowa_zmienna": Frazy: "Opłata sieciowa zmienna całodobowa", "składnik zmienny stawki sieciowej". Wartość netto.\n'
-        '20. "oplata_sieciowa_zmienna_brutto": Wartość brutto opłaty sieciowej zmiennej. Jeśli nie widoczna — null.\n'
-        '21. "oplata_jakosciowa": Frazy: "Opłata jakościowa". Wartość netto.\n'
-        '22. "oplata_jakosciowa_brutto": Wartość brutto opłaty jakościowej. Jeśli nie widoczna — null.\n'
-        '23. "oplata_oze": Frazy: "Opłata OZE", "OZE". Wartość netto.\n'
-        '24. "oplata_oze_brutto": Wartość brutto opłaty OZE. Jeśli nie widoczna — null.\n'
-        '25. "oplata_kogeneracyjna": Frazy: "Opłata kogeneracyjna", "kogeneracja". Wartość netto.\n'
-        '26. "oplata_kogeneracyjna_brutto": Wartość brutto opłaty kogeneracyjnej. Jeśli nie widoczna — null.\n'
-        '27. "oplata_przejsciowa": Frazy: "Opłata przejściowa". Wartość netto.\n'
-        '28. "oplata_przejsciowa_brutto": Wartość brutto opłaty przejściowej. Jeśli nie widoczna — null.\n'
-        '29. "oplata_mocowa": Frazy: "Opłata mocowa", "rynek mocy". Wartość netto.\n'
-        '30. "oplata_mocowa_brutto": Wartość brutto opłaty mocowej. Jeśli nie widoczna — null.\n'
+        'OPŁATY DODATKOWE (pola 15–30): Pobieraj z kolumny "Wartość netto" (NIE "Cena jed."). '
+        'Jeśli opłata ma wiele wierszy — zwróć WSZYSTKIE wartości oddzielone "|" (np. "0.00|115.21"), '
+        'WŁĄCZNIE z wierszami gdzie wartość wynosi 0.00 — to osobne pozycje, nie brak opłaty. '
+        'Jeśli opłata ma jeden wiersz — zwróć samą liczbę jako string (np. "12.34"). '
+        'Jeśli opłaty w ogóle NIE MA w dokumencie — zwróć "" (pusty string).\n'
+        '15. "oplata_abonamentowa": "Opłata abonamentowa", "abonament". Wartość(i) netto.\n'
+        '16. "oplata_abonamentowa_brutto": wartość(i) brutto opłaty abonamentowej.\n'
+        '17. "oplata_sieciowa_stala": "Składnik stały stawki sieciowej", "opłata sieciowa stała". Wartość netto.\n'
+        '18. "oplata_sieciowa_stala_brutto": wartość brutto tej opłaty.\n'
+        '19. "oplata_sieciowa_zmienna": "Składnik zmienny stawki sieciowej", "opłata sieciowa zmienna". Wartość netto.\n'
+        '20. "oplata_sieciowa_zmienna_brutto": wartość brutto tej opłaty.\n'
+        '21. "oplata_jakosciowa": "Opłata jakościowa", "stawka jakościowa". Wartość netto.\n'
+        '22. "oplata_jakosciowa_brutto": wartość brutto tej opłaty.\n'
+        '23. "oplata_oze": "Opłata OZE". Wartość netto.\n'
+        '24. "oplata_oze_brutto": wartość brutto opłaty OZE.\n'
+        '25. "oplata_kogeneracyjna": "Opłata kogeneracyjna". Wartość netto.\n'
+        '26. "oplata_kogeneracyjna_brutto": wartość brutto tej opłaty.\n'
+        '27. "oplata_przejsciowa": "Opłata przejściowa", "stawka opłaty przejściowej". Wartość netto.\n'
+        '28. "oplata_przejsciowa_brutto": wartość brutto tej opłaty.\n'
+        '29. "oplata_mocowa": "Opłata mocowa". Wartość netto — może być bardzo wiele wierszy dziennych, zwróć wszystkie oddzielone "|".\n'
+        '30. "oplata_mocowa_brutto": wartość brutto wszystkich wierszy opłaty mocowej, oddzielone "|".\n'
         '31. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
     )
 
