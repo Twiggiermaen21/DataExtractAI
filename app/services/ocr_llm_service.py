@@ -155,72 +155,10 @@ class OCRService:
                 if os.path.exists(p):
                     os.remove(p)
 
-    # ── Wspólny prompt systemowy ────────────────────────────────
+    # ── Wspólny prompt systemowy (wartości z .env) ─────────────
 
-    SYSTEM_PROMPT = (
-        "Jesteś ekspertem OCR specjalizującym się w polskich fakturach za energię elektryczną "
-        "(PGE, Tauron, Enea, Energa, E.ON i innych operatorów). "
-        "Każdy operator stosuje inne nazewnictwo i układ tabel. "
-        "Twoim zadaniem jest znalezienie konkretnych wartości niezależnie od układu dokumentu.\n\n"
-        "ZASADY BEZWZGLĘDNE — MUSISZ ICH PRZESTRZEGAĆ:\n"
-        "1. Przepisuj WYŁĄCZNIE wartości widoczne w dokumencie. "
-        "NIE wolno Ci niczego obliczać, szacować, interpolować ani domyślać się.\n"
-        "2. Jeśli danej LICZBOWEJ wartości NIE MA w dokumencie — zwróć null. "
-        "Jeśli danej TEKSTOWEJ (string) wartości NIE MA w dokumencie — zwróć pusty string ''. "
-        "Nigdy nie wstawiaj własnych szacunków ani 0 zamiast pustego stringa.\n"
-        "3. NIE wolno Ci 'poprawiać' ani 'uzupełniać' danych na podstawie wiedzy o typowych fakturach.\n"
-        "4. Wartości numeryczne przepisuj dokładnie tak jak stoją w dokumencie, "
-        "zamieniając tylko separator dziesiętny na kropkę i usuwając symbole walut/jednostek.\n"
-        "5. Zwróć WYŁĄCZNIE czysty obiekt JSON — bez żadnego komentarza, wyjaśnienia ani markdown."
-    )
-
-    FIELD_INSTRUCTIONS = (
-        "KRYTYCZNA ZASADA — TABELE Z OPŁATAMI:\n"
-        "Faktury za energię mają tabele z kolumnami: Lp. | Nazwa | Ilość | Cena jed. netto | Wartość netto | Wartość brutto.\n"
-        "- ZAWSZE bierz wartość z kolumny 'Wartość netto' (nie z 'Cena jed.', 'Stawka', 'zł/kWh').\n"
-        "- Kolumna 'Cena jed. netto' to cena za 1 kWh/kW/mc — to NIE jest kwota do zapłaty.\n"
-        "- Kolumna 'Wartość netto' to kwota do zapłaty — tej szukasz.\n"
-        "- Jeśli opłata ma kilka wierszy (strefy, dni, taryfy) — zwróć WSZYSTKIE wartości oddzielone '|', np. '0.00|115.21'.\n"
-        "- WAŻNE: Zwracaj WSZYSTKIE wiersze tej samej opłaty — nawet jeśli wartość wynosi 0.00. "
-        "Wiersze z zerem to osobne pozycje rozliczeniowe (np. inna taryfa lub mnożnik), nie brak opłaty.\n\n"
-        "Gdzie szukać poszczególnych pól (jeśli NIE ZNAJDZIESZ — zwróć null dla liczb, '' dla stringów):\n"
-        '1. "numer_faktury": Numer faktury. Frazy: "Nr faktury", "Numer faktury", "Faktura VAT nr", "FV/", "FA/". Przepisz dokładnie z dokumentu.\n'
-        '2. "sprzedawca": Nazwa firmy wystawiającej fakturę widoczna w nagłówku lub stopce (np. PGE Obrót S.A., Tauron Sprzedaż). Ignoruj dane Nabywcy/Odbiorcy.\n'
-        '3. "data_wystawienia": Frazy: "Data wystawienia", "Wystawiono dnia". Format YYYY-MM-DD.\n'
-        '4. "data_sprzedazy": Frazy: "Data sprzedaży", "Miesiąc sprzedaży", lub końcowa data z "Okres rozliczeniowy od ... do ...". Format YYYY-MM-DD.\n'
-        '5. "wolumen_energii": Całkowite zużycie energii czynnej. Frazy: "Ilość", "Wolumen", suma tabeli odczytów licznika. Tylko liczba bez jednostki.\n'
-        '6. "naleznos_netto": Całkowita należność netto przed VAT. Nie mylić z kwotą bieżącej faktury.\n'
-        '7. "naleznos_brutto": Kwota ostateczna do zapłaty przez klienta. Frazy: "Do zapłaty", "Razem do zapłaty", "Należność ogółem", "Kwota do zapłaty".\n'
-        '8. "kwota_netto": Suma netto z tabeli stawek VAT lub głównego podsumowania za bieżący okres rozliczeniowy.\n'
-        '9. "kwota_brutto": Suma brutto z tabeli stawek VAT lub głównego podsumowania za bieżący okres.\n'
-        '10. "kwota_vat": Podatek VAT za bieżący okres. Frazy: "Kwota VAT", "Podatek VAT", "Suma VAT".\n'
-        '11. "sprzedaz_cena_netto": Suma netto sekcji SPRZEDAŻY (energia czynna, opłata handlowa). Frazy: "Sprzedaż energii elektrycznej".\n'
-        '12. "sprzedaz_cena_brutto": Suma brutto sekcji SPRZEDAŻY energii.\n'
-        '13. "dystrybucja_cena_netto": Suma netto sekcji DYSTRYBUCJI. Frazy: "Dystrybucja", "Usługi dystrybucyjne".\n'
-        '14. "dystrybucja_cena_brutto": Suma brutto sekcji DYSTRYBUCJI.\n'
-        'OPŁATY DODATKOWE (pola 15–30): Pobieraj z kolumny "Wartość netto" (NIE "Cena jed."). '
-        'Jeśli opłata ma wiele wierszy — zwróć WSZYSTKIE wartości oddzielone "|" (np. "0.00|115.21"), '
-        'WŁĄCZNIE z wierszami gdzie wartość wynosi 0.00 — to osobne pozycje, nie brak opłaty. '
-        'Jeśli opłata ma jeden wiersz — zwróć samą liczbę jako string (np. "12.34"). '
-        'Jeśli opłaty w ogóle NIE MA w dokumencie — zwróć "" (pusty string).\n'
-        '15. "oplata_abonamentowa": "Opłata abonamentowa", "abonament". Wartość(i) netto.\n'
-        '16. "oplata_abonamentowa_brutto": wartość(i) brutto opłaty abonamentowej.\n'
-        '17. "oplata_sieciowa_stala": "Składnik stały stawki sieciowej", "opłata sieciowa stała". Wartość netto.\n'
-        '18. "oplata_sieciowa_stala_brutto": wartość brutto tej opłaty.\n'
-        '19. "oplata_sieciowa_zmienna": "Składnik zmienny stawki sieciowej", "opłata sieciowa zmienna". Wartość netto.\n'
-        '20. "oplata_sieciowa_zmienna_brutto": wartość brutto tej opłaty.\n'
-        '21. "oplata_jakosciowa": "Opłata jakościowa", "stawka jakościowa". Wartość netto.\n'
-        '22. "oplata_jakosciowa_brutto": wartość brutto tej opłaty.\n'
-        '23. "oplata_oze": "Opłata OZE". Wartość netto.\n'
-        '24. "oplata_oze_brutto": wartość brutto opłaty OZE.\n'
-        '25. "oplata_kogeneracyjna": "Opłata kogeneracyjna". Wartość netto.\n'
-        '26. "oplata_kogeneracyjna_brutto": wartość brutto tej opłaty.\n'
-        '27. "oplata_przejsciowa": "Opłata przejściowa", "stawka opłaty przejściowej". Wartość netto.\n'
-        '28. "oplata_przejsciowa_brutto": wartość brutto tej opłaty.\n'
-        '29. "oplata_mocowa": "Opłata mocowa". Wartość netto — może być bardzo wiele wierszy dziennych, zwróć wszystkie oddzielone "|".\n'
-        '30. "oplata_mocowa_brutto": wartość brutto wszystkich wierszy opłaty mocowej, oddzielone "|".\n'
-        '31. "pewnosc_ocr_procent": Liczba całkowita 0-100 — Twoja pewność że odczytane wartości są dokładnie takie jak w dokumencie (nie domysły).'
-    )
+    SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", "")
+    FIELD_INSTRUCTIONS = os.environ.get("FIELD_INSTRUCTIONS", "")
 
     # ── tekst → LLM ────────────────────────────────────────────
 
