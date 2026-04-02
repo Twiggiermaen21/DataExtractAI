@@ -10,6 +10,7 @@ __pycache__/
 venv/
 .venv/
 env/
+llm_config.py
 
 # ── Dane aplikacji (pliki użytkownika) ─────────────────────────
 input/*

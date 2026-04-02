@@ -2,7 +2,7 @@ import os
 import glob
 from app.utils.ocr_utils import get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, extract_text_from_xml
 from app.utils.ocr_result import OCRResult
-
+from llm_config import ALL_COLUMNS,CONFIDENCE_COL,DEFAULT_COLUMNS,FIELD_INSTRUCTIONS,SYSTEM_PROMPT
 import subprocess
 import atexit
 import time
@@ -11,47 +11,6 @@ from openai import OpenAI
 
 # Usuwamy stare importy llama_cpp
 
-# Pełna definicja dostępnych kolumn (id → typ JSON Schema)
-ALL_COLUMNS = {
-    "numer_faktury":            {"type": "string"},
-    "sprzedawca":               {"type": "string"},
-    "data_wystawienia":         {"type": "string"},
-    "data_sprzedazy":           {"type": "string"},
-    "wolumen_energii":          {"type": "number"},
-    "kwota_netto":              {"type": "number"},
-    "kwota_brutto":             {"type": "number"},
-    "kwota_vat":                {"type": "number"},
-    "sprzedaz_cena_netto":      {"type": "number"},
-    "sprzedaz_cena_brutto":     {"type": "number"},
-    "dystrybucja_cena_netto":   {"type": "number"},
-    "dystrybucja_cena_brutto":  {"type": "number"},
-    # Opłaty dodatkowe — typ string: LLM zwraca liczbę lub wiele wartości rozdzielonych "|"
-    "oplata_abonamentowa":             {"type": "string"},
-    "oplata_abonamentowa_brutto":      {"type": "string"},
-    "oplata_sieciowa_stala":           {"type": "string"},
-    "oplata_sieciowa_stala_brutto":    {"type": "string"},
-    "oplata_sieciowa_zmienna":         {"type": "string"},
-    "oplata_sieciowa_zmienna_brutto":  {"type": "string"},
-    "oplata_jakosciowa":               {"type": "string"},
-    "oplata_jakosciowa_brutto":        {"type": "string"},
-    "oplata_oze":                      {"type": "string"},
-    "oplata_oze_brutto":               {"type": "string"},
-    "oplata_kogeneracyjna":            {"type": "string"},
-    "oplata_kogeneracyjna_brutto":     {"type": "string"},
-    "oplata_przejsciowa":              {"type": "string"},
-    "oplata_przejsciowa_brutto":       {"type": "string"},
-    "oplata_mocowa":                   {"type": "string"},
-    "oplata_mocowa_brutto":            {"type": "string"},
-    "naleznos_netto":           {"type": "number"},
-    "naleznos_brutto":          {"type": "number"},
-}
-
-# Kolumna pewności jest zawsze wymagana
-CONFIDENCE_COL = {"pewnosc_ocr_procent": {"type": "integer"}}
-
-# Domyślne kolumny (gdy frontend nie poda wyboru)
-DEFAULT_COLUMNS = ["sprzedawca", "data_wystawienia", "data_sprzedazy",
-                   "wolumen_energii", "kwota_netto", "kwota_brutto", "kwota_vat"]
 
 
 def build_response_schema(selected_columns=None):
@@ -155,10 +114,7 @@ class OCRService:
                 if os.path.exists(p):
                     os.remove(p)
 
-    # ── Wspólny prompt systemowy (wartości z .env) ─────────────
-
-    SYSTEM_PROMPT = os.environ.get("SYSTEM_PROMPT", "")
-    FIELD_INSTRUCTIONS = os.environ.get("FIELD_INSTRUCTIONS", "")
+ 
 
     # ── tekst → LLM ────────────────────────────────────────────
 
@@ -176,7 +132,7 @@ class OCRService:
 
         user_msg = (
             "Przeanalizuj poniższy tekst faktury za energię elektryczną.\n\n"
-            f"{self.FIELD_INSTRUCTIONS}\n\n"
+            f"{FIELD_INSTRUCTIONS}\n\n"
             f"--- TEKST DOKUMENTU ---\n{text_content}\n--- KONIEC ---"
         )
 
@@ -185,7 +141,7 @@ class OCRService:
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user",   "content": user_msg},
             ],
             response_format=self.response_schema,
@@ -215,7 +171,7 @@ class OCRService:
 
         user_msg = (
             "Przeanalizuj załączoną fakturę za energię elektryczną.\n\n"
-            f"{self.FIELD_INSTRUCTIONS}"
+            f"{FIELD_INSTRUCTIONS}"
         )
 
         log.debug("[OCR] Prompt (wizja): %s", user_msg[:800])
@@ -223,7 +179,7 @@ class OCRService:
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": [
                     {"type": "text",      "text": user_msg},
                     {"type": "image_url", "image_url": {"url": f"data:{mime_type};base64,{image_base64}"}},
@@ -251,7 +207,7 @@ class OCRService:
         user_msg = (
             f"Przeanalizuj poniższy dokument składający się z {len(image_paths)} stron "
             f"(każdy obraz to jedna strona faktury za energię elektryczną).\n\n"
-            f"{self.FIELD_INSTRUCTIONS}"
+            f"{FIELD_INSTRUCTIONS}"
         )
 
         # Buduj content: tekst + wszystkie obrazy
@@ -267,7 +223,7 @@ class OCRService:
         response = client.chat.completions.create(
             model="local-model",
             messages=[
-                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user",   "content": content},
             ],
             response_format=self.response_schema,

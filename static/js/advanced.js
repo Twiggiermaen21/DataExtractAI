@@ -1444,8 +1444,8 @@ function renderDynamicTable(documents) {
 function formatCurrencyHelper(v) {
     const n = parseFloat(String(v).replace(',', '.'));
     return !isNaN(n) 
-        ? n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' zł'
-        : '0,00 zł';
+        ? n.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : '0,00';
 }
 
 // Globalny listener dla checkboxów i switcha netto (delegacja)
