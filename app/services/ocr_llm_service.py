@@ -2,7 +2,7 @@ import os
 import glob
 from app.utils.ocr_utils import get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, extract_text_from_xml
 from app.utils.ocr_result import OCRResult
-from llm_config import ALL_COLUMNS,CONFIDENCE_COL,DEFAULT_COLUMNS,FIELD_INSTRUCTIONS,SYSTEM_PROMPT
+from llm_config import ALL_COLUMNS,DEFAULT_COLUMNS,FIELD_INSTRUCTIONS,SYSTEM_PROMPT
 import subprocess
 import atexit
 import time
@@ -18,8 +18,6 @@ def build_response_schema(selected_columns=None):
     Parametr selected_columns jest ignorowany przy ekstrakcji; filtrowanie
     do podglądu i Excela odbywa się po stronie frontendu / excel_export."""
     properties = dict(ALL_COLUMNS)
-    # Pewność OCR jest zawsze dodawana
-    properties.update(CONFIDENCE_COL)
 
     return {
         "type": "json_schema",

@@ -3,17 +3,37 @@ import os
 import time
 import logging
 
+from json_repair import repair_json
+
 log = logging.getLogger(__name__)
 
 
 class OCRResult:
 
+    # Fields where many daily rows should be summed rather than listed.
+    _SUM_IF_MANY = {"oplata_mocowa", "oplata_mocowa_brutto"}
+    # Any pipe-separated field with more than this many parts gets summed.
+    _PIPE_LIMIT = 10
+
     def __init__(self, text, input_path, is_vision=False):
         self.text = text
         self.input_path = input_path
         self.is_vision = is_vision
-        self.extracted_data = self._parse_json(text)
+        self.extracted_data = self._postprocess(self._parse_json(text))
         self.parsing_res_list = [{"block_content": text}]
+
+    def _postprocess(self, data):
+        if not isinstance(data, dict):
+            return data
+        for key in self._SUM_IF_MANY:
+            if key in data and isinstance(data[key], str):
+                parts = [p.strip() for p in data[key].split("|") if p.strip()]
+                if len(parts) > self._PIPE_LIMIT:
+                    try:
+                        data[key] = str(round(sum(float(p.replace(",", ".")) for p in parts), 2))
+                    except ValueError:
+                        pass
+        return data
 
     def _parse_json(self, text):
         try:
@@ -24,6 +44,13 @@ class OCRResult:
             return json.loads(clean)
         except Exception as e:
             log.warning("Nie udało się sparsować odpowiedzi LLM jako JSON: %s | Tekst: %.200s", e, text)
+            try:
+                repaired = repair_json(text, return_objects=True)
+                if isinstance(repaired, dict) and repaired:
+                    log.info("JSON naprawiony przez json_repair")
+                    return repaired
+            except Exception:
+                pass
             return {"_parse_error": str(e)}
 
     def save_to_json(self, save_path):

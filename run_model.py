@@ -78,18 +78,30 @@ def start():
         # Pokaż okno konsoli żeby widać było postęp ładowania modelu
         creationflags = subprocess.CREATE_NEW_CONSOLE
 
+    stderr_pipe = None if creationflags else subprocess.PIPE
+
     try:
-        _llama_process = subprocess.Popen(cmd, creationflags=creationflags)
+        _llama_process = subprocess.Popen(cmd, creationflags=creationflags, stderr=stderr_pipe)
 
         time.sleep(2)
         if _llama_process.poll() is not None:
             log.error("Serwer AI zamknął się tuż po starcie (kod: %d).", _llama_process.returncode)
+            if stderr_pipe is not None:
+                stderr_out = _llama_process.stderr.read().decode(errors="replace").strip()
+                if stderr_out:
+                    log.error("Błąd z llama-server:\n%s", stderr_out)
             sys.exit(1)
 
         log.info("Serwer AI uruchomiony (PID %d). Ładowanie modelu...", _llama_process.pid)
 
-    except Exception:
-        log.exception("Błąd podczas uruchamiania llama-server")
+    except FileNotFoundError:
+        log.error("Nie można uruchomić llama-server.exe — plik nie istnieje: %s", server_exe)
+        sys.exit(1)
+    except PermissionError as e:
+        log.error("Brak uprawnień do uruchomienia llama-server.exe: %s", e)
+        sys.exit(1)
+    except Exception as e:
+        log.exception("Nieoczekiwany błąd podczas uruchamiania llama-server: %s", e)
         sys.exit(1)
 
 
@@ -107,17 +119,24 @@ def wait_until_ready(timeout=300):
     url  = f"http://{host}:{port}/health"
 
     log.info("Oczekiwanie na gotowość modelu (max %d s)...", timeout)
+    last_error = None
     for elapsed in range(timeout):
         try:
             with urllib.request.urlopen(url, timeout=1) as r:
                 if r.status == 200:
                     log.info("Model gotowy po %d s.", elapsed)
                     return True
-        except Exception:
-            pass
+        except urllib.error.URLError as e:
+            last_error = str(e.reason)
+            log.debug("Próba %d/%d — serwer jeszcze nie gotowy: %s", elapsed + 1, timeout, e.reason)
+        except Exception as e:
+            last_error = str(e)
+            log.debug("Próba %d/%d — błąd: %s", elapsed + 1, timeout, e)
         time.sleep(1)
 
     log.warning("Model nie odpowiedział w ciągu %d sekund.", timeout)
+    if last_error:
+        log.warning("Ostatni błąd połączenia: %s", last_error)
     return False
 
 

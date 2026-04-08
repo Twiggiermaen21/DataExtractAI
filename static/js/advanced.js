@@ -1246,6 +1246,55 @@ if (btnGeneratePozew) {
 
 
 /**
+ * Walidacja finansowa wiersza faktury.
+ * Zwraca Set id kolumn, które przeszły walidację (powinny być zielone).
+ *
+ * Sprawdzane reguły (tolerancja ±0.05 zł z tytułu zaokrągleń):
+ *   1. sprzedaz_netto + dystrybucja_netto ≈ kwota_netto
+ *   2. sprzedaz_brutto + dystrybucja_brutto ≈ kwota_brutto
+ *   3. kwota_netto + kwota_vat ≈ kwota_brutto
+ */
+function computeValidation(fields) {
+    const valid = new Set();
+
+    // Konwertuj do groszy (int) żeby uniknąć błędów zmiennoprzecinkowych
+    function gr(key) {
+        const v = parseFloat(String(fields[key] ?? '').replace(',', '.'));
+        return isNaN(v) ? null : Math.round(v * 100);
+    }
+
+    const kn = gr('kwota_netto');
+    const kb = gr('kwota_brutto');
+    const kv = gr('kwota_vat');
+    const sn = gr('sprzedaz_cena_netto');
+    const sb = gr('sprzedaz_cena_brutto');
+    const dn = gr('dystrybucja_cena_netto');
+    const db = gr('dystrybucja_cena_brutto');
+    // Reguła 1: sprzedaz_netto + dystrybucja_netto = kwota_netto
+    if (kn !== null && sn !== null && dn !== null && kn === sn + dn) {
+        valid.add('kwota_netto');
+        valid.add('sprzedaz_cena_netto');
+        valid.add('dystrybucja_cena_netto');
+    }
+
+    // Reguła 2: sprzedaz_brutto + dystrybucja_brutto = kwota_brutto
+    if (kb !== null && sb !== null && db !== null && kb === sb + db) {
+        valid.add('kwota_brutto');
+        valid.add('sprzedaz_cena_brutto');
+        valid.add('dystrybucja_cena_brutto');
+    }
+
+    // Reguła 3: kwota_netto + kwota_vat = kwota_brutto
+    if (kn !== null && kb !== null && kv !== null && kb === kn + kv) {
+        valid.add('kwota_netto');
+        valid.add('kwota_brutto');
+        valid.add('kwota_vat');
+    }
+
+    return valid;
+}
+
+/**
  * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxów.
  * Obsługuje grupy netto/brutto — jeden checkbox → dwie kolumny obok siebie z nagłówkiem grupującym.
  */
@@ -1277,8 +1326,6 @@ function renderDynamicTable(documents) {
         { label: 'Data wystawienia', cols: [{ id: 'data_wystawienia',           sub: null,    numeric: false }] },
         { label: 'Data sprzedaży',   cols: [{ id: 'data_sprzedazy',            sub: null,    numeric: false }] },
         { label: 'Wolumen [kWh]',    cols: [{ id: 'wolumen_energii',            sub: null,    numeric: true  }] },
-        { label: 'Należność',        cols: [{ id: 'naleznos_netto',             sub: 'Netto', numeric: true  },
-                                            { id: 'naleznos_brutto',            sub: 'Brutto',numeric: true  }] },
         { label: 'Kwoty',            cols: [{ id: 'kwota_netto',                sub: 'Netto', numeric: true  },
                                             { id: 'kwota_brutto',               sub: 'Brutto',numeric: true  }] },
         { label: 'VAT',              cols: [{ id: 'kwota_vat',                  sub: null,    numeric: true  }] },
@@ -1327,7 +1374,7 @@ function renderDynamicTable(documents) {
             header1Html += `<th class="${thBase} text-center border-l border-zinc-200" colspan="${g.activeCols.length}">${g.label}</th>`;
         }
     });
-    header1Html += `<th class="${thBase} text-right" ${hasSubHeaders ? 'rowspan="2"' : ''}>Pewność</th>`;
+    header1Html += `<th class="${thBase} text-right" ${hasSubHeaders ? 'rowspan="2"' : ''}>Skan</th>`;
     tableHeaderRow1.innerHTML = header1Html;
 
     // 1b. Wiersz 2 nagłówka (Netto / Brutto pod grupą — tylko gdy oba widoczne)
@@ -1361,12 +1408,12 @@ function renderDynamicTable(documents) {
     documents.forEach(docData => {
         const fields = docData.fields || {};
         const isScan = !!docData.is_vision;
+        const validFields = computeValidation(fields);
 
         const brutoVal = parseFloat(String(fields['kwota_brutto'] || 0).replace(',', '.'));
         if (!isNaN(brutoVal)) totalBrutto += brutoVal;
 
-        const confidence = parseInt(String(fields['pewnosc_ocr_procent'] || 0).replace('%', ''));
-        if (confidence < 85 || isScan) lowConfidenceCount++;
+        if (isScan) lowConfidenceCount++;
 
         const rowClass = isScan
             ? 'border-b border-zinc-100 last:border-b-0 bg-yellow-50 hover:bg-yellow-100 transition-colors'
@@ -1397,18 +1444,14 @@ function renderDynamicTable(documents) {
                 }
                 const isMain = c.id === 'naleznos_brutto' || c.id === 'kwota_brutto';
                 const borderLeft = (g.activeCols.length > 1 && ci === 0) ? 'border-l border-zinc-100' : '';
-                bodyHtml += `<td class="px-3 py-3 ${borderLeft}"><div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'} ${g.activeCols.length > 1 ? 'text-center' : ''}">${val}</div></td>`;
+                const validStyle = validFields.has(c.id) ? ' style="background:#d1fae5;"' : '';
+                bodyHtml += `<td class="px-3 py-3 ${borderLeft}"${validStyle}><div class="${isMain ? 'text-sm font-semibold text-zinc-900' : 'text-xs text-zinc-700'} ${g.activeCols.length > 1 ? 'text-center' : ''}">${val}</div></td>`;
             });
         });
 
-        const scanBadge = isScan
-            ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold mr-1" title="Skan">📷</span>`
-            : '';
         bodyHtml += `
-            <td class="px-4 py-3 text-right">
-                ${scanBadge}<span class="inline-flex items-center rounded-full ${confidence < 85 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'} px-2 py-0.5 text-[10px] font-bold">
-                    ${confidence}%
-                </span>
+            <td class="px-4 py-3 text-center">
+                ${isScan ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold" title="Skan — wyższe ryzyko błędu OCR">📷 Skan</span>` : ''}
             </td>`;
 
         bodyHtml += `</tr>`;
