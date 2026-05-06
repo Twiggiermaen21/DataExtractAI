@@ -1,4 +1,4 @@
-// ==================== Templates - ADVANCED MODE ====================
+﻿// ==================== Templates - ADVANCED MODE ====================
 const templateSelect = document.getElementById('templateSelect');
 const templatePreview = document.getElementById('templatePreview');
 const extractedDataCard = document.getElementById('extractedDataCard');
@@ -15,7 +15,7 @@ const advDividerStep3 = document.getElementById('advDividerStep3');
 const advWezwaniaList = document.getElementById('advWezwaniaList');
 const advRefreshWezwaniaList = document.getElementById('advRefreshWezwaniaList');
 
-// Źródło danych - OCR vs JSON
+// ĹąrĂłdĹ‚o danych - OCR vs JSON
 const btnSourceOcr = document.getElementById('btnSourceOcr');
 const btnSourceJson = document.getElementById('btnSourceJson');
 const ocrSection = document.getElementById('ocrSection');
@@ -71,7 +71,7 @@ async function loadJsonFiles() {
         const files = await response.json();
 
         if (files.length === 0) {
-            jsonCheckboxList.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plików JSON. Najpierw uruchom OCR.</div>';
+            jsonCheckboxList.innerHTML = '<div style="color: var(--text-muted); padding: 16px; text-align: center;">Brak plikĂłw JSON. Najpierw uruchom OCR.</div>';
         } else {
             jsonCheckboxList.innerHTML = files.map(file => `
                 <div class="checkbox-item">
@@ -86,10 +86,10 @@ async function loadJsonFiles() {
     }
 }
 
-// Zmienna do przechowywania wybranych wezwań w trybie zaawansowanym
+// Zmienna do przechowywania wybranych wezwaĹ„ w trybie zaawansowanym
 let selectedAdvWezwania = [];
 
-// Funkcja ładowania listy wezwań dla pozwu w trybie zaawansowanym
+// Funkcja Ĺ‚adowania listy wezwaĹ„ dla pozwu w trybie zaawansowanym
 async function loadAdvWezwaniaList() {
     if (!advWezwaniaList) return;
     try {
@@ -99,7 +99,7 @@ async function loadAdvWezwaniaList() {
         if (wezwania.length === 0) {
             advWezwaniaList.innerHTML = `
                 <div style="color: var(--text-muted); padding: 16px; text-align: center;">
-                    Brak zapisanych wezwań. Najpierw wygeneruj Wezwanie do Zapłaty.
+                    Brak zapisanych wezwaĹ„. Najpierw wygeneruj Wezwanie do ZapĹ‚aty.
                 </div>`;
         } else {
             advWezwaniaList.innerHTML = wezwania.map(w => `
@@ -117,11 +117,11 @@ async function loadAdvWezwaniaList() {
         }
     } catch (e) {
         console.error('Error loading wezwania:', e);
-        advWezwaniaList.innerHTML = '<div style="color: red; padding: 16px;">Błąd ładowania wezwań</div>';
+        advWezwaniaList.innerHTML = '<div style="color: red; padding: 16px;">BĹ‚Ä…d Ĺ‚adowania wezwaĹ„</div>';
     }
 }
 
-// Obsługa wyboru wezwań w trybie zaawansowanym
+// ObsĹ‚uga wyboru wezwaĹ„ w trybie zaawansowanym
 window.toggleAdvWezwanieSelection = function (id) {
     const index = selectedAdvWezwania.indexOf(id);
     if (index > -1) {
@@ -136,14 +136,14 @@ window.toggleAdvWezwanieSelection = function (id) {
     }
 };
 
-// Przycisk odświeżania listy wezwań
+// Przycisk odĹ›wieĹĽania listy wezwaĹ„
 if (advRefreshWezwaniaList) {
     advRefreshWezwaniaList.addEventListener('click', loadAdvWezwaniaList);
 }
 
 loadTemplates();
 
-// === PRZEŁĄCZANIE ŹRÓDŁA (OCR vs JSON) ===
+// === PRZEĹÄ„CZANIE ĹąRĂ“DĹA (OCR vs JSON) ===
 if (btnSourceOcr) {
     btnSourceOcr.addEventListener('click', () => {
         advDataSource = 'ocr';
@@ -212,10 +212,10 @@ function renderAdvFileList() {
     if (!advFileList) return;
     advFileList.innerHTML = advUploadedFiles.map((file, index) => `
         <div class="file-item">
-            <span class="icon">📄</span>
+            <span class="icon">đź“„</span>
             <span class="name">${file.name}</span>
             <span class="size">${formatSize(file.size)}</span>
-            <span class="remove" onclick="removeAdvFile(${index})">✕</span>
+            <span class="remove" onclick="removeAdvFile(${index})">âś•</span>
         </div>
     `).join('');
 }
@@ -250,7 +250,7 @@ if (btnOcrFill) {
 
         btnOcrFill.disabled = true;
         btnOcrFill.classList.add('loading');
-        if (btnOcrFillIcon) btnOcrFillIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnOcrFillIcon) btnOcrFillIcon.innerHTML = '<span class="spinner">âŹł</span>';
         if (btnOcrFillText) btnOcrFillText.textContent = 'Trwa analiza...';
         
         if (ocrFillProgressBar) ocrFillProgressBar.classList.remove('hidden');
@@ -264,7 +264,6 @@ if (btnOcrFill) {
         }
 
         // Reset actions state
-        if (advBtnSaveToLibrary) advBtnSaveToLibrary.disabled = true;
         if (btnPrintTemplate) btnPrintTemplate.disabled = true;
         if (btnExportExcel) btnExportExcel.disabled = true;
 
@@ -274,7 +273,7 @@ if (btnOcrFill) {
 
         try {
             if (advWorkflowType === 'podsumowanie') {
-                // Pobierz zaznaczone kolumny z checkboxów (obsługa data-columns + switch netto)
+                // Pobierz zaznaczone kolumny z checkboxĂłw (obsĹ‚uga data-columns + switch netto)
                 const _nettoSw = document.getElementById('nettoSwitch');
                 const _nettoOn = !_nettoSw || _nettoSw.checked;
                 const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
@@ -333,7 +332,7 @@ if (btnOcrFill) {
                 if (ocrFillProgressFill) ocrFillProgressFill.style.width = '20%';
                 if (ocrFillProgressText) {
                     ocrFillProgressText.classList.remove('hidden');
-                    ocrFillProgressText.textContent = 'Trwa wysyłanie plików...';
+                    ocrFillProgressText.textContent = 'Trwa wysyĹ‚anie plikĂłw...';
                 }
 
                 const response = await fetch('/api/process_ocr', {
@@ -342,12 +341,12 @@ if (btnOcrFill) {
                 });
                 
                 if (ocrFillProgressFill) ocrFillProgressFill.style.width = '70%';
-                if (ocrFillProgressText) ocrFillProgressText.textContent = 'Analizowanie wyników...';
+                if (ocrFillProgressText) ocrFillProgressText.textContent = 'Analizowanie wynikĂłw...';
                 
                 const data = await response.json();
                 
                 if (ocrFillProgressFill) ocrFillProgressFill.style.width = '100%';
-                if (ocrFillProgressText) ocrFillProgressText.textContent = 'Zakończono!';
+                if (ocrFillProgressText) ocrFillProgressText.textContent = 'ZakoĹ„czono!';
 
                 if (data.success && data.documents) {
                     // This part remains as it was in original advanced.js for 'wezwanie'/'pozew'
@@ -366,7 +365,6 @@ if (btnOcrFill) {
             }
 
             // After completion
-            if (advBtnSaveToLibrary) advBtnSaveToLibrary.disabled = false;
             if (btnPrintTemplate) btnPrintTemplate.disabled = false;
             if (btnExportExcel) btnExportExcel.disabled = (allProcessedFiles.length === 0 && !window.lastProcessedFiles);
 
@@ -383,8 +381,8 @@ if (btnOcrFill) {
             console.error('OCR Processing Error:', error);
         } finally {
             btnOcrFill.classList.remove('loading');
-            if (btnOcrFillIcon) btnOcrFillIcon.textContent = '🚀';
-            if (btnOcrFillText) btnOcrFillText.textContent = 'Analiza zakończona';
+            if (btnOcrFillIcon) btnOcrFillIcon.textContent = 'đźš€';
+            if (btnOcrFillText) btnOcrFillText.textContent = 'Analiza zakoĹ„czona';
             
             // Keep progress bar for a moment
             setTimeout(() => {
@@ -399,7 +397,7 @@ if (btnOcrFill) {
 function processStandardWorkflowData(data) {
     if (!data.documents || data.documents.length === 0) return;
     
-    // Agreguj dane z wielu dokumentów (moved from original btnOcrFill listener)
+    // Agreguj dane z wielu dokumentĂłw (moved from original btnOcrFill listener)
     const invoiceNumbers = [];
     const invoiceDates = [];
     let totalAmount = 0;
@@ -447,7 +445,7 @@ function processStandardWorkflowData(data) {
         const dateInputs = doc.querySelectorAll('input[name*="date_wystawienia"]');
         dateInputs.forEach(input => { input.value = invoiceDates.join(', '); input.style.background = '#e8f5e9'; });
         const amountInputs = doc.querySelectorAll('input[name*="kwot"]');
-        amountInputs.forEach(input => { input.value = totalAmount.toFixed(2) + ' zł'; input.style.background = '#fff3e0'; });
+        amountInputs.forEach(input => { input.value = totalAmount.toFixed(2) + ' zĹ‚'; input.style.background = '#fff3e0'; });
         if (latestPaymentDateStr) {
             const nextDay = addOneDay(latestPaymentDateStr);
             const paymentInputs = doc.querySelectorAll('input[name*="terminu_platnosci"], input[name*="date_terminu"]');
@@ -466,25 +464,25 @@ if (btnRunLlm) {
 
         btnRunLlm.disabled = true;
         btnRunLlm.classList.add('loading');
-        if (btnLlmIcon) btnLlmIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnLlmIcon) btnLlmIcon.innerHTML = '<span class="spinner">âŹł</span>';
         if (btnLlmText) btnLlmText.textContent = 'Przetwarzanie...';
         if (llmProgressBar) llmProgressBar.classList.remove('hidden');
         if (llmStatusText) {
             llmStatusText.classList.remove('hidden');
-            llmStatusText.textContent = '🤖 Wysyłanie do AI...';
+            llmStatusText.textContent = 'đź¤– WysyĹ‚anie do AI...';
         }
         if (llmProgressFill) llmProgressFill.style.width = '20%';
         if (extractedDataCard) extractedDataCard.classList.add('hidden');
 
         try {
-            // Dla wielu plików w wezwaniu - przetwarzaj każdy osobno
+            // Dla wielu plikĂłw w wezwaniu - przetwarzaj kaĹĽdy osobno
             const isMultipleInvoices = selectedFiles.length > 1 && advWorkflowType === 'wezwanie';
             const endpoint = isMultipleInvoices ? '/api/process_multiple_invoices' : '/api/process_template';
 
             if (isMultipleInvoices) {
-                if (llmStatusText) llmStatusText.textContent = `🤖 Przetwarzanie ${selectedFiles.length} faktur osobno...`;
+                if (llmStatusText) llmStatusText.textContent = `đź¤– Przetwarzanie ${selectedFiles.length} faktur osobno...`;
             } else {
-                if (llmStatusText) llmStatusText.textContent = '🤖 Ekstrakcja danych...';
+                if (llmStatusText) llmStatusText.textContent = 'đź¤– Ekstrakcja danych...';
             }
             if (llmProgressFill) llmProgressFill.style.width = '50%';
 
@@ -503,8 +501,8 @@ if (btnRunLlm) {
 
             if (data.success) {
                 if (isMultipleInvoices) {
-                    // Obsługa wielu faktur
-                    if (llmStatusText) llmStatusText.textContent = `✅ Przetworzono ${data.invoices?.length || 0} faktur! Zapisano do: ${data.output_folder}`;
+                    // ObsĹ‚uga wielu faktur
+                    if (llmStatusText) llmStatusText.textContent = `âś… Przetworzono ${data.invoices?.length || 0} faktur! Zapisano do: ${data.output_folder}`;
 
                     if (extractedDataCard) extractedDataCard.classList.remove('hidden');
                     if (extractedDataContent) {
@@ -515,12 +513,12 @@ if (btnRunLlm) {
                         }, null, 2);
                     }
 
-                    // Wypełnij szablon danymi wspólnymi + pierwszą fakturą
+                    // WypeĹ‚nij szablon danymi wspĂłlnymi + pierwszÄ… fakturÄ…
                     if (templateIframe && templateIframe.contentDocument) {
                         const doc = templateIframe.contentDocument;
                         const skipFields = ['Wpisz_aktualne_miasto_uzytkownika_oraz_dzisiejsza_date_w_formacie_Miejscowosc_Data'];
 
-                        // Wypełnij wspólne dane (wierzyciel, dłużnik)
+                        // WypeĹ‚nij wspĂłlne dane (wierzyciel, dĹ‚uĹĽnik)
                         for (let [fieldName, value] of Object.entries(data.common_data || {})) {
                             if (skipFields.includes(fieldName) || !value) continue;
                             const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
@@ -530,9 +528,9 @@ if (btnRunLlm) {
                             });
                         }
 
-                        // Wypełnij dane z faktur
+                        // WypeĹ‚nij dane z faktur
                         if (data.invoices && data.invoices.length > 0) {
-                            // Połącz numery wszystkich faktur i wstaw do WSZYSTKICH pól numeru
+                            // PoĹ‚Ä…cz numery wszystkich faktur i wstaw do WSZYSTKICH pĂłl numeru
                             const allNumers = data.invoices.map(i => i.numer).filter(n => n).join(', ');
                             const numerInputs = doc.querySelectorAll('input[name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"]');
                             numerInputs.forEach(input => {
@@ -540,12 +538,12 @@ if (btnRunLlm) {
                                 input.style.background = '#e8f5e9';
                             });
 
-                            // Połącz daty wystawienia wszystkich faktur po przecinku
+                            // PoĹ‚Ä…cz daty wystawienia wszystkich faktur po przecinku
                             const allDates = data.invoices.map(i => i.data).filter(d => d).join(', ');
 
                             // parsePolishDate is defined in helpers.js
 
-                            // Znajdź najpóźniejszy termin płatności (od niego liczymy odsetki)
+                            // ZnajdĹş najpĂłĹşniejszy termin pĹ‚atnoĹ›ci (od niego liczymy odsetki)
                             let latestTerminDate = null;
                             let latestTerminStr = '';
                             data.invoices.forEach(inv => {
@@ -569,17 +567,17 @@ if (btnRunLlm) {
                             }
                         }
 
-                        // Wstaw łączną kwotę
+                        // Wstaw Ĺ‚Ä…cznÄ… kwotÄ™
                         const kwotaInput = doc.querySelector('input[name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta"]');
                         if (kwotaInput && data.total_amount) {
-                            kwotaInput.value = data.total_amount + ' zł';
+                            kwotaInput.value = data.total_amount + ' zĹ‚';
                             kwotaInput.style.background = '#fff3e0';
                         }
                     }
 
                 } else {
-                    // Standardowa obsługa
-                    if (llmStatusText) llmStatusText.textContent = '✅ Ekstrakcja zakończona!';
+                    // Standardowa obsĹ‚uga
+                    if (llmStatusText) llmStatusText.textContent = 'âś… Ekstrakcja zakoĹ„czona!';
 
                     if (extractedDataCard) extractedDataCard.classList.remove('hidden');
                     if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.fields, null, 2);
@@ -594,7 +592,7 @@ if (btnRunLlm) {
                         for (let [fieldName, value] of Object.entries(data.fields)) {
                             if (skipFields.includes(fieldName) || !value) continue;
 
-                            // Dla terminu płatności - przesuń datę o 1 dzień
+                            // Dla terminu pĹ‚atnoĹ›ci - przesuĹ„ datÄ™ o 1 dzieĹ„
                             if (fieldName.includes('terminu_platnosci') || fieldName.includes('date_terminu')) {
                                 value = addOneDay(value);
                             }
@@ -614,15 +612,15 @@ if (btnRunLlm) {
                 }
 
             } else {
-                if (llmStatusText) llmStatusText.textContent = `❌ ${data.error}`;
+                if (llmStatusText) llmStatusText.textContent = `âťŚ ${data.error}`;
             }
 
         } catch (error) {
-            if (llmStatusText) llmStatusText.textContent = `❌ ${error.message}`;
+            if (llmStatusText) llmStatusText.textContent = `âťŚ ${error.message}`;
         } finally {
             btnRunLlm.classList.remove('loading');
-            if (btnLlmIcon) btnLlmIcon.textContent = '🤖';
-            if (btnLlmText) btnLlmText.textContent = 'Wypełnij szablon AI';
+            if (btnLlmIcon) btnLlmIcon.textContent = 'đź¤–';
+            if (btnLlmText) btnLlmText.textContent = 'WypeĹ‚nij szablon AI';
             updateLlmButton();
 
             setTimeout(() => {
@@ -636,7 +634,7 @@ if (btnRunLlm) {
 
 // === TEMPLATE SELECTION - WORKFLOW BRANCHING ===
 
-// Połącz powiązania z Sidebarem (Paskiem bocznym)
+// PoĹ‚Ä…cz powiÄ…zania z Sidebarem (Paskiem bocznym)
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarNav = document.getElementById('sidebarTemplateNav');
     if (sidebarNav && templateSelect) {
@@ -652,22 +650,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Odznacz wszystkie
                     navItems.forEach(nav => nav.classList.remove('active'));
-                    // Zaznacz kliknięty
+                    // Zaznacz klikniÄ™ty
                     item.classList.add('active');
 
-                    // Ukryj welcome screen i bibliotekę
+                    // Ukryj welcome screen i bibliotekÄ™
                     const welcome = document.getElementById('dashboard-welcome');
-                    const library = document.getElementById('dashboard-library');
+                    
                     const advanced = document.getElementById('dashboard-advanced');
                     if (welcome) welcome.classList.add('hidden');
-                    if (library) library.classList.add('hidden');
+                    
                     if (advanced) advanced.classList.remove('hidden');
 
                     // Add header padding when in template
                     const header = document.querySelector('.dashboard-header');
                     if (header) header.classList.add('header-padded');
 
-                    // Zmień wartość ukrytego selecta i wywołaj event zmiany
+                    // ZmieĹ„ wartoĹ›Ä‡ ukrytego selecta i wywoĹ‚aj event zmiany
                     templateSelect.value = templateFile;
                     templateSelect.dispatchEvent(new Event('change'));
                 }
@@ -688,11 +686,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // View Switch
             const welcome = document.getElementById('dashboard-welcome');
-            const library = document.getElementById('dashboard-library');
+            
             const advanced = document.getElementById('dashboard-advanced');
 
             if (welcome) welcome.classList.remove('hidden');
-            if (library) library.classList.add('hidden');
+            
             if (advanced) advanced.classList.add('hidden');
 
             // Remove header padding on welcome
@@ -731,12 +729,9 @@ if (templateSelect) {
         }
         if (advActionsCard) advActionsCard.classList.add('hidden');
 
-        const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
-        if (btnSaveLib) btnSaveLib.disabled = true;
-
         if (!filename) {
             advWorkflowType = null;
-            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: var(--text-muted);">Wybierz szablon aby zobaczyć podgląd</div>';
+            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: var(--text-muted);">Wybierz szablon aby zobaczyÄ‡ podglÄ…d</div>';
             currentTemplateFields = [];
             return;
         }
@@ -748,21 +743,21 @@ if (templateSelect) {
 
         if (filename.includes('wezwanie')) {
             advWorkflowType = 'wezwanie';
-            // Dla wezwania - pokaż sekcję upload
+            // Dla wezwania - pokaĹĽ sekcjÄ™ upload
             if (advStepUpload) advStepUpload.classList.remove('hidden');
         } else if (filename.includes('pozew')) {
             advWorkflowType = 'pozew';
-            // Dla pozwu - pokaż sekcję z wezwaniami, ukryj upload
+            // Dla pozwu - pokaĹĽ sekcjÄ™ z wezwaniami, ukryj upload
             if (advStepSourcePozew) advStepSourcePozew.classList.remove('hidden');
             if (advStepPozewExtra) advStepPozewExtra.classList.remove('hidden');
 
-            // Załaduj listę wezwań
+            // ZaĹ‚aduj listÄ™ wezwaĹ„
             loadAdvWezwaniaList();
         } else if (filename.includes('podsumowanie')) {
             advWorkflowType = 'podsumowanie';
-            // Pokaż sekcję upload dla podsumowania
+            // PokaĹĽ sekcjÄ™ upload dla podsumowania
             if (advStepUpload) advStepUpload.classList.remove('hidden');
-            // Pokaż ustawienia kolumn
+            // PokaĹĽ ustawienia kolumn
             const podsumowanieSettings = document.getElementById('podsumowanieSettings');
             const podsumowanieExtraOptions = document.getElementById('podsumowanieExtraOptions');
             if (podsumowanieSettings) podsumowanieSettings.classList.remove('hidden');
@@ -818,14 +813,11 @@ if (templateSelect) {
                 };
             }
 
-            const btnSaveLib = document.getElementById('advBtnSaveToLibrary');
-            if (btnSaveLib) btnSaveLib.disabled = true;
-
             const btnExportExcel = document.getElementById('btnExportExcel');
             if (btnExportExcel) btnExportExcel.disabled = true;
 
         } catch (e) {
-            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">Błąd ładowania szablonu</div>';
+            if (templatePreview) templatePreview.innerHTML = '<div style="padding: 48px; text-align: center; color: #ff453a;">BĹ‚Ä…d Ĺ‚adowania szablonu</div>';
         }
     });
 
@@ -839,7 +831,7 @@ if (templateSelect) {
 
             const doc = templateIframe.contentDocument;
 
-            // Krytyczne: Zsynchronizuj wartości inputów z atrybutami, aby zachowały się w HTML
+            // Krytyczne: Zsynchronizuj wartoĹ›ci inputĂłw z atrybutami, aby zachowaĹ‚y siÄ™ w HTML
             doc.querySelectorAll('input, textarea, select').forEach(el => {
                 if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio')) {
                     if (el.checked) el.setAttribute('checked', 'checked');
@@ -872,14 +864,14 @@ if (templateSelect) {
 
                 const result = await response.json();
                 if (result.success) {
-                    alert('✅ Dokument zapisany w bibliotece!');
-                    if (typeof loadLibrary === 'function') loadLibrary(); // Odśwież widok biblioteki jeśli funkcja dostępna
+                    alert('âś… Dokument zapisany w bibliotece!');
+                    if (typeof loadLibrary === 'function') loadLibrary(); // OdĹ›wieĹĽ widok biblioteki jeĹ›li funkcja dostÄ™pna
                 } else {
-                    alert('❌ Błąd zapisu: ' + result.error);
+                    alert('âťŚ BĹ‚Ä…d zapisu: ' + result.error);
                 }
             } catch (e) {
                 console.error('Save to library error:', e);
-                alert('❌ Błąd połączenia z serwerem');
+                alert('âťŚ BĹ‚Ä…d poĹ‚Ä…czenia z serwerem');
             } finally {
                 advBtnSaveToLibrary.disabled = false;
                 advBtnSaveToLibrary.textContent = 'Zapisz w bibliotece';
@@ -947,7 +939,7 @@ function renderPozewFileList() {
     pozewFileList.innerHTML = pozewUploadedFiles.map((f, i) => `
         <div class="file-item">
             <span class="file-name">${f.name}</span>
-            <button class="file-remove" onclick="removePozewFile(${i})">✕</button>
+            <button class="file-remove" onclick="removePozewFile(${i})">âś•</button>
         </div>
     `).join('');
 }
@@ -974,10 +966,10 @@ if (btnPozewOcr) {
         const statusText = document.getElementById('pozewOcrStatusText');
 
         btnPozewOcr.disabled = true;
-        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">âŹł</span>';
         if (btnText) btnText.textContent = 'Przetwarzanie...';
         if (progressBar) progressBar.classList.remove('hidden');
-        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = '📷 OCR wezwania...'; }
+        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = 'đź“· OCR wezwania...'; }
         if (progressFill) progressFill.style.width = '20%';
 
         const formData = new FormData();
@@ -993,23 +985,23 @@ if (btnPozewOcr) {
             const data = await response.json();
 
             if (data.success && data.documents?.length > 0) {
-                if (statusText) statusText.textContent = '✅ Dane z wezwania pobrane!';
+                if (statusText) statusText.textContent = 'âś… Dane z wezwania pobrane!';
                 if (progressFill) progressFill.style.width = '100%';
 
-                // Pokaż dane
+                // PokaĹĽ dane
                 if (extractedDataCard) extractedDataCard.classList.remove('hidden');
                 if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(data.documents, null, 2);
 
-                // Wyczyść
+                // WyczyĹ›Ä‡
                 pozewUploadedFiles = [];
                 renderPozewFileList();
             } else {
-                if (statusText) statusText.textContent = '⚠️ Brak danych';
+                if (statusText) statusText.textContent = 'âš ď¸Ź Brak danych';
             }
         } catch (e) {
-            if (statusText) statusText.textContent = `❌ ${e.message}`;
+            if (statusText) statusText.textContent = `âťŚ ${e.message}`;
         } finally {
-            if (btnIcon) btnIcon.textContent = '🚀';
+            if (btnIcon) btnIcon.textContent = 'đźš€';
             if (btnText) btnText.textContent = 'OCR wezwania';
             updatePozewOcrButton();
             setTimeout(() => progressBar?.classList.add('hidden'), 3000);
@@ -1052,7 +1044,7 @@ function renderKrsFileList() {
     krsFileList.innerHTML = krsUploadedFiles.map((f, i) => `
         <div class="file-item">
             <span class="file-name">${f.name}</span>
-            <button class="file-remove" onclick="removeKrsFile(${i})">✕</button>
+            <button class="file-remove" onclick="removeKrsFile(${i})">âś•</button>
         </div>
     `).join('');
 }
@@ -1065,7 +1057,7 @@ window.removeKrsFile = function (index) {
 
 function updateGeneratePozewButton() {
     if (btnGeneratePozew) {
-        // Musi mieć KRS i źródło wezwania (zapisane lub upload)
+        // Musi mieÄ‡ KRS i ĹşrĂłdĹ‚o wezwania (zapisane lub upload)
         const hasKrs = krsUploadedFiles.length > 0;
         const hasSavedWezwania = document.querySelectorAll('#advWezwaniaList input:checked').length > 0;
         const hasUploadWezwania = pozewUploadedFiles.length > 0;
@@ -1073,7 +1065,7 @@ function updateGeneratePozewButton() {
     }
 }
 
-// Update na zmiany checkboxów wezwań
+// Update na zmiany checkboxĂłw wezwaĹ„
 document.addEventListener('change', e => {
     if (e.target.closest('#advWezwaniaList')) updateGeneratePozewButton();
 });
@@ -1088,10 +1080,10 @@ if (btnGeneratePozew) {
         const statusText = document.getElementById('pozewStatusText');
 
         btnGeneratePozew.disabled = true;
-        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+        if (btnIcon) btnIcon.innerHTML = '<span class="spinner">âŹł</span>';
         if (btnText) btnText.textContent = 'Generowanie...';
         if (progressBar) progressBar.classList.remove('hidden');
-        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = '🔄 Rozpoczynam...'; }
+        if (statusText) { statusText.classList.remove('hidden'); statusText.textContent = 'đź”„ Rozpoczynam...'; }
         if (progressFill) progressFill.style.width = '5%';
 
         try {
@@ -1103,7 +1095,7 @@ if (btnGeneratePozew) {
 
             if (pozewUploadedFiles.length > 0) {
                 // OCR wezwania z pliku
-                if (statusText) statusText.textContent = '📷 OCR wezwania do zapłaty...';
+                if (statusText) statusText.textContent = 'đź“· OCR wezwania do zapĹ‚aty...';
                 if (progressFill) progressFill.style.width = '15%';
 
                 const wezForm = new FormData();
@@ -1120,10 +1112,10 @@ if (btnGeneratePozew) {
                     wezwanieData = wezData.documents[0].fields;
                 }
             } else {
-                // Z zapisanych wezwań
+                // Z zapisanych wezwaĹ„
                 const selectedIds = Array.from(document.querySelectorAll('#advWezwaniaList input:checked')).map(cb => cb.value);
                 if (selectedIds.length > 0) {
-                    if (statusText) statusText.textContent = '📋 Ładowanie zapisanego wezwania...';
+                    if (statusText) statusText.textContent = 'đź“‹ Ĺadowanie zapisanego wezwania...';
                     const resp = await fetch(`/api/wezwania/${selectedIds[0]}`);
                     const data = await resp.json();
                     wezwanieData = data.fields || {};
@@ -1133,8 +1125,8 @@ if (btnGeneratePozew) {
 
             if (progressFill) progressFill.style.width = '30%';
 
-            // KROK 2: Wyciągnij tekst z plików KRS (bez LLM - tylko ekstrakcja tekstu)
-            if (statusText) statusText.textContent = '📄 Ekstrakcja tekstu z KRS...';
+            // KROK 2: WyciÄ…gnij tekst z plikĂłw KRS (bez LLM - tylko ekstrakcja tekstu)
+            if (statusText) statusText.textContent = 'đź“„ Ekstrakcja tekstu z KRS...';
             if (progressFill) progressFill.style.width = '45%';
 
             let krsTexts = [];
@@ -1148,35 +1140,35 @@ if (btnGeneratePozew) {
 
                     if (krsData.success && krsData.text) {
                         krsTexts.push(krsData.text);
-                        console.log(`📄 KRS ${krsData.filename}: ${krsData.text.length} znaków` +
-                            (krsData.truncated ? ` (przycięto z ${krsData.original_length})` : ''));
+                        console.log(`đź“„ KRS ${krsData.filename}: ${krsData.text.length} znakĂłw` +
+                            (krsData.truncated ? ` (przyciÄ™to z ${krsData.original_length})` : ''));
                     } else {
-                        console.warn(`⚠️ Nie udało się wyciągnąć tekstu z: ${krsFile.name}`, krsData.error);
+                        console.warn(`âš ď¸Ź Nie udaĹ‚o siÄ™ wyciÄ…gnÄ…Ä‡ tekstu z: ${krsFile.name}`, krsData.error);
                     }
                 } catch (e) {
-                    console.warn(`❌ Błąd ekstrakcji KRS: ${krsFile.name}`, e);
+                    console.warn(`âťŚ BĹ‚Ä…d ekstrakcji KRS: ${krsFile.name}`, e);
                 }
             }
 
             if (progressFill) progressFill.style.width = '70%';
 
-            // KROK 3: Wyślij dane do analizy (mapowanie wezwania + szukanie KRS)
-            if (statusText) statusText.textContent = '🔍 Szukanie numeru KRS pozwanego...';
+            // KROK 3: WyĹ›lij dane do analizy (mapowanie wezwania + szukanie KRS)
+            if (statusText) statusText.textContent = 'đź”Ť Szukanie numeru KRS pozwanego...';
 
             const allData = {
                 wezwanie: wezwanieData,
                 krs: krsTexts
             };
 
-            console.log('📦 Dane wysłane do LLM (wezwanie + KRS):', JSON.stringify(allData, null, 2));
+            console.log('đź“¦ Dane wysĹ‚ane do LLM (wezwanie + KRS):', JSON.stringify(allData, null, 2));
 
-            // Pokaż surowe dane
+            // PokaĹĽ surowe dane
             if (extractedDataCard) extractedDataCard.classList.remove('hidden');
             if (extractedDataContent) extractedDataContent.textContent = JSON.stringify(allData, null, 2);
 
             if (progressFill) progressFill.style.width = '80%';
 
-            // Wywołaj drugi LLM do analizy i mapowania
+            // WywoĹ‚aj drugi LLM do analizy i mapowania
             const analyzeResp = await fetch('/api/analyze_pozew', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1184,18 +1176,18 @@ if (btnGeneratePozew) {
             });
             const analyzeData = await analyzeResp.json();
 
-            console.log('🤖 LLM odpowiedź (zmapowane pola pozwu):', JSON.stringify(analyzeData, null, 2));
+            console.log('đź¤– LLM odpowiedĹş (zmapowane pola pozwu):', JSON.stringify(analyzeData, null, 2));
 
             if (progressFill) progressFill.style.width = '95%';
 
-            // KROK 4: Wypełnij szablon Pozew
-            if (statusText) statusText.textContent = '📝 Wypełnianie szablonu pozwu...';
+            // KROK 4: WypeĹ‚nij szablon Pozew
+            if (statusText) statusText.textContent = 'đź“ť WypeĹ‚nianie szablonu pozwu...';
 
             if (templateIframe && templateIframe.contentDocument && analyzeData.success && analyzeData.fields) {
                 const doc = templateIframe.contentDocument;
                 const pozewFields = analyzeData.fields;
 
-                // Wypełnij pola z analizy LLM
+                // WypeĹ‚nij pola z analizy LLM
                 for (let [fieldName, value] of Object.entries(pozewFields)) {
                     if (!value) continue;
                     const inputs = doc.querySelectorAll(`input[name="${fieldName}"]`);
@@ -1205,7 +1197,7 @@ if (btnGeneratePozew) {
                     });
                 }
 
-                // Wypełnij datę wezwania z created_at pliku JSON
+                // WypeĹ‚nij datÄ™ wezwania z created_at pliku JSON
                 if (wezwanieCreatedAt) {
                     const wezwanieDate = new Date(wezwanieCreatedAt);
                     const dd = String(wezwanieDate.getDate()).padStart(2, '0');
@@ -1224,18 +1216,18 @@ if (btnGeneratePozew) {
             }
 
             if (progressFill) progressFill.style.width = '100%';
-            if (statusText) statusText.textContent = '✅ Pozew wygenerowany!';
+            if (statusText) statusText.textContent = 'âś… Pozew wygenerowany!';
 
-            // Wyczyść pliki
+            // WyczyĹ›Ä‡ pliki
             krsUploadedFiles = [];
             pozewUploadedFiles = [];
             renderKrsFileList();
             renderPozewFileList();
 
         } catch (e) {
-            if (statusText) statusText.textContent = `❌ ${e.message}`;
+            if (statusText) statusText.textContent = `âťŚ ${e.message}`;
         } finally {
-            if (btnIcon) btnIcon.textContent = '⚖️';
+            if (btnIcon) btnIcon.textContent = 'âš–ď¸Ź';
             if (btnText) btnText.textContent = 'Generuj Pozew';
             updateGeneratePozewButton();
             setTimeout(() => progressBar?.classList.add('hidden'), 3000);
@@ -1247,17 +1239,17 @@ if (btnGeneratePozew) {
 
 /**
  * Walidacja finansowa wiersza faktury.
- * Zwraca Set id kolumn, które przeszły walidację (powinny być zielone).
+ * Zwraca Set id kolumn, ktĂłre przeszĹ‚y walidacjÄ™ (powinny byÄ‡ zielone).
  *
- * Sprawdzane reguły (tolerancja ±0.05 zł z tytułu zaokrągleń):
- *   1. sprzedaz_netto + dystrybucja_netto ≈ kwota_netto
- *   2. sprzedaz_brutto + dystrybucja_brutto ≈ kwota_brutto
- *   3. kwota_netto + kwota_vat ≈ kwota_brutto
+ * Sprawdzane reguĹ‚y (tolerancja Â±0.05 zĹ‚ z tytuĹ‚u zaokrÄ…gleĹ„):
+ *   1. sprzedaz_netto + dystrybucja_netto â‰ kwota_netto
+ *   2. sprzedaz_brutto + dystrybucja_brutto â‰ kwota_brutto
+ *   3. kwota_netto + kwota_vat â‰ kwota_brutto
  */
 function computeValidation(fields) {
     const valid = new Set();
 
-    // Konwertuj do groszy (int) żeby uniknąć błędów zmiennoprzecinkowych
+    // Konwertuj do groszy (int) ĹĽeby uniknÄ…Ä‡ bĹ‚Ä™dĂłw zmiennoprzecinkowych
     function gr(key) {
         const v = parseFloat(String(fields[key] ?? '').replace(',', '.'));
         return isNaN(v) ? null : Math.round(v * 100);
@@ -1270,21 +1262,21 @@ function computeValidation(fields) {
     const sb = gr('sprzedaz_cena_brutto');
     const dn = gr('dystrybucja_cena_netto');
     const db = gr('dystrybucja_cena_brutto');
-    // Reguła 1: sprzedaz_netto + dystrybucja_netto = kwota_netto
+    // ReguĹ‚a 1: sprzedaz_netto + dystrybucja_netto = kwota_netto
     if (kn !== null && sn !== null && dn !== null && kn === sn + dn) {
         valid.add('kwota_netto');
         valid.add('sprzedaz_cena_netto');
         valid.add('dystrybucja_cena_netto');
     }
 
-    // Reguła 2: sprzedaz_brutto + dystrybucja_brutto = kwota_brutto
+    // ReguĹ‚a 2: sprzedaz_brutto + dystrybucja_brutto = kwota_brutto
     if (kb !== null && sb !== null && db !== null && kb === sb + db) {
         valid.add('kwota_brutto');
         valid.add('sprzedaz_cena_brutto');
         valid.add('dystrybucja_cena_brutto');
     }
 
-    // Reguła 3: kwota_netto + kwota_vat = kwota_brutto
+    // ReguĹ‚a 3: kwota_netto + kwota_vat = kwota_brutto
     if (kn !== null && kb !== null && kv !== null && kb === kn + kv) {
         valid.add('kwota_netto');
         valid.add('kwota_brutto');
@@ -1295,8 +1287,8 @@ function computeValidation(fields) {
 }
 
 /**
- * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxów.
- * Obsługuje grupy netto/brutto — jeden checkbox → dwie kolumny obok siebie z nagłówkiem grupującym.
+ * Dynamiczne renderowanie tabeli w iframe na podstawie zaznaczonych checkboxĂłw.
+ * ObsĹ‚uguje grupy netto/brutto â€” jeden checkbox â†’ dwie kolumny obok siebie z nagĹ‚Ăłwkiem grupujÄ…cym.
  */
 function renderDynamicTable(documents) {
     if (!templateIframe || !templateIframe.contentDocument) return;
@@ -1307,65 +1299,65 @@ function renderDynamicTable(documents) {
     const tableBodyEl = doc.getElementById('summary-table-body');
     if (!tableHeaderRow1 || !tableBodyEl) return;
 
-    // Zbierz zaznaczone kolumny (obsługa data-columns z przecinkiem + switch netto)
+    // Zbierz zaznaczone kolumny (obsĹ‚uga data-columns z przecinkiem + switch netto)
     const nettoSwitch = document.getElementById('nettoSwitch');
     const nettoEnabled = !nettoSwitch || nettoSwitch.checked;
     const selectedColumns = Array.from(document.querySelectorAll('#columnToggleList input:checked'))
         .flatMap(cb => {
             const cols = (cb.dataset.columns || '').split(',').map(s => s.trim()).filter(Boolean);
-            // Jeśli switch netto wyłączony i to para (netto,brutto) → tylko brutto
+            // JeĹ›li switch netto wyĹ‚Ä…czony i to para (netto,brutto) â†’ tylko brutto
             if (!nettoEnabled && cols.length === 2) return [cols[1]];
             return cols;
         });
 
-    // Definicja grup kolumn — każda group ma label i listę podkolumn (cols)
-    // Grupy z 1 col → pojedyncza kolumna; grupy z 2 cols → nagłówek grupujący + Netto/Brutto
+    // Definicja grup kolumn â€” kaĹĽda group ma label i listÄ™ podkolumn (cols)
+    // Grupy z 1 col â†’ pojedyncza kolumna; grupy z 2 cols â†’ nagĹ‚Ăłwek grupujÄ…cy + Netto/Brutto
     const columnsConfig = [
         { label: 'Nr faktury',       cols: [{ id: 'numer_faktury',              sub: null,    numeric: false }] },
         { label: 'Sprzedawca',       cols: [{ id: 'sprzedawca',                sub: null,    numeric: false }] },
         { label: 'Data wystawienia', cols: [{ id: 'data_wystawienia',           sub: null,    numeric: false }] },
-        { label: 'Data sprzedaży',   cols: [{ id: 'data_sprzedazy',            sub: null,    numeric: false }] },
+        { label: 'Data sprzedaĹĽy',   cols: [{ id: 'data_sprzedazy',            sub: null,    numeric: false }] },
         { label: 'Wolumen [kWh]',    cols: [{ id: 'wolumen_energii',            sub: null,    numeric: true  }] },
         { label: 'Kwoty',            cols: [{ id: 'kwota_netto',                sub: 'Netto', numeric: true  },
                                             { id: 'kwota_brutto',               sub: 'Brutto',numeric: true  }] },
         { label: 'VAT',              cols: [{ id: 'kwota_vat',                  sub: null,    numeric: true  }] },
-        { label: 'Sprzedaż energii', cols: [{ id: 'sprzedaz_cena_netto',        sub: 'Netto', numeric: true  },
+        { label: 'SprzedaĹĽ energii', cols: [{ id: 'sprzedaz_cena_netto',        sub: 'Netto', numeric: true  },
                                             { id: 'sprzedaz_cena_brutto',       sub: 'Brutto',numeric: true  }] },
         { label: 'Dystrybucja',      cols: [{ id: 'dystrybucja_cena_netto',     sub: 'Netto', numeric: true  },
                                             { id: 'dystrybucja_cena_brutto',    sub: 'Brutto',numeric: true  }] },
         { label: 'Abonamentowa',     cols: [{ id: 'oplata_abonamentowa',        sub: 'Netto', numeric: true  },
                                             { id: 'oplata_abonamentowa_brutto', sub: 'Brutto',numeric: true  }] },
-        { label: 'Sieciowa stała',   cols: [{ id: 'oplata_sieciowa_stala',      sub: 'Netto', numeric: true  },
+        { label: 'Sieciowa staĹ‚a',   cols: [{ id: 'oplata_sieciowa_stala',      sub: 'Netto', numeric: true  },
                                             { id: 'oplata_sieciowa_stala_brutto',sub:'Brutto',numeric: true  }] },
         { label: 'Sieciowa zmienna', cols: [{ id: 'oplata_sieciowa_zmienna',    sub: 'Netto', numeric: true  },
                                             { id: 'oplata_sieciowa_zmienna_brutto',sub:'Brutto',numeric:true }] },
-        { label: 'Jakościowa',       cols: [{ id: 'oplata_jakosciowa',           sub: 'Netto', numeric: true  },
+        { label: 'JakoĹ›ciowa',       cols: [{ id: 'oplata_jakosciowa',           sub: 'Netto', numeric: true  },
                                             { id: 'oplata_jakosciowa_brutto',    sub: 'Brutto',numeric: true  }] },
         { label: 'OZE',              cols: [{ id: 'oplata_oze',                  sub: 'Netto', numeric: true  },
                                             { id: 'oplata_oze_brutto',           sub: 'Brutto',numeric: true  }] },
         { label: 'Kogeneracyjna',    cols: [{ id: 'oplata_kogeneracyjna',        sub: 'Netto', numeric: true  },
                                             { id: 'oplata_kogeneracyjna_brutto', sub: 'Brutto',numeric: true  }] },
-        { label: 'Przejściowa',      cols: [{ id: 'oplata_przejsciowa',          sub: 'Netto', numeric: true  },
+        { label: 'PrzejĹ›ciowa',      cols: [{ id: 'oplata_przejsciowa',          sub: 'Netto', numeric: true  },
                                             { id: 'oplata_przejsciowa_brutto',   sub: 'Brutto',numeric: true  }] },
         { label: 'Mocowa',           cols: [{ id: 'oplata_mocowa',               sub: 'Netto', numeric: true  },
                                             { id: 'oplata_mocowa_brutto',        sub: 'Brutto',numeric: true  }] },
     ];
 
-    // Aktywne grupy — group aktywna gdy co najmniej jedna jej kolumna jest w selectedColumns
+    // Aktywne grupy â€” group aktywna gdy co najmniej jedna jej kolumna jest w selectedColumns
     const activeGroups = columnsConfig
         .filter(g => g.cols.some(c => selectedColumns.includes(c.id)))
         .map(g => ({
             ...g,
-            // activeCols = tylko te kolumny grupy które są w selectedColumns
+            // activeCols = tylko te kolumny grupy ktĂłre sÄ… w selectedColumns
             activeCols: g.cols.filter(c => selectedColumns.includes(c.id)),
         }));
 
-    // Czy którakolwiek aktywna grupa ma 2 aktywne podkolumny (netto + brutto oba widoczne)?
+    // Czy ktĂłrakolwiek aktywna grupa ma 2 aktywne podkolumny (netto + brutto oba widoczne)?
     const hasSubHeaders = activeGroups.some(g => g.activeCols.length > 1);
 
     const thBase = 'px-3 py-2 text-left text-[10px] font-bold text-zinc-500 uppercase tracking-wider';
 
-    // 1a. Wiersz 1 nagłówka (etykiety grup)
+    // 1a. Wiersz 1 nagĹ‚Ăłwka (etykiety grup)
     let header1Html = '';
     activeGroups.forEach(g => {
         if (g.activeCols.length === 1) {
@@ -1377,7 +1369,7 @@ function renderDynamicTable(documents) {
     header1Html += `<th class="${thBase} text-right" ${hasSubHeaders ? 'rowspan="2"' : ''}>Skan</th>`;
     tableHeaderRow1.innerHTML = header1Html;
 
-    // 1b. Wiersz 2 nagłówka (Netto / Brutto pod grupą — tylko gdy oba widoczne)
+    // 1b. Wiersz 2 nagĹ‚Ăłwka (Netto / Brutto pod grupÄ… â€” tylko gdy oba widoczne)
     if (tableHeaderRow2) {
         if (hasSubHeaders) {
             let header2Html = '';
@@ -1419,7 +1411,7 @@ function renderDynamicTable(documents) {
             ? 'border-b border-zinc-100 last:border-b-0 bg-yellow-50 hover:bg-yellow-100 transition-colors'
             : 'border-b border-zinc-100 last:border-b-0 hover:bg-zinc-50 transition-colors';
 
-        bodyHtml += `<tr class="${rowClass}" title="${isScan ? '⚠ Skan – wyższe ryzyko błędu OCR' : ''}">`;
+        bodyHtml += `<tr class="${rowClass}" title="${isScan ? 'âš  Skan â€“ wyĹĽsze ryzyko bĹ‚Ä™du OCR' : ''}">`;
 
         activeGroups.forEach(g => {
             g.activeCols.forEach((c, ci) => {
@@ -1431,7 +1423,7 @@ function renderDynamicTable(documents) {
                     const n = parseFloat(String(raw).replace(',', '.'));
                     val = !isNaN(n) ? n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) : String(raw);
                 } else if (c.numeric && String(raw).includes('|')) {
-                    // Wiele wartości (np. opłata pojawia się 2x w fakturze) — wypisz jedną pod drugą
+                    // Wiele wartoĹ›ci (np. opĹ‚ata pojawia siÄ™ 2x w fakturze) â€” wypisz jednÄ… pod drugÄ…
                     val = String(raw).split('|')
                         .map(v => v.trim())
                         .filter(v => v !== '')
@@ -1451,7 +1443,7 @@ function renderDynamicTable(documents) {
 
         bodyHtml += `
             <td class="px-4 py-3 text-center">
-                ${isScan ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold" title="Skan — wyższe ryzyko błędu OCR">📷 Skan</span>` : ''}
+                ${isScan ? `<span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-[10px] font-bold" title="Skan â€” wyĹĽsze ryzyko bĹ‚Ä™du OCR">đź“· Skan</span>` : ''}
             </td>`;
 
         bodyHtml += `</tr>`;
@@ -1459,12 +1451,12 @@ function renderDynamicTable(documents) {
 
     tableBodyEl.innerHTML = bodyHtml;
 
-    // 3. Aktualizacja podsumowań w nagłówku iframe
+    // 3. Aktualizacja podsumowaĹ„ w nagĹ‚Ăłwku iframe
     const summaryTotalEl = doc.getElementById('summary-total-amount');
     if (summaryTotalEl) summaryTotalEl.textContent = formatCurrencyHelper(totalBrutto);
 
     const headerBadgeEl = doc.getElementById('summary-header-badge');
-    if (headerBadgeEl) headerBadgeEl.textContent = `${documents.length} faktur • PLN`;
+    if (headerBadgeEl) headerBadgeEl.textContent = `${documents.length} faktur â€˘ PLN`;
 
     const statusTextEl = doc.getElementById('summary-ocr-status-text');
     if (statusTextEl) statusTextEl.textContent = lowConfidenceCount > 0 ? `${lowConfidenceCount} wymaga uwagi` : 'Wszystkie odczyty poprawne';
@@ -1491,7 +1483,7 @@ function formatCurrencyHelper(v) {
         : '0,00';
 }
 
-// Globalny listener dla checkboxów i switcha netto (delegacja)
+// Globalny listener dla checkboxĂłw i switcha netto (delegacja)
 document.addEventListener('change', (e) => {
     if ((e.target.closest('#columnToggleList') || e.target.id === 'distributionToggle' || e.target.id === 'nettoSwitch') && window.lastProcessedDocuments) {
         renderDynamicTable(window.lastProcessedDocuments);
@@ -1512,3 +1504,4 @@ document.addEventListener('change', (e) => {
         track.style.background = '#4B5563';
     }
 });
+

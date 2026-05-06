@@ -1,10 +1,10 @@
 import os
-import json
 import logging
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, current_app
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 
-from app.services.ocr_pipeline import get_pipeline, unload_pipeline
+from app.services.ocr_pipeline import get_pipeline
 from app.extensions import limiter
 
 log = logging.getLogger(__name__)
@@ -17,7 +17,6 @@ MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
 
 
 def _safe_upload_path(folder, filename):
-    """Zwraca bezpieczną ścieżkę pliku i weryfikuje brak path traversal."""
     filename = secure_filename(filename)
     if not filename:
         return None, "Nieprawidłowa nazwa pliku"
@@ -30,9 +29,17 @@ def _safe_upload_path(folder, filename):
     return path, None
 
 
+def _safe_unlink(path):
+    try:
+        if path and os.path.exists(path):
+            os.remove(path)
+    except Exception:
+        log.warning("Nie udało się usunąć pliku tymczasowego: %s", path)
+
+
 @ocr_bp.route('/api/extract_pdf_text', methods=['POST'])
+@login_required
 def extract_pdf_text():
-    """Wyciąga surowy tekst z PDF/DOCX bez wysyłania do LLM."""
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'Brak pliku'}), 400
 
@@ -81,15 +88,17 @@ def extract_pdf_text():
             'original_length': original_len,
             'truncated': original_len > 3000,
         })
-
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        log.exception("Błąd extract_pdf_text")
+        return jsonify({'success': False, 'error': 'Błąd przetwarzania pliku'}), 500
+    finally:
+        _safe_unlink(filepath)
 
 
 @ocr_bp.route('/api/process_ocr', methods=['POST'])
-@limiter.limit("100 per minute") # Ograniczenie do 100 żądań na minutę
+@limiter.limit("100 per minute")
+@login_required
 def process_ocr():
-    """OCR — przetwarza pliki i zwraca wyekstrahowane dane."""
     if 'files' not in request.files:
         return jsonify({'success': False, 'error': 'Brak plików'}), 400
 
@@ -98,21 +107,26 @@ def process_ocr():
         return jsonify({'success': False, 'error': 'Nie wybrano plików'}), 400
 
     template_name = request.form.get('template', 'wezwanie_do_zaplaty.html')
-    template_path = os.path.join(current_app.root_path, '..', 'templates', 'documents', template_name)
     model_name = request.form.get('model')
-
-    # Odczytaj wybrane kolumny (z checkboxów "Dane do odczytu")
     columns_raw = request.form.get('selected_columns', '')
     selected_columns = [c.strip() for c in columns_raw.split(',') if c.strip()] or None
 
     try:
-        pipeline = get_pipeline(template_path if os.path.exists(template_path) else None,
-                                model=model_name, selected_columns=selected_columns)
+        template_full_path = None
+        if template_name:
+            safe_template_name = secure_filename(template_name)
+            if safe_template_name.endswith(".html"):
+                candidate = os.path.realpath(os.path.join(current_app.root_path, '..', 'templates', 'documents', safe_template_name))
+                templates_root = os.path.realpath(os.path.join(current_app.root_path, '..', 'templates', 'documents'))
+                if candidate.startswith(templates_root) and os.path.exists(candidate):
+                    template_full_path = candidate
+
+        pipeline = get_pipeline(template_full_path, model=model_name, selected_columns=selected_columns)
         if pipeline is None:
             return jsonify({'success': False, 'error': 'Nie można połączyć z LM Studio'}), 500
-    except Exception as e:
+    except Exception:
         log.exception("Błąd inicjalizacji pipeline")
-        return jsonify({'success': False, 'error': f'Błąd: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': 'Błąd inicjalizacji OCR'}), 500
 
     processed_files = []
     documents = []
@@ -138,16 +152,12 @@ def process_ocr():
         try:
             file.save(original_path)
             ocr_output = pipeline.predict(original_path)
-
             has_data = False
             for res in ocr_output:
-                saved = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
-                if saved:
-                    processed_files.append(os.path.basename(saved))
-
+                processed_files.append(filename)
                 if hasattr(res, 'extracted_data') and res.extracted_data:
                     documents.append({
-                        'filename': filename, 
+                        'filename': filename,
                         'fields': res.extracted_data,
                         'is_vision': getattr(res, 'is_vision', False)
                     })
@@ -155,12 +165,11 @@ def process_ocr():
 
             if not has_data:
                 errors.append({'file': filename, 'error': f'Model nie zwrócił danych dla pliku: {filename}'})
-
-        except Exception as e:
+        except Exception:
             log.exception("OCR error for %s", filename)
-            errors.append({'file': filename, 'error': str(e)})
-
-    # unload_pipeline()
+            errors.append({'file': filename, 'error': 'Błąd OCR dla pliku'})
+        finally:
+            _safe_unlink(original_path)
 
     return jsonify({
         'success': True,
@@ -172,43 +181,24 @@ def process_ocr():
 
 
 @ocr_bp.route('/api/get_results')
+@login_required
 def get_results():
-    """Zwraca listę plików JSON z folderu output."""
-    output_folder = current_app.config['OUTPUT_FOLDER']
-    if not os.path.exists(output_folder):
-        return jsonify([])
-    try:
-        files = sorted([f for f in os.listdir(output_folder) if f.endswith('.json')], reverse=True)
-        return jsonify(files)
-    except Exception:
-        return jsonify([])
+    return jsonify([])
 
 
 @ocr_bp.route('/api/get_result/<filename>')
+@login_required
 def get_result(filename):
-    """Zwraca zawartość pliku JSON."""
-    safe_name = secure_filename(filename)
-    if not safe_name or not safe_name.endswith('.json'):
-        return jsonify({'error': 'Nieprawidłowa nazwa pliku'}), 400
-    output_folder = current_app.config['OUTPUT_FOLDER']
-    path = os.path.realpath(os.path.join(output_folder, safe_name))
-    if not path.startswith(os.path.realpath(output_folder)):
-        return jsonify({'error': 'Niedozwolona ścieżka'}), 400
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return jsonify(json.load(f))
-    except FileNotFoundError:
-        return jsonify({'error': 'Nie znaleziono pliku'}), 404
-    except Exception as e:
-        log.exception("Błąd odczytu JSON: %s", safe_name)
-        return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Odczyt zapisanych wyników jest wyłączony w tej wersji.'}), 410
 
 
 @ocr_bp.route('/input/<filename>')
+@login_required
 def serve_input(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
+    return jsonify({'error': 'Dostęp do katalogu input jest wyłączony w tej wersji.'}), 410
 
 
 @ocr_bp.route('/saved/<filename>')
+@login_required
 def serve_saved(filename):
-    return send_from_directory(current_app.config['SAVED_FOLDER'], filename)
+    return jsonify({'error': 'Dostęp do katalogu saved jest wyłączony w tej wersji.'}), 410

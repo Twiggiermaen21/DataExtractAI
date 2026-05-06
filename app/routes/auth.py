@@ -1,10 +1,19 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
+from urllib.parse import urlparse, urljoin
 from app.extensions import db, limiter
 from app.models import User
 from app.forms import LoginForm, RegistrationForm
 
 auth_bp = Blueprint('auth', __name__)
+
+
+def _is_safe_redirect_target(target: str) -> bool:
+    if not target:
+        return False
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -20,7 +29,9 @@ def login():
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             flash('Zalogowano pomyślnie!', 'success')
-            return redirect(next_page or url_for('main.index'))
+            if next_page and _is_safe_redirect_target(next_page):
+                return redirect(next_page)
+            return redirect(url_for('main.index'))
         flash('Nieprawidłowy email lub hasło.', 'danger')
     return render_template('login.html', form=form)
 
@@ -42,7 +53,8 @@ def register():
     return render_template('register.html', form=form)
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
+@login_required
 def logout():
     logout_user()
     flash('Wylogowano pomyślnie.', 'info')

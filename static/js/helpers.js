@@ -112,7 +112,6 @@ function switchView(viewId, title) {
     const views = [
         'dashboard-welcome',
         'dashboard-advanced',
-        'dashboard-library',
         'dashboard-settings'
     ];
     
@@ -134,7 +133,6 @@ function switchView(viewId, title) {
     // Find nav item that might be associated with this view
     let navId = '';
     if (viewId === 'dashboard-welcome') navId = 'sidebar-logo';
-    else if (viewId === 'dashboard-library') navId = 'navLibrary';
     else if (viewId === 'dashboard-settings') navId = 'navSettings';
     else if (viewId === 'dashboard-advanced') {
         // Advanced is usually activated via data-template items

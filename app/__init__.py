@@ -1,5 +1,6 @@
 import os
 import secrets
+import click
 from flask import Flask
 
 
@@ -17,7 +18,13 @@ def create_app():
             "i dodaj go do pliku .env jako SECRET_KEY=<twój_klucz>."
         )
     app.config['SECRET_KEY'] = secret_key
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ── Konfiguracja e-mail ────────────────────────────────────────────
@@ -40,17 +47,16 @@ def create_app():
         os.makedirs(folder, exist_ok=True)
 
     # ── Inicjalizacja rozszerzeń ───────────────────────────────────────
-    from app.extensions import db, login_manager, limiter, mail
+    from app.extensions import db, login_manager, limiter, mail, migrate
     db.init_app(app)
     login_manager.init_app(app)
     limiter.init_app(app)
     mail.init_app(app)
+    if migrate is not None:
+        migrate.init_app(app, db)
 
     # Import modeli, aby SQLAlchemy znało tabele
     from app import models  # noqa: F401
-
-    with app.app_context():
-        db.create_all()
 
     # ── Rejestracja blueprintów ────────────────────────────────────────
     from app.routes.main import main_bp
@@ -74,5 +80,21 @@ def create_app():
     app.register_blueprint(excel_export_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(settings_bp)
+
+    @app.cli.command("seed-admin")
+    @click.option("--email", default="admin@admin.com", show_default=True)
+    @click.option("--password", default="admin", show_default=True)
+    @click.option("--username", default="admin", show_default=True)
+    def seed_admin(email, password, username):
+        from app.models import User
+        existing = User.query.filter_by(email=email).first()
+        if existing:
+            click.echo(f"Admin already exists: {email}")
+            return
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        click.echo(f"Admin created: {email}")
 
     return app

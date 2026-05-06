@@ -28,20 +28,16 @@
         {% include 'components/tab_advanced.html' %}
       </div>
 
-      <div class="dashboard-content content-padded hidden" id="dashboard-library">
-        {% include 'components/library.html' %}
-      </div>
-
       {% include 'components/settings.html' %}
     </div>
   </div>
+  <form id="logoutForm" method="POST" action="{{ url_for('auth.logout') }}" style="display:none;"></form>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ocr.js') }}"></script>
   <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
   <script src="{{ url_for('static', filename='js/pozew-process.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/library.js') }}"></script>
   <script src="{{ url_for('static', filename='js/excel_export.js') }}"></script>
   <script src="{{ url_for('static', filename='js/auth_ui.js') }}"></script>
 
@@ -102,7 +98,7 @@
             style="background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); flex: 1; margin: 0; box-shadow: none;">
             Anuluj
           </button>
-          <button class="btn" onclick="window.location.href='/logout'"
+          <button class="btn" onclick="document.getElementById('logoutForm').submit()"
             style="background: #ff453a; color: #fff; flex: 1; margin: 0; box-shadow: none; border: none;">
             Tak, wyloguj
           </button>
