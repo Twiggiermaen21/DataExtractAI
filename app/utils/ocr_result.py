@@ -3,7 +3,10 @@ import os
 import time
 import logging
 
-from json_repair import repair_json
+try:
+    from json_repair import repair_json
+except ImportError:
+    repair_json = None
 
 log = logging.getLogger(__name__)
 
@@ -43,14 +46,17 @@ class OCRResult:
                 clean = "\n".join(lines[1:-1])
             return json.loads(clean)
         except Exception as e:
-            log.warning("Nie udało się sparsować odpowiedzi LLM jako JSON: %s | Tekst: %.200s", e, text)
-            try:
-                repaired = repair_json(text, return_objects=True)
-                if isinstance(repaired, dict) and repaired:
-                    log.info("JSON naprawiony przez json_repair")
-                    return repaired
-            except Exception:
-                pass
+            log.warning("Nie udalo sie sparsowac odpowiedzi LLM jako JSON: %s | Tekst: %.200s", e, text)
+            if repair_json is not None:
+                try:
+                    repaired = repair_json(text, return_objects=True)
+                    if isinstance(repaired, dict) and repaired:
+                        log.info("JSON naprawiony przez json_repair")
+                        return repaired
+                except Exception:
+                    pass
+            else:
+                log.warning("Brak biblioteki json_repair - pomijam probe naprawy JSON.")
             return {"_parse_error": str(e)}
 
     def save_to_json(self, save_path):
@@ -72,5 +78,5 @@ class OCRResult:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             return full_path
         except Exception as e:
-            log.error("Błąd zapisu JSON: %s", e)
+            log.error("Blad zapisu JSON: %s", e)
             return None

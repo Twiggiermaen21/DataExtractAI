@@ -21,7 +21,7 @@ def slownie(amount):
         zlotowki = int(kwota)
         grosze = int(round((kwota - zlotowki) * 100))
 
-        slownie_text = num2words(zlotowki, lang='pl')
+        slownie = num2words(zlotowki, lang='pl')
 
         reszta_100 = zlotowki % 100
         reszta_10 = zlotowki % 10
@@ -33,7 +33,9 @@ def slownie(amount):
         else:
             waluta = "złotych"
 
-        final_text = f"{slownie_text} {waluta} {grosze:02d}/100"
+        final_text = f"{slownie} {waluta} {grosze:02d}/100"
         return jsonify({'slownie': final_text})
-    except Exception:
-        return jsonify({'error': 'Nieprawidłowa kwota'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+

@@ -2,8 +2,14 @@ import os
 import base64
 import re
 import logging
+import tempfile
 
 import fitz  # PyMuPDF
+try:
+    from PIL import Image, ImageEnhance, ImageFilter, ImageStat
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 try:
     from docx import Document as DocxDocument
@@ -40,6 +46,39 @@ def extract_fields_from_template(template_path):
 def image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
+
+
+def enhance_image_for_ocr(path: str):
+    """Wyostrza litery i kontroluje jasność obrazu. Zwraca (new_path, is_temp)."""
+    if not PIL_AVAILABLE:
+        return path, False
+
+    try:
+        with Image.open(path) as img:
+            # Pracuj na RGB dla spójnych operacji.
+            processed = img.convert("RGB")
+
+            # Delikatne odszumienie i wyostrzenie liter.
+            processed = processed.filter(ImageFilter.MedianFilter(size=3))
+            processed = ImageEnhance.Sharpness(processed).enhance(1.8)
+            processed = ImageEnhance.Contrast(processed).enhance(1.12)
+
+            # Kontrola jasności: poprawa czytelności bez przepalania.
+            gray = processed.convert("L")
+            mean_luma = ImageStat.Stat(gray).mean[0]
+            if mean_luma < 85:
+                processed = ImageEnhance.Brightness(processed).enhance(1.12)
+            elif mean_luma > 190:
+                processed = ImageEnhance.Brightness(processed).enhance(0.90)
+
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+            tmp_path = tmp.name
+            tmp.close()
+            processed.save(tmp_path, format="PNG", optimize=True)
+            return tmp_path, True
+    except Exception:
+        # Fallback bez blokowania OCR.
+        return path, False
 
 
 def get_mime_type(path):

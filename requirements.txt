@@ -43,5 +43,5 @@ Flask-Limiter
 Flask-Talisman
 email-validator
 Flask-Mail
-psycopg2-binary
-Flask-Migrate
+json-repair
+Pillow

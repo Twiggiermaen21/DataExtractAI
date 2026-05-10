@@ -1,10 +1,10 @@
-// ==================== EXCEL EXPORT LOGIC ====================
+﻿// ==================== EXCEL EXPORT LOGIC ====================
 document.addEventListener('DOMContentLoaded', () => {
     const btnExportExcel = document.getElementById('btnExportExcel');
     if (btnExportExcel) {
         btnExportExcel.addEventListener('click', async () => {
-            if (!window.lastProcessedFiles || window.lastProcessedFiles.length === 0) {
-                alert('Brak przetworzonych plików do wyeksportowania.');
+            if (!window.lastProcessedDocuments || window.lastProcessedDocuments.length === 0) {
+                alert('Brak przetworzonych danych do wyeksportowania.');
                 return;
             }
 
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        files: window.lastProcessedFiles,
+                        documents: window.lastProcessedDocuments,
                         selected_columns: selectedColumns.length ? selectedColumns : null
                     })
                 });

