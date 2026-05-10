@@ -1,4 +1,4 @@
-﻿import os
+import os
 import json
 import logging
 import tempfile
@@ -110,8 +110,8 @@ def process_ocr():
     if not files or files[0].filename == '':
         return jsonify({'success': False, 'error': 'Nie wybrano plikow'}), 400
 
-    template_name = request.form.get('template', 'wezwanie_do_zaplaty.html')
-    template_path = os.path.join(current_app.root_path, '..', 'templates', 'documents', template_name)
+    template_name = request.form.get('template', 'podsumowanie.html')
+    template_path = os.path.join(current_app.config['TEMPLATES_FOLDER'], template_name)
     model_name = request.form.get('model')
 
     columns_raw = request.form.get('selected_columns', '')

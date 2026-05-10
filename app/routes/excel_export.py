@@ -1,4 +1,4 @@
-﻿import os
+import os
 import re
 import json
 import logging
@@ -89,11 +89,8 @@ def _to_number(value):
 
 
 def _find_json(output_dir, filename):
-    """Szuka pliku JSON w OUTPUT_FOLDER i podfolderze wezwania_faktury."""
-    for candidate in [
-        os.path.join(output_dir, filename),
-        os.path.join(output_dir, 'wezwania_faktury', filename),
-    ]:
+    """Szuka pliku JSON w OUTPUT_FOLDER."""
+    for candidate in [os.path.join(output_dir, filename)]:
         if os.path.exists(candidate):
             return candidate
 

@@ -1,0 +1,164 @@
+<div id="tab-advanced" class="modern-container">
+    <div class="actions-column panel-flex">
+        <div class="card-modern card-dark adv-import-card">
+            <h3 class="modern-title">
+                <span class="adv-title-bar"></span>
+                Importuj dane
+            </h3>
+
+            <div class="step-section hidden adv-template-selector-wrap">
+                <select id="templateSelect" class="btn-modern btn-dark-modern">
+                    <option value="">-- Wybierz szablon --</option>
+                </select>
+            </div>
+
+            <div class="step-section hidden" id="advStepUpload">
+                <div class="upload-zone-modern" id="advUploadZone">
+                    <div class="upload-icon-box">&#128196;</div>
+                    <div class="upload-text adv-upload-title">Dodaj pliki faktur</div>
+                    <div class="modern-subtitle adv-upload-subtitle">Przeciagnij lub kliknij (JPG, PNG, PDF, XML)</div>
+                </div>
+                <input type="file" id="advFileInput" multiple accept="image/*,.pdf,.xml" class="adv-hidden-input">
+                <div class="file-list adv-file-list" id="advFileList"></div>
+            </div>
+        </div>
+
+        <div class="card-modern card-dark hidden" id="podsumowanieSettings">
+            <h3 class="modern-title">Dane do odczytu</h3>
+
+            <div class="adv-switch-row">
+                <span class="adv-switch-label">Pokaz kolumny netto</span>
+                <label class="adv-switch">
+                    <input type="checkbox" id="nettoSwitch" checked class="adv-switch-input">
+                    <span class="adv-switch-track">
+                        <span class="adv-switch-thumb" id="nettoSwitchThumb"></span>
+                    </span>
+                </label>
+            </div>
+
+            <div id="columnToggleList">
+                <div class="adv-column-group adv-column-group-base">
+                    <div class="adv-column-group-title">Dane podstawowe</div>
+                    <div class="adv-column-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="numer_faktury">
+                            <span class="checkbox-label adv-checkbox-label">Nr faktury</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="sprzedawca">
+                            <span class="checkbox-label adv-checkbox-label">Sprzedawca</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="data_wystawienia">
+                            <span class="checkbox-label adv-checkbox-label">Data wystawienia</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="data_sprzedazy">
+                            <span class="checkbox-label adv-checkbox-label">Data sprzedazy</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="wolumen_energii">
+                            <span class="checkbox-label adv-checkbox-label">Wolumen energii</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="adv-column-group adv-column-group-amounts">
+                    <div class="adv-column-group-title">Kwoty</div>
+                    <div class="adv-column-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" checked data-columns="razem">
+                            <span class="checkbox-label adv-checkbox-label">Razem do zaplaty</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="kwota_vat">
+                            <span class="checkbox-label adv-checkbox-label">Kwota VAT</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="sprzedaz_cena_netto,sprzedaz_cena_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Sprzedaz energii</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="dystrybucja_cena_netto,dystrybucja_cena_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Dystrybucja</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="adv-column-group adv-column-group-fees">
+                    <div class="adv-column-group-title">Oplaty</div>
+                    <div class="adv-column-grid">
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_abonamentowa,oplata_abonamentowa_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Abonamentowa</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_sieciowa_stala,oplata_sieciowa_stala_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Sieciowa stala</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_sieciowa_zmienna,oplata_sieciowa_zmienna_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Sieciowa zmienna</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_jakosciowa,oplata_jakosciowa_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Jakosciowa</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_oze,oplata_oze_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Oplata OZE</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_kogeneracyjna,oplata_kogeneracyjna_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Kogeneracyjna</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_przejsciowa,oplata_przejsciowa_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Przejsciowa</span>
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" data-columns="oplata_mocowa,oplata_mocowa_brutto">
+                            <span class="checkbox-label adv-checkbox-label">Mocowa</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-modern card-dark hidden adv-actions-card" id="advActionsCard">
+            <h3 class="modern-title">Akcje</h3>
+
+            <div id="analysis-actions" class="adv-analysis-actions">
+                <button class="btn-modern btn-emerald adv-main-action-btn" id="btnOcrFill" disabled>
+                    <span id="btnOcrFillIcon">&#128640;</span>
+                    <span id="btnOcrFillText">Rozpocznij analize</span>
+                </button>
+
+                <div class="progress-bar hidden adv-progress-top" id="ocrFillProgressBar">
+                    <div class="fill adv-progress-zero" id="ocrFillProgressFill"></div>
+                </div>
+                <div id="ocrFillProgressText" class="status-text hidden adv-progress-text">0/0</div>
+            </div>
+
+            <div class="document-actions adv-document-actions">
+                <button class="btn-modern btn-dark-modern adv-print-btn" id="btnPrintTemplate" disabled>
+                    <span>Drukuj</span>
+                </button>
+                <button class="btn-modern btn-gray-modern" id="btnExportExcel" disabled>
+                    <span>Excel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-column">
+        <div class="card-modern card-light hidden adv-preview-card" id="advPreviewCard">
+            <div id="templatePreview" class="adv-template-preview">
+                <div class="adv-preview-placeholder">
+                    <div class="upload-icon-box adv-preview-icon">&#128196;</div>
+                    <p class="adv-preview-text">Wybierz szablon aby zobaczyc podglad</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

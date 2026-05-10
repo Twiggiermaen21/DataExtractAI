@@ -114,6 +114,15 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
+}
+
+.sidebar-logo-image {
+    width: 30px;
+}
+
+.nav-item-danger {
+    color: #ff453a;
 }
 
 .logo-text {

@@ -801,6 +801,86 @@ label,
     background: white;
 }
 
+.modal-container-sm {
+    max-width: 400px;
+    height: auto;
+}
+
+.modal-container-md {
+    max-width: 500px;
+    height: auto;
+}
+
+.modal-body-stacked {
+    flex-direction: column;
+    text-align: center;
+}
+
+.modal-body-help {
+    padding: 40px 20px;
+}
+
+.modal-body-sm {
+    padding: 30px 20px;
+}
+
+.modal-help-icon {
+    margin-bottom: 20px;
+}
+
+.modal-help-text {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    font-size: 1.05rem;
+}
+
+.modal-help-link {
+    background: var(--accent-yellow);
+    color: #121316;
+    text-decoration: none;
+    width: auto;
+    padding: 12px 30px;
+    border-radius: var(--radius-xl);
+    font-weight: 600;
+}
+
+.modal-message {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.modal-actions-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.modal-btn {
+    flex: 1;
+    margin: 0;
+    box-shadow: none;
+}
+
+.modal-btn-cancel {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.modal-btn-danger {
+    background: #ff453a;
+    color: #fff;
+    border: none;
+}
+
+.modal-btn-primary {
+    background: var(--accent-purple);
+    color: #fff;
+    border: none;
+}
+
 /* ==================== WELCOME SCREEN ==================== */
 .welcome-screen {
     flex: 1;
@@ -957,6 +1037,26 @@ label,
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 0.8s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.welcome-delay-1 {
+    animation-delay: 0.1s;
+}
+
+.welcome-delay-2 {
+    animation-delay: 0.2s;
+}
+
+.welcome-delay-3 {
+    animation-delay: 0.3s;
+}
+
+.welcome-delay-4 {
+    animation-delay: 0.4s;
+}
+
+.welcome-delay-5 {
+    animation-delay: 0.5s;
 }
 
 @keyframes fadeInUp {

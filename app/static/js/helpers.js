@@ -66,8 +66,6 @@ function findMatchingInputs(doc, fieldName) {
     // Warianty do próby: zamień końcówki gramatyczne
     const variants = [
         fieldName,
-        fieldName.replace('wezwania', 'wezwanie'),
-        fieldName.replace('wezwanie', 'wezwania'),
         fieldName.replace('kwote', 'kwota'),
         fieldName.replace('kwota', 'kwote'),
         fieldName.replace('nazwe', 'nazwa'),

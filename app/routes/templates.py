@@ -14,7 +14,10 @@ templates_bp = Blueprint('templates', __name__)
 @templates_bp.route('/api/templates')
 def get_templates():
     """Zwraca listę szablonów HTML z folderu templates/documents/."""
-    templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
+    templates_dir = current_app.config.get(
+        'TEMPLATES_FOLDER',
+        os.path.join(current_app.root_path, 'templates', 'documents')
+    )
 
     if not os.path.exists(templates_dir):
         return jsonify([])
@@ -31,7 +34,10 @@ def get_templates():
 @templates_bp.route('/api/template/<filename>')
 def get_template(filename):
     """Zwraca zawartość szablonu HTML oraz listę nazw pól formularza."""
-    templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
+    templates_dir = current_app.config.get(
+        'TEMPLATES_FOLDER',
+        os.path.join(current_app.root_path, 'templates', 'documents')
+    )
     template_path = os.path.join(templates_dir, filename)
 
     if not os.path.exists(template_path):

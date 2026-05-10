@@ -36,7 +36,6 @@
   <script src="{{ url_for('static', filename='js/helpers.js') }}"></script>
   <script src="{{ url_for('static', filename='js/ocr.js') }}"></script>
   <script src="{{ url_for('static', filename='js/advanced.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/pozew-process.js') }}"></script>
   <script src="{{ url_for('static', filename='js/excel_export.js') }}"></script>
   <script src="{{ url_for('static', filename='js/auth_ui.js') }}"></script>
 
@@ -57,23 +56,22 @@
   <!-- Modal Pomocy -->
   <div id="helpModal" class="modal">
     <div class="modal-overlay" onclick="closeHelpModal()"></div>
-    <div class="modal-container" style="max-width: 500px; height: auto;">
+    <div class="modal-container modal-container-md">
       <div class="modal-header">
         <h3 id="helpModalTitle">Potrzebujesz pomocy?</h3>
         <button class="close-btn" onclick="closeHelpModal()">✕</button>
       </div>
-      <div class="modal-body" style="flex-direction: column; text-align: center; padding: 40px 20px;">
+      <div class="modal-body modal-body-stacked modal-body-help">
         <svg fill="none" stroke="var(--accent-yellow)" stroke-width="2" viewBox="0 0 24 24" width="64" height="64"
-          style="margin-bottom: 20px;">
+          class="modal-help-icon">
           <circle cx="12" cy="12" r="10"></circle>
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
           <line x1="12" y1="17" x2="12.01" y2="17"></line>
         </svg>
-        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 1.05rem;">
+        <p class="modal-help-text">
           Pomoc możesz uzyskać na stronie <b>iufuly.pl</b> oraz w naszym centrum wsparcia.
         </p>
-        <a href="https://iufuly.pl" target="_blank" class="btn"
-          style="background: var(--accent-yellow); color: #121316; text-decoration: none; width: auto; padding: 12px 30px; border-radius: var(--radius-xl); font-weight: 600;">
+        <a href="https://iufuly.pl" target="_blank" class="btn modal-help-link">
           Przejdź do iufuly.pl
         </a>
       </div>
@@ -83,22 +81,20 @@
   <!-- Modal Wylogowania -->
   <div id="logoutModal" class="modal">
     <div class="modal-overlay" onclick="closeLogoutModal()"></div>
-    <div class="modal-container" style="max-width: 400px; height: auto;">
+    <div class="modal-container modal-container-sm">
       <div class="modal-header">
         <h3 id="logoutModalTitle">Wylogowanie</h3>
         <button class="close-btn" onclick="closeLogoutModal()">✕</button>
       </div>
-      <div class="modal-body" style="flex-direction: column; text-align: center; padding: 30px 20px;">
-        <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1rem; font-weight: 500;">
+      <div class="modal-body modal-body-stacked modal-body-sm">
+        <p class="modal-message">
           Czy na pewno chcesz się wylogować z aplikacji?
         </p>
-        <div style="display: flex; gap: 12px; width: 100%;">
-          <button class="btn" onclick="closeLogoutModal()"
-            style="background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); flex: 1; margin: 0; box-shadow: none;">
+        <div class="modal-actions-row">
+          <button class="btn modal-btn modal-btn-cancel" onclick="closeLogoutModal()">
             Anuluj
           </button>
-          <button class="btn" onclick="window.location.href='/logout'"
-            style="background: #ff453a; color: #fff; flex: 1; margin: 0; box-shadow: none; border: none;">
+          <button class="btn modal-btn modal-btn-danger" onclick="window.location.href='/logout'">
             Tak, wyloguj
           </button>
         </div>
@@ -109,23 +105,20 @@
   <!-- Modal Resetu Hasła -->
   <div id="resetPasswordModal" class="modal">
     <div class="modal-overlay" onclick="closeResetPasswordModal()"></div>
-    <div class="modal-container" style="max-width: 400px; height: auto;">
+    <div class="modal-container modal-container-sm">
       <div class="modal-header">
         <h3 id="resetPasswordModalTitle">Resetowanie hasła</h3>
         <button class="close-btn" onclick="closeResetPasswordModal()">✕</button>
       </div>
-      <div class="modal-body" style="flex-direction: column; text-align: center; padding: 30px 20px;">
-        <p id="resetModalMessage"
-          style="color: var(--text-secondary); margin-bottom: 24px; font-size: 1rem; font-weight: 500;">
+      <div class="modal-body modal-body-stacked modal-body-sm">
+        <p id="resetModalMessage" class="modal-message">
           Czy na pewno chcesz zresetować hasło? Na Twój adres e-mail zostanie wysłana wiadomość z linkiem.
         </p>
-        <div id="resetModalButtons" style="display: flex; gap: 12px; width: 100%;">
-          <button class="btn" onclick="closeResetPasswordModal()"
-            style="background: rgba(255,255,255,0.05); color: var(--text-primary); border: 1px solid var(--border-color); flex: 1; margin: 0; box-shadow: none;">
+        <div id="resetModalButtons" class="modal-actions-row">
+          <button class="btn modal-btn modal-btn-cancel" onclick="closeResetPasswordModal()">
             Anuluj
           </button>
-          <button class="btn" id="resetConfirmBtn" onclick="confirmResetPassword()"
-            style="background: var(--accent-purple); color: #fff; flex: 1; margin: 0; box-shadow: none; border: none;">
+          <button class="btn modal-btn modal-btn-primary" id="resetConfirmBtn" onclick="confirmResetPassword()">
             Tak, resetuj
           </button>
         </div>

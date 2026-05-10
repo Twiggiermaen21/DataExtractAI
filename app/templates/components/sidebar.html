@@ -1,26 +1,12 @@
 <aside class="sidebar">
-    <div class="sidebar-logo" id="sidebar-logo" style="cursor: pointer;">
-        <div class="logo-icon"><img style="width: 30px;" src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+    <div class="sidebar-logo" id="sidebar-logo">
+        <div class="logo-icon">
+            <img class="sidebar-logo-image" src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
         </div>
         <span class="logo-text">iusfully</span>
     </div>
-    <nav class="sidebar-nav" id="sidebarTemplateNav">
-        <!-- Wezwanie do Zapłaty -->
-        <!-- <a href="#" class="nav-item" data-template="wezwanie_do_zaplaty.html" title="Wezwanie do zapłaty">
-            <span class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-            </span>
-            <span class="nav-label">Wezwanie</span>
-        </a> -->
 
-        <!-- Podsumowanie -->
+    <nav class="sidebar-nav" id="sidebarTemplateNav">
         <a href="#" class="nav-item" data-template="podsumowanie.html" title="Podsumowanie">
             <span class="nav-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -36,19 +22,6 @@
             <span class="nav-label">Podsumowanie</span>
         </a>
 
-        <!-- Pozew -->
-        <!-- <a href="#" class="nav-item" data-template="pozew.html" title="Pozew Sądowy">
-            <span class="nav-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2v20"></path>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-            </span>
-            <span class="nav-label">Pozew</span>
-        </a> -->
-
-        <!-- Ustawienia -->
         <a href="#" class="nav-item" id="navSettings" title="Ustawienia aplikacji">
             <span class="nav-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -60,10 +33,12 @@
             <span class="nav-label">Ustawienia</span>
         </a>
     </nav>
+
     <div class="sidebar-bottom">
-        <a href="#" class="nav-item" id="navLogout" title="Wyloguj się" style="color: #ff453a;" onclick="openLogoutModal(); return false;">
+        <a href="#" class="nav-item nav-item-danger" id="navLogout" title="Wyloguj sie" onclick="openLogoutModal(); return false;">
             <span class="nav-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                     <polyline points="16 17 21 12 16 7"></polyline>
                     <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -71,6 +46,7 @@
             </span>
             <span class="nav-label">Wyloguj</span>
         </a>
+
         <a href="#" class="nav-item" title="Help" onclick="openHelpModal(); return false;">
             <span class="nav-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
