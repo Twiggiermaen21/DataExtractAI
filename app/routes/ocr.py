@@ -10,7 +10,7 @@ from app.extensions import limiter
 
 log = logging.getLogger(__name__)
 
-ocr_bp = Blueprint('ocr', __name__)
+ocr_bp = Blueprint('ocr', __name__, url_prefix='/api')
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | {'.pdf', '.docx', '.doc', '.xml'}
@@ -35,7 +35,7 @@ def _save_upload_to_temp(file_storage):
     return tmp_path, None
 
 
-@ocr_bp.route('/api/extract_pdf_text', methods=['POST'])
+@ocr_bp.route('/extract_pdf_text', methods=['POST'])
 def extract_pdf_text():
     """Wyciaga surowy tekst z PDF/DOCX bez wysylania do LLM."""
     if 'file' not in request.files:
@@ -99,7 +99,7 @@ def extract_pdf_text():
             pass
 
 
-@ocr_bp.route('/api/process_ocr', methods=['POST'])
+@ocr_bp.route('/process_ocr', methods=['POST'])
 @limiter.limit('100 per minute', methods=['POST'])
 def process_ocr():
     """OCR - przetwarza pliki i zwraca wyekstrahowane dane (bez zapisu input/output)."""
@@ -186,7 +186,7 @@ def process_ocr():
     })
 
 
-@ocr_bp.route('/api/get_results')
+@ocr_bp.route('/get_results')
 def get_results():
     """Zwraca liste plikow JSON z folderu output."""
     output_folder = current_app.config['OUTPUT_FOLDER']
@@ -199,7 +199,7 @@ def get_results():
         return jsonify([])
 
 
-@ocr_bp.route('/api/get_result/<filename>')
+@ocr_bp.route('/get_result/<filename>')
 def get_result(filename):
     """Zwraca zawartosc pliku JSON."""
     safe_name = secure_filename(filename)

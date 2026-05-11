@@ -16,10 +16,10 @@ from app.services.email_service import (
 from app.utils.token_utils import verify_token
 
 log = logging.getLogger(__name__)
-settings_bp = Blueprint('settings', __name__)
+settings_bp = Blueprint('settings', __name__, url_prefix='/api/settings')
 
 
-@settings_bp.route('/api/settings/profile', methods=['GET'])
+@settings_bp.route('/profile', methods=['GET'])
 @login_required
 def get_profile():
     """Return the current user's profile data."""
@@ -29,7 +29,7 @@ def get_profile():
     })
 
 
-@settings_bp.route('/api/settings/change-name', methods=['POST'])
+@settings_bp.route('/change-name', methods=['POST'])
 @login_required
 @limiter.limit("5 per hour", methods=["POST"])
 def change_name():
@@ -61,7 +61,7 @@ def change_name():
         return jsonify({'success': False, 'error': 'Nie udało się wysłać e-maila. Spróbuj ponownie.'}), 500
 
 
-@settings_bp.route('/api/settings/change-email', methods=['POST'])
+@settings_bp.route('/change-email', methods=['POST'])
 @login_required
 @limiter.limit("5 per hour", methods=["POST"])
 def change_email():
@@ -90,7 +90,7 @@ def change_email():
         return jsonify({'success': False, 'error': 'Nie udało się wysłać e-maila. Spróbuj ponownie.'}), 500
 
 
-@settings_bp.route('/api/settings/request-password-reset', methods=['POST'])
+@settings_bp.route('/request-password-reset', methods=['POST'])
 @login_required
 @limiter.limit("3 per hour", methods=["POST"])
 def request_password_reset():
@@ -106,7 +106,7 @@ def request_password_reset():
         return jsonify({'success': False, 'error': 'Nie udało się wysłać e-maila. Spróbuj ponownie.'}), 500
 
 
-@settings_bp.route('/api/settings/confirm/<token>', methods=['GET'])
+@settings_bp.route('/confirm/<token>', methods=['GET'])
 def confirm_change(token):
     """Confirm a name or email change via the token from the email link."""
     from flask import render_template

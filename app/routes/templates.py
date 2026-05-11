@@ -8,10 +8,10 @@ from flask import Blueprint, request, jsonify, current_app
 
 from app.services.llm_service import extract_template_fields
 
-templates_bp = Blueprint('templates', __name__)
+templates_bp = Blueprint('templates', __name__, url_prefix='/api')
 
 
-@templates_bp.route('/api/templates')
+@templates_bp.route('/templates')
 def get_templates():
     """Zwraca listę szablonów HTML z folderu templates/documents/."""
     templates_dir = current_app.config.get(
@@ -31,7 +31,7 @@ def get_templates():
         return jsonify([])
 
 
-@templates_bp.route('/api/template/<filename>')
+@templates_bp.route('/template/<filename>')
 def get_template(filename):
     """Zwraca zawartość szablonu HTML oraz listę nazw pól formularza."""
     templates_dir = current_app.config.get(
@@ -53,7 +53,7 @@ def get_template(filename):
         return jsonify({'error': str(e)}), 500
 
 
-@templates_bp.route('/api/process_template', methods=['POST'])
+@templates_bp.route('/process_template', methods=['POST'])
 def process_template():
     """Przetwarza pliki OCR i wypełnia pola szablonu przez LLM."""
     data = request.get_json()

@@ -53,20 +53,7 @@ def create_app():
         db.create_all()
 
     # ── Rejestracja blueprintów ────────────────────────────────────────
-    from app.routes.main import main_bp
-    from app.routes.ocr import ocr_bp
-    from app.routes.llm import llm_bp
-    from app.routes.templates import templates_bp
-    from app.routes.excel_export import excel_export_bp
-    from app.routes.auth import auth_bp
-    from app.routes.settings import settings_bp
-
-    app.register_blueprint(main_bp)
-    app.register_blueprint(ocr_bp)
-    app.register_blueprint(llm_bp)
-    app.register_blueprint(templates_bp)
-    app.register_blueprint(excel_export_bp)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(settings_bp)
+    from app.routes import register_blueprints
+    register_blueprints(app)
 
     return app

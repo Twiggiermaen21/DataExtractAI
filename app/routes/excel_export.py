@@ -9,7 +9,7 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from flask import Blueprint, request, jsonify, current_app, send_file
 
-excel_export_bp = Blueprint('excel_export', __name__)
+excel_export_bp = Blueprint('excel_export', __name__, url_prefix='/api')
 log = logging.getLogger(__name__)
 
 # KolejnoĹ›Ä‡ i etykiety wszystkich moĹĽliwych kolumn
@@ -102,7 +102,7 @@ def _find_json(output_dir, filename):
     return None
 
 
-@excel_export_bp.route('/api/export_excel', methods=['POST'])
+@excel_export_bp.route('/export_excel', methods=['POST'])
 def export_excel():
     data = request.get_json()
     if not data:

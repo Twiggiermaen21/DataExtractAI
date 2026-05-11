@@ -12,7 +12,7 @@ auth_bp = Blueprint('auth', __name__)
 @limiter.limit("5 per minute", methods=["POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('pages.index'))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -33,14 +33,14 @@ def login():
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             flash('Zalogowano pomyślnie!', 'success')
-            return redirect(next_page or url_for('main.index'))
+            return redirect(next_page or url_for('pages.index'))
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             flash('Zalogowano pomyślnie!', 'success')
-            return redirect(next_page or url_for('main.index'))
+            return redirect(next_page or url_for('pages.index'))
         flash('Nieprawidłowy email lub hasło.', 'danger')
     return render_template('login.html', form=form)
 
@@ -49,7 +49,7 @@ def login():
 @limiter.limit("3 per minute", methods=["POST"])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('pages.index'))
 
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -74,7 +74,7 @@ def logout():
 def forgot_password():
     """Public page to request a password reset email."""
     if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
+        return redirect(url_for('pages.index'))
 
     if request.method == 'POST':
         email = (request.form.get('email') or '').strip().lower()
