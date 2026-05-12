@@ -19,6 +19,7 @@ let currentTemplateFields = [];
 let advWorkflowType = null; // currently supported: 'podsumowanie'
 let advUploadedFiles = [];
 let summaryEditingRowIndex = null;
+const FILE_PROCESS_TIMEOUT_MS = 120000;
 
 function setPreviewPlaceholder(message, color = 'var(--text-muted)') {
     if (!templatePreview) return;
@@ -130,6 +131,7 @@ if (btnOcrFill) {
 
         const allDocuments = [];
         const allProcessedFiles = [];
+        const allFailedFiles = [];
         const templateName = templateSelect ? templateSelect.value : '';
 
         try {
@@ -153,15 +155,64 @@ if (btnOcrFill) {
                 if (templateName) formData.append('template', templateName);
                 formData.append('selected_columns', selectedColumns.join(','));
 
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), FILE_PROCESS_TIMEOUT_MS);
+
                 try {
-                    const response = await fetch('/api/process_ocr', { method: 'POST', body: formData });
-                    const data = await response.json();
-                    if (data.success && data.documents) {
+                    const response = await fetch('/api/process_ocr', {
+                        method: 'POST',
+                        body: formData,
+                        signal: controller.signal,
+                    });
+
+                    let data = null;
+                    try {
+                        data = await response.json();
+                    } catch (jsonErr) {
+                        data = null;
+                    }
+
+                    if (response.ok && data && data.success) {
                         allDocuments.push(...data.documents);
                         if (data.processed) allProcessedFiles.push(...data.processed);
+                        if (Array.isArray(data.errors) && data.errors.length > 0) {
+                            data.errors.forEach(item => {
+                                allFailedFiles.push({
+                                    file: item?.file || file.name,
+                                    error: item?.error || 'Nieznany blad OCR',
+                                });
+                            });
+                        }
+                        if (Array.isArray(data.failed_files) && data.failed_files.length > 0) {
+                            data.failed_files.forEach(name => {
+                                if (!name) return;
+                                allFailedFiles.push({
+                                    file: name,
+                                    error: 'Przekroczono limit czasu lub blad OCR',
+                                });
+                            });
+                        }
+                    } else {
+                        const errorMsg = (data && data.error)
+                            ? data.error
+                            : `Błąd HTTP ${response.status}`;
+                        allFailedFiles.push({ file: file.name, error: errorMsg });
                     }
                 } catch (err) {
+                    if (err && err.name === 'AbortError') {
+                        allFailedFiles.push({
+                            file: file.name,
+                            error: 'Przekroczono limit 2 minut i pominieto plik.',
+                        });
+                    } else {
+                        allFailedFiles.push({
+                            file: file.name,
+                            error: err?.message || 'Nieznany blad przetwarzania',
+                        });
+                    }
                     console.error(`Error processing file ${file.name}:`, err);
+                } finally {
+                    clearTimeout(timeoutId);
                 }
 
                 if (ocrFillProgressFill) {
@@ -171,8 +222,16 @@ if (btnOcrFill) {
             }
 
             summaryEditingRowIndex = null;
+            const uniqueFailedFiles = Array.from(
+                new Map(
+                    allFailedFiles
+                        .filter(item => item && item.file)
+                        .map(item => [item.file, item])
+                ).values()
+            );
             window.lastProcessedDocuments = allDocuments;
             window.lastProcessedFiles = allProcessedFiles;
+            window.lastFailedFiles = uniqueFailedFiles;
 
             if (allDocuments.length > 0) {
                 renderDynamicTable(allDocuments);
@@ -181,6 +240,16 @@ if (btnOcrFill) {
 
             if (btnExportExcel) btnExportExcel.disabled = (allDocuments.length === 0);
             if (advActionsCard) advActionsCard.classList.remove('hidden');
+            if (ocrFillProgressText) {
+                if (uniqueFailedFiles.length > 0) {
+                    const failedNames = uniqueFailedFiles.map(item => item.file).join(', ');
+                    ocrFillProgressText.textContent =
+                        `Zakonczono. Poprawne: ${allProcessedFiles.length}, bledne: ${uniqueFailedFiles.length}. Pominiete: ${failedNames}`;
+                } else {
+                    ocrFillProgressText.textContent =
+                        `Zakonczono. Poprawnie przetworzono ${allProcessedFiles.length} plikow.`;
+                }
+            }
 
         } catch (error) {
             console.error('OCR Processing Error:', error);
@@ -566,7 +635,7 @@ function renderDynamicTable(documents) {
     if (summaryTotalEl) summaryTotalEl.textContent = formatCurrencyHelper(totalBrutto);
 
     const headerBadgeEl = doc.getElementById('summary-header-badge');
-    if (headerBadgeEl) headerBadgeEl.textContent = `${documents.length} faktur â€˘ PLN`;
+    if (headerBadgeEl) headerBadgeEl.textContent = `${documents.length} faktur \u2022 PLN`;
 
     const statusTextEl = doc.getElementById('summary-ocr-status-text');
     if (statusTextEl) statusTextEl.textContent = lowConfidenceCount > 0 ? `${lowConfidenceCount} wymaga uwagi` : 'Wszystkie odczyty poprawne';

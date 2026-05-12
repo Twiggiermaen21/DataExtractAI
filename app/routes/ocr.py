@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import tempfile
+import time
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
@@ -15,6 +16,18 @@ ocr_bp = Blueprint('ocr', __name__, url_prefix='/api')
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | {'.pdf', '.docx', '.doc', '.xml'}
 MAX_UPLOAD_SIZE = 20 * 1024 * 1024  # 20 MB
+
+
+def _get_file_timeout_seconds():
+    raw = os.environ.get('OCR_FILE_TIMEOUT_SECONDS', '120')
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        value = 120
+    return max(1, value)
+
+
+OCR_FILE_TIMEOUT_SECONDS = _get_file_timeout_seconds()
 
 
 
@@ -132,6 +145,7 @@ def process_ocr():
     processed_files = []
     documents = []
     errors = []
+    failed_files = []
 
     for file in files:
         if file.filename == '':
@@ -142,17 +156,29 @@ def process_ocr():
         file.stream.seek(0)
         if size > MAX_UPLOAD_SIZE:
             errors.append({'file': file.filename, 'error': 'Plik za duzy (max 20 MB)'})
+            failed_files.append(secure_filename(file.filename) or file.filename)
             continue
 
         temp_path, err = _save_upload_to_temp(file)
         if err:
             errors.append({'file': file.filename, 'error': err})
+            failed_files.append(secure_filename(file.filename) or file.filename)
             continue
 
         filename = secure_filename(file.filename)
+        file_started = time.monotonic()
 
         try:
             ocr_output = pipeline.predict(temp_path)
+            elapsed = time.monotonic() - file_started
+
+            if elapsed > OCR_FILE_TIMEOUT_SECONDS:
+                timeout_msg = (
+                    f'Przekroczono limit czasu {OCR_FILE_TIMEOUT_SECONDS}s dla pliku: {filename}'
+                )
+                errors.append({'file': filename, 'error': timeout_msg})
+                failed_files.append(filename)
+                continue
 
             has_data = False
             for res in ocr_output:
@@ -166,10 +192,21 @@ def process_ocr():
 
             if not has_data:
                 errors.append({'file': filename, 'error': f'Model nie zwrocil danych dla pliku: {filename}'})
+                failed_files.append(filename)
+            else:
+                processed_files.append(filename)
 
         except Exception as e:
             log.exception('OCR error for %s', filename)
-            errors.append({'file': filename, 'error': str(e)})
+            elapsed = time.monotonic() - file_started
+            if elapsed >= OCR_FILE_TIMEOUT_SECONDS:
+                timeout_msg = (
+                    f'Przekroczono limit czasu {OCR_FILE_TIMEOUT_SECONDS}s dla pliku: {filename}'
+                )
+                errors.append({'file': filename, 'error': timeout_msg})
+            else:
+                errors.append({'file': filename, 'error': str(e)})
+            failed_files.append(filename)
         finally:
             try:
                 if temp_path and os.path.exists(temp_path):
@@ -182,5 +219,6 @@ def process_ocr():
         'processed': processed_files,
         'documents': documents,
         'errors': errors,
+        'failed_files': sorted(set(failed_files)),
         'message': f'Przetworzono {len(documents)} rekordow',
     })

@@ -265,6 +265,10 @@
     gap: 12px;
 }
 
+.adv-document-actions #btnExportExcel {
+    grid-column: 1 / -1;
+}
+
 .adv-print-btn {
     background: var(--accent-emerald);
 }

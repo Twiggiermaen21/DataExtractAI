@@ -2,6 +2,8 @@ import json
 import os
 import time
 import logging
+import re
+from datetime import date
 
 try:
     from json_repair import repair_json
@@ -17,6 +19,7 @@ class OCRResult:
     _SUM_IF_MANY = {"oplata_mocowa", "oplata_mocowa_brutto"}
     # Any pipe-separated field with more than this many parts gets summed.
     _PIPE_LIMIT = 10
+    _DATE_PATTERN = re.compile(r"\d{4}[./-]\d{1,2}[./-]\d{1,2}|\d{1,2}[./-]\d{1,2}[./-]\d{4}")
 
     def __init__(self, text, input_path, is_vision=False):
         self.text = text
@@ -36,11 +39,62 @@ class OCRResult:
                         data[key] = str(round(sum(float(p.replace(",", ".")) for p in parts), 2))
                     except ValueError:
                         pass
+        if isinstance(data.get("data_sprzedazy"), str):
+            data["data_sprzedazy"] = self._normalize_data_sprzedazy(data["data_sprzedazy"])
         return data
+
+    @classmethod
+    def _normalize_data_sprzedazy(cls, value):
+        raw = value.strip()
+        if not raw:
+            return raw
+
+        lower = raw.lower()
+        matches = cls._DATE_PATTERN.findall(raw)
+        if len(matches) >= 2 and ("od" in lower or "do" in lower):
+            first_date = cls._to_iso_date(matches[0])
+            return first_date or matches[0]
+
+        return cls._to_iso_date(raw) or raw
+
+    @staticmethod
+    def _to_iso_date(value):
+        clean = value.strip().replace("/", "-").replace(".", "-")
+        parts = clean.split("-")
+        if len(parts) != 3:
+            return None
+
+        try:
+            p1, p2, p3 = (int(part) for part in parts)
+        except ValueError:
+            return None
+
+        if len(parts[0]) == 4:
+            year, month, day = p1, p2, p3
+        elif len(parts[2]) == 4:
+            day, month, year = p1, p2, p3
+        else:
+            return None
+
+        try:
+            return date(year, month, day).isoformat()
+        except ValueError:
+            return None
 
     def _parse_json(self, text):
         try:
+            if text is None:
+                log.warning("LLM zwrocil None zamiast JSON.")
+                return {"_parse_error": "empty LLM response (None)"}
+
+            if not isinstance(text, str):
+                text = str(text)
+
             clean = text.strip()
+            if not clean:
+                log.warning("LLM zwrocil pusty tekst zamiast JSON.")
+                return {"_parse_error": "empty LLM response"}
+
             if clean.startswith("```"):
                 lines = clean.split("\n")
                 clean = "\n".join(lines[1:-1])
