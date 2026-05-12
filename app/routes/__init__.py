@@ -1,6 +1,6 @@
 from app.routes.auth import auth_bp
 from app.routes.excel_export import excel_export_bp
-from app.routes.llm import llm_bp
+
 from app.routes.ocr import ocr_bp
 from app.routes.pages import pages_bp
 from app.routes.settings import settings_bp
@@ -13,7 +13,7 @@ WEB_BLUEPRINTS = (
 
 API_BLUEPRINTS = (
     ocr_bp,
-    llm_bp,
+
     templates_bp,
     excel_export_bp,
     settings_bp,

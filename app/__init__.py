@@ -17,7 +17,16 @@ def create_app():
             "i dodaj go do pliku .env jako SECRET_KEY=<twój_klucz>."
         )
     app.config['SECRET_KEY'] = secret_key
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
+    
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Flask-SQLAlchemy wymaga "postgresql://" zamiast "postgres://"
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    else:
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'instance', 'app.db')
+        
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ── Konfiguracja e-mail ────────────────────────────────────────────
@@ -35,8 +44,7 @@ def create_app():
     app.config['SAVED_FOLDER'] = os.path.join(BASE_DIR, "saved")
     app.config['TEMPLATES_FOLDER'] = os.path.join(app.root_path, "templates", "documents")
 
-    for folder in [app.config['UPLOAD_FOLDER'], app.config['OUTPUT_FOLDER'],
-                   app.config['SAVED_FOLDER'], os.path.join(BASE_DIR, 'instance')]:
+    for folder in [app.config['SAVED_FOLDER'], os.path.join(BASE_DIR, 'instance')]:
         os.makedirs(folder, exist_ok=True)
 
     # ── Inicjalizacja rozszerzeń ───────────────────────────────────────

@@ -45,3 +45,4 @@ email-validator
 Flask-Mail
 json-repair
 Pillow
+psycopg2-binary

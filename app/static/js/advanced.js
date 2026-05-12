@@ -107,7 +107,7 @@ if (btnOcrFill) {
         const ocrFillProgressBar = document.getElementById('ocrFillProgressBar');
         const ocrFillProgressFill = document.getElementById('ocrFillProgressFill');
         const ocrFillProgressText = document.getElementById('ocrFillProgressText');
-        const btnPrintTemplate = document.getElementById('btnPrintTemplate');
+
         const btnExportExcel = document.getElementById('btnExportExcel');
 
         btnOcrFill.disabled = true;
@@ -125,7 +125,7 @@ if (btnOcrFill) {
             ocrFillProgressFill.classList.add('animating');
         }
 
-        if (btnPrintTemplate) btnPrintTemplate.disabled = true;
+
         if (btnExportExcel) btnExportExcel.disabled = true;
 
         const allDocuments = [];
@@ -178,7 +178,7 @@ if (btnOcrFill) {
                 renderDynamicTable(allDocuments);
             }
 
-            if (btnPrintTemplate) btnPrintTemplate.disabled = false;
+
             if (btnExportExcel) btnExportExcel.disabled = (allDocuments.length === 0);
             if (advActionsCard) advActionsCard.classList.remove('hidden');
 
@@ -306,16 +306,7 @@ if (templateSelect) {
                 templateIframe.contentDocument.close();
             }
 
-            const btnPrint = document.getElementById('btnPrintTemplate');
-            if (btnPrint) {
-                btnPrint.disabled = true;
-                btnPrint.onclick = function () {
-                    if (templateIframe && templateIframe.contentWindow) {
-                        templateIframe.contentWindow.focus();
-                        templateIframe.contentWindow.print();
-                    }
-                };
-            }
+
 
             const btnExportExcel = document.getElementById('btnExportExcel');
             if (btnExportExcel) btnExportExcel.disabled = true;

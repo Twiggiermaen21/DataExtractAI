@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: ocr_postgres
+    environment:
+      POSTGRES_USER: ocr_user
+      POSTGRES_PASSWORD: ocr_password
+      POSTGRES_DB: ocr_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  web:
+    build: .
+    container_name: ocr_web
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://ocr_user:ocr_password@db:5432/ocr_db
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/instance
+      - /app/input
+      - /app/output
+      - /app/saved
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -113,12 +113,12 @@ Zwróć TYLKO JSON:"""
         generated_text = call_llm(prompt, SYSTEM_ROLE, model=model)
         extracted_data = _parse_json_response(generated_text)
 
-        # Zapis do output/extract_data/
+        # Zapis do saved/extract_data/
         source_filename = os.path.basename(ocr_json_path)
         source_name = os.path.splitext(source_filename)[0]
 
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        extract_dir = os.path.join(project_root, "output", "extract_data")
+        extract_dir = os.path.join(project_root, "saved", "extract_data")
         os.makedirs(extract_dir, exist_ok=True)
 
         output_filename = f"extracted_{source_name}.json"
