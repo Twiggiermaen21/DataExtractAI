@@ -40,7 +40,7 @@ def create_app():
     app.config['BASE_URL'] = os.environ.get('BASE_URL', 'http://localhost:5000')
 
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, "input")
-    app.config['OUTPUT_FOLDER'] = os.path.join(BASE_DIR, "output")
+
     app.config['SAVED_FOLDER'] = os.path.join(BASE_DIR, "saved")
     app.config['TEMPLATES_FOLDER'] = os.path.join(app.root_path, "templates", "documents")
 
