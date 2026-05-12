@@ -63,10 +63,11 @@ def process_template():
     if 'fields' not in data or not data['fields']:
         return jsonify({'success': False, 'error': 'Brak pól do ekstrakcji'}), 400
 
+    output_dir = current_app.config.get('OUTPUT_FOLDER', '')
     json_paths = [
-        os.path.join(current_app.config['OUTPUT_FOLDER'], f)
+        os.path.join(output_dir, f)
         for f in data['files']
-        if os.path.exists(os.path.join(current_app.config['OUTPUT_FOLDER'], f))
+        if os.path.exists(os.path.join(output_dir, f))
     ]
 
     if not json_paths:

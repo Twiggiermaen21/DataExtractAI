@@ -115,7 +115,7 @@ def export_excel():
 
     # Kolumny wybrane przez użytkownika (opcjonalne — jeśli brak, bierzemy wszystkie)
     selected = data.get('selected_columns') or [k for k, _, _ in COLUMN_DEFS]
-    output_dir = current_app.config['OUTPUT_FOLDER']
+    output_dir = current_app.config.get('OUTPUT_FOLDER', '')
 
     # Wyznacz aktywne kolumny zachowując kolejność z COLUMN_DEFS
     active_cols = [(k, label, numeric)
