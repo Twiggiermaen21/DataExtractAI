@@ -1,10 +1,13 @@
 # Ignoruj wszystko w folderze input...
+.venv/
+
 input/*
 # ...ale nie ignoruj pliku .gitkeep (który musisz tam utworzyć)
 !input/.gitkeep
 
 # To samo dla output
 output/*
+app/_pycache__/
 pom/
 !output/.gitkeep
 templates_db/*
