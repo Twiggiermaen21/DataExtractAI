@@ -1,13 +1,13 @@
 # Ignoruj wszystko w folderze input...
 .venv/
-
+.env
 input/*
 # ...ale nie ignoruj pliku .gitkeep (który musisz tam utworzyć)
 !input/.gitkeep
 
 # To samo dla output
 output/*
-app/_pycache__/
+Daapp/_pycache__
 pom/
 !output/.gitkeep
 templates_db/*
@@ -18,3 +18,10 @@ app/gotowe_dokumenty/*
 llama.md
 models/*
 !models/.gitkeep
+.env
+app/__pycache__/*
+app/routes/__pycache__/*
+app/services/__pycache__*
+app/utils/__pycache__/*
+app/services/__pycache__/*
+app/services/__pycache__/llm_service.cpython-314.pyc

@@ -74,3 +74,16 @@ Aplikację można łatwo uruchomić jako samodzielny kontener Docker, bez używa
 <div align="center">
     <sub>Projekt stworzony w celach edukacyjnych.</sub>
 </div>
+
+## llama-server z obsługą obrazów
+
+OCR plików JPG/PNG wymaga modelu vision oraz pasującego pliku `mmproj`.
+Serwer można uruchomić jawnie w następujący sposób:
+
+```powershell
+llama-server.exe --model "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf" --mmproj "mmproj-BF16-qwen3.6A3E.gguf" --host 0.0.0.0 --port 8080
+```
+
+Po uruchomieniu odpowiedź `GET /v1/models` musi informować o obsłudze
+obrazów. Jeśli serwer zwraca wyłącznie capability `completion`, projektor
+nie został załadowany albo nie pasuje do modelu.

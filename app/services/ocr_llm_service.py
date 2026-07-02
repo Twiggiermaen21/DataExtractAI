@@ -1,6 +1,7 @@
+import copy
+import json
 import os
-import requests
-from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template
+from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, llm_post
 from app.utils.ocr_result import OCRResult
 
 # Schema JSON wysyłany do LLM (structured output)
@@ -139,11 +140,31 @@ class OCRService:
         return {
             "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
             "temperature": 0.1,
-            "response_format": RESPONSE_SCHEMA,
+            "response_format": self._response_format(),
+        }
+
+    def _response_format(self):
+        if not self.fields:
+            return RESPONSE_SCHEMA
+
+        properties = {field: {"type": "string"} for field in self.fields}
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "ekstrakcja_pol_szablonu",
+                "schema": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": self.fields,
+                    "additionalProperties": False,
+                },
+                "strict": True,
+            },
         }
 
     def _send_to_llm(self, payload, result_path):
-        response = requests.post(
+        print("[LLM INPUT / OCR]", json.dumps(self._debug_payload(payload), ensure_ascii=False, indent=2))
+        response = llm_post(
             self.api_url, json=payload,
             headers={"Content-Type": "application/json"},
             timeout=self.timeout,
@@ -152,7 +173,29 @@ class OCRService:
             output_text = response.json()["choices"][0]["message"]["content"]
             print(f"[OCR] Odpowiedź LLM (500 zn.): {output_text[:500]}")
             return OCRResult(output_text, result_path)
+
+        if "image input is not supported" in response.text.lower():
+            raise Exception(
+                "Serwer LLM działa bez obsługi obrazów. Uruchom llama-server ponownie "
+                "z pasującym projektorem, np. --mmproj <plik-mmproj.gguf>, albo ustaw "
+                "LLAMA_ARG_MMPROJ. Model i mmproj muszą pochodzić z tego samego wydania."
+            )
         raise Exception(f"API błąd {response.status_code}: {response.text}")
+
+
+    def _debug_payload(self, payload):
+        debug_payload = copy.deepcopy(payload)
+        for message in debug_payload.get("messages", []):
+            content = message.get("content")
+            if not isinstance(content, list):
+                continue
+            for item in content:
+                image_url = item.get("image_url") if isinstance(item, dict) else None
+                url = image_url.get("url") if isinstance(image_url, dict) else None
+                if isinstance(url, str) and url.startswith("data:"):
+                    header, _, data = url.partition(",")
+                    image_url["url"] = f"{header},<base64 omitted; {len(data)} chars>"
+        return debug_payload
 
     def _build_prompt(self, is_text=False):
         action = "Przeanalizuj tekst" if is_text else "Przeanalizuj obraz"
@@ -168,7 +211,9 @@ class OCRService:
                 "podaj szacunkową pewność odczytu jako tekst z procentem (np. \"95%\").\n"
                 "Dla pola \"komentarz_ocr\", podaj krótki komentarz (max 10 słów) o tym, "
                 "jak dobrze udało się odczytać dane.\n"
-                "Jeśli wartości nie ma, użyj null."
+                "Użyj dokładnie takich samych kluczy JSON jak nazwy pól powyżej.\n"
+                "Każda wartość ma być tekstem; jeśli nie znajdziesz danych, wpisz pusty string \"\".\n"
+                "Nie dodawaj żadnych dodatkowych kluczy."
             )
         return (
             f"{action} i wyodrębnij wszystkie kluczowe dane z dokumentu. "

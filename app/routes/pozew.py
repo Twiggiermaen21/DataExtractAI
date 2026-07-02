@@ -7,10 +7,10 @@ import os
 import re
 import json
 import logging
-import requests
 from flask import Blueprint, request, jsonify, current_app
 
 from app.utils.helpers import parse_kwota, extract_city_from_address, extract_postal_code_city, extract_postal_code
+from app.utils.ocr_utils import get_llm_api_url, llm_post, normalize_llm_api_url
 
 log = logging.getLogger(__name__)
 
@@ -65,8 +65,8 @@ Odpowiedz TYLKO numerem KRS (same cyfry, np. "0000123456").
 Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "BRAK"."""
 
     try:
-        response = requests.post(
-            os.environ.get("LLM_API_URL"),
+        response = llm_post(
+            normalize_llm_api_url(get_llm_api_url()),
             json={
                 "model": model or os.environ.get("LLM_MODEL"),
                 "messages": [

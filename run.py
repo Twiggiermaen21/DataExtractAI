@@ -1,5 +1,6 @@
 import os
 import logging
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,6 +9,7 @@ logging.basicConfig(
     level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%H:%M:%S",
+    stream=sys.stdout,
 )
 
 from app import create_app

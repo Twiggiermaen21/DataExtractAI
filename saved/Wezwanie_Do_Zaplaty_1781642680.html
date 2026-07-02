@@ -1,7 +1,4 @@
-<!DOCTYPE html>
-<html lang="pl">
-
-<head>
+<html lang="pl"><head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0">
     <title>Formularz Wezwania do Zapłaty</title>
@@ -126,29 +123,29 @@
             }
         }
     </style>
-</head>
+<style>
+                    body::-webkit-scrollbar { width: 8px; }
+                    body::-webkit-scrollbar-track { background: #f1f1f1; }
+                    body::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+                    body::-webkit-scrollbar-thumb:hover { background: #555; }
+                    body { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }
+                </style></head>
 
 <body>
 
     <div class="container">
         <div class="right-align section">
-            <input type="text" id="miejscowosc_data" style="width: 180px;">
+            <input type="text" id="miejscowosc_data" style="width: 180px;" value="Pszczyna, 16.06.2026 r.">
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
             <div class="section">
                 <strong>Wierzyciel:</strong><br>
-                <input type="text"
-                    name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury"
-                    class="inline-input" style="width: 280px;"><br>
+                <input type="text" name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury" class="inline-input" style="width: 280px; background: rgb(232, 245, 233);" value="Dobra Dieta oliwia wilson"><br>
 
-                <input type="text"
-                    name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto"
-                    class="inline-input" style="width: 320px;"><br>
+                <input type="text" name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_zawierajacy_tylko_ulice_numer_domu_kod_pocztowy_i_miasto" class="inline-input" style="width: 320px; background: rgb(232, 245, 233);" value="ul. M. Skłodowskiej-Curie 48 59-300 Lubin"><br>
 
-                NIP: <input type="text"
-                    name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
-                    class="inline-input" style="width: 130px;">
+                NIP: <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="69200000013">
             </div>
 
             <div class="section" style="font-size: 0.9em; border-top: 1px solid #eee; padding-top: 10px;">
@@ -162,24 +159,18 @@
         <div class="flex-group" style="background: #fafafa; padding: 10px; border-radius: 4px;">
             <div>
                 <strong>Dot. Faktury nr:</strong><br>
-                <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                    class="inline-input" style="width: 130px;">
+                <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty" class="inline-input" style="width: 130px; background: rgb(227, 242, 253);" value="8905">
             </div>
             <div class="right-align" style="margin-left: auto;">
                 <div style="display: inline-block; text-align: left;">
                     <strong>Dłużnik:</strong><br>
-                    <input type="text"
-                        name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge"
-                        class="inline-input" style="width: 280px;">
+                    <input type="text" name="Znajdz_na_fakturze_pelna_nazwa_firmy_nabywcy_czyli_dluznika_ktory_ma_zaplacic_za_towar_lub_usluge" class="inline-input" style="width: 280px; background: rgb(232, 245, 233);" value="Maspex sp. z o.o.">
 
-                    <input type="text"
-                        name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto"
-                        class="inline-input" style="width: 320px;">
+                    <input type="text" name="Znajdz_na_fakturze_dokladny_adres_siedziby_nabywcy_dluznika_ulica_kod_miasto" class="inline-input" style="width: 320px; background: rgb(232, 245, 233);" value="ul. Legionów 37 .. 34-100 Wadowice">
 
                     <div style="display: flex; align-items: center;">
                         <span style="width: 35px;">NIP:</span>
-                        <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany"
-                            class="inline-input" style="width: 130px;">
+                        <input type="text" name="Znajdz_na_fakturze_numer_NIP_nabywcy_dluznika_jesli_jest_podany" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="5512617657">
                     </div>
                 </div>
             </div>
@@ -189,40 +180,27 @@
 
         <div class="content-text section">
             Działając w imieniu
-            <input type="text"
-                name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury"
-                class="inline-input" style="width: 220px;">
+            <input type="text" name="Znajdz_na_fakturze_pelna_nazwa_firmy_sprzedawcy_czyli_wierzyciela_wraz_z_forma_prawna_np_Spolka_Akcyjna_else_nazwa_na_gorze_faktury" class="inline-input" style="width: 220px; background: rgb(232, 245, 233);" value="Dobra Dieta oliwia wilson">
             z siedzibą
-            <input type="text"
-                name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto"
-                class="inline-input" style="width: 260px;">
+            <input type="text" name="Znajdz_na_fakturze_pelny_adres_sprzedawcy_wierzyciela_zawierajacy_ulice_numer_domu_kod_pocztowy_i_miasto" class="inline-input" style="width: 260px; background: rgb(232, 245, 233);" value="ul. M. Skłodowskiej-Curie 48 59-300 Lubin">
             NIP:
-            <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji"
-                class="inline-input" style="width: 130px;">,
+            <input type="text" name="Znajdz_na_fakturze_numer_NIP_sprzedawcy_wierzyciela_bez_myslnikow_i_spacji" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="69200000013">,
 
             na podstawie pełnomocnictwa, w związku z fakturą nr
-            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                class="inline-input" style="width: 130px;">
+            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty" class="inline-input" style="width: 130px; background: rgb(227, 242, 253);" value="8905">
 
             z dnia
-            <input type="text" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy"
-                class="inline-input" style="width: 130px;">
+            <input type="text" name="Znajdz_na_fakturze_date_wystawienia_dokumentu_lub_date_sprzedazy" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="05.11.2025">
             wzywam do zapłaty kwoty
-            <input type="text"
-                name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury"
-                class="inline-input" style="width: 130px;">
+            <input type="text" name="Znajdz_na_fakturze_koncowa_kwote_do_zaplaty_opisana_czesto_jako_Razem_lub_Do_zaplaty_brutto_wraz_z_waluta_szukaj_na_koncu_faktury" class="inline-input" style="width: 130px; background: rgb(255, 243, 224);" value="2214.00 zł">
             wraz z odsetkami od dnia
-            <input type="text" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki"
-                class="inline-input" style="width: 130px;">.
+            <input type="text" name="Znajdz_na_fakturze_date_terminu_platnosci_od_ktorej_beda_liczone_odsetki" class="inline-input" style="width: 130px; background: rgb(252, 228, 236);" value="20.11.2025">.
         </div>
 
         <div class="section">
             <strong>Numer rachunku do wpłaty:</strong><br>
-            <input type="text"
-                name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury"
-                class="inline-input" style="width: 130px;"><br>
-            <input type="text" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta"
-                class="inline-input" style="width: 130px;">
+            <input type="text" name="Znajdz_numer_konta_bankowego_na_ktory_ma_zostac_dokonana_wplata_zazwyczaj_na_dole_faktury" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="1234 1234 1234 1234"><br>
+            <input type="text" name="Znajdz_nazwe_banku_wierzyciela_jesli_jest_podana_obok_numeru_konta" class="inline-input" style="width: 130px; background: rgb(232, 245, 233);" value="Borcelle">
         </div>
 
         <div class="right-align footer">
@@ -230,13 +208,11 @@
 
         </div>
 
-        <div class="section"
-            style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
+        <div class="section" style="font-size: 0.85em; border-top: 1px solid #eee; margin-top: 20px; padding-top: 10px;">
             <strong>Załączniki:</strong><br>
             1. Pełnomocnictwo<br>
             2. Faktura nr
-            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty"
-                class="inline-input" style="width: 130px;">
+            <input type="text" name="Znajdz_i_przepisz_numer_faktury_ktorej_dotyczy_to_wezwanie_do_zaplaty" class="inline-input" style="width: 130px; background: rgb(227, 242, 253);" value="8905">
         </div>
     </div>
 
@@ -308,6 +284,7 @@
         });
     </script>
 
-</body>
 
-</html>
+
+
+</body></html>

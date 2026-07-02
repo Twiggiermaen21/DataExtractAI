@@ -256,6 +256,9 @@ if (btnOcrFill) {
         const templateName = templateSelect ? templateSelect.value : '';
         if (templateName) formData.append('template', templateName);
 
+        const modelSelect = document.getElementById('modelSelect');
+        if (modelSelect && modelSelect.value) formData.append('model', modelSelect.value);
+
         try {
             if (ocrFillProgressFill) ocrFillProgressFill.style.width = '30%';
 
@@ -594,7 +597,8 @@ if (btnRunLlm) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     files: selectedFiles,
-                    fields: currentTemplateFields
+                    fields: currentTemplateFields,
+                    model: document.getElementById('modelSelect')?.value || undefined
                 })
             });
 

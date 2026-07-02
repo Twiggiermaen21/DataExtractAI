@@ -3,10 +3,10 @@ Endpointy API do zarządzania szablonami dokumentów.
 """
 
 import os
-import re
 from flask import Blueprint, request, jsonify, current_app
 
 from app.services.llm_service import extract_template_fields
+from app.utils.ocr_utils import extract_fields_from_template
 
 templates_bp = Blueprint('templates', __name__)
 
@@ -41,7 +41,7 @@ def get_template(filename):
         with open(template_path, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        field_names = list(set(re.findall(r'name=["\']([^"\']+)["\']', content)))
+        field_names = extract_fields_from_template(template_path)
         return jsonify({'content': content, 'fields': field_names})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

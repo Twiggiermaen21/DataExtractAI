@@ -8,6 +8,8 @@ import json
 import logging
 import requests
 
+from app.utils.ocr_utils import get_llm_api_url, llm_post, normalize_llm_api_url
+
 log = logging.getLogger(__name__)
 
 
@@ -27,7 +29,9 @@ def _get_text_from_ocr_json(json_path: str) -> str:
 
 def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     """Wysyła zapytanie do LLM API i zwraca odpowiedź."""
-    api_url = os.environ.get("LLM_API_URL", "http://localhost:8080/v1/chat/completions")
+    api_url = normalize_llm_api_url(
+        get_llm_api_url("http://localhost:8080/v1")
+    )
     model_name = model or os.environ.get("LLM_MODEL", "default")
 
     messages = []
@@ -35,16 +39,19 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    log.debug("LLM request: model=%s, url=%s", model_name, api_url)
+    payload = {
+        "model": model_name,
+        "messages": messages,
+        "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
+        "temperature": 0.1,
+    }
 
-    response = requests.post(
+    log.debug("LLM request: model=%s, url=%s", model_name, api_url)
+    print("[LLM INPUT / PROCESS_LLM]", json.dumps(payload, ensure_ascii=False, indent=2))
+
+    response = llm_post(
         api_url,
-        json={
-            "model": model_name,
-            "messages": messages,
-            "max_tokens": int(os.environ.get("LLM_MAX_TOKENS", 8000)),
-            "temperature": 0.1,
-        },
+        json=payload,
         timeout=120,
     )
 
