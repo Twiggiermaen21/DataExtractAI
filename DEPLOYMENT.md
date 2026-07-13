@@ -1,83 +1,63 @@
 # Wdrozenie Docker/VPS
 
-## Lokalnie przez Docker Compose
+Aplikacja jest przygotowana pod uruchomienie bezposrednio na porcie VPS:
 
-1. Skopiuj konfiguracje:
+```text
+http://srv59.mikr.us:40107
+```
+
+W kontenerze Gunicorn slucha na `0.0.0.0:5000`, a Docker wystawia go na hoscie jako `0.0.0.0:40107`.
+
+## Start na VPS
+
+1. Wejdz do katalogu projektu:
+
+```bash
+cd DataExtractAI
+```
+
+2. Utworz konfiguracje, jesli jeszcze jej nie ma:
 
 ```bash
 cp .env.example .env
 ```
 
-2. Ustaw w `.env` adres serwera LLM:
+3. Ustaw w `.env` adres serwera LLM. Jesli `llama-server` dziala na tym samym VPS poza Dockerem:
 
 ```bash
 LLM_API_URL=http://host.docker.internal:8080/v1/chat/completions
 LLM_MODEL=default
 ```
 
-3. Zbuduj i uruchom:
-
-```bash
-docker compose up -d --build
-```
-
-4. Sprawdz logi i healthcheck:
-
-```bash
-docker compose logs -f app
-curl http://127.0.0.1:5000/healthz
-```
-
-## VPS
-
-1. Zainstaluj Docker i plugin Compose.
-2. Wgraj projekt na serwer, wejdz do katalogu `DataExtractAI`.
-3. Utworz `.env` z `.env.example` i ustaw produkcyjny `LLM_API_URL`.
-4. Uruchom aplikacje:
-
-```bash
-docker compose up -d --build
-```
-
-Compose wystawia aplikacje tylko na `127.0.0.1:5000`, wiec publiczny ruch powinien isc przez Nginx.
-
-## Nginx
-
-1. Skopiuj `deploy/nginx.conf` do `/etc/nginx/sites-available/dataextractai`.
-2. Zmien `server_name example.com www.example.com;` na swoja domene.
-3. Wlacz konfiguracje:
-
-```bash
-sudo ln -s /etc/nginx/sites-available/dataextractai /etc/nginx/sites-enabled/dataextractai
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-4. Dla HTTPS najprosciej uzyc Certbota:
-
-```bash
-sudo certbot --nginx -d twoja-domena.pl
-```
-
-## LLM na VPS
-
-Jesli `llama-server` dziala bezposrednio na tym samym VPS poza Dockerem, ustaw:
-
-```bash
-LLM_API_URL=http://host.docker.internal:8080/v1/chat/completions
-```
-
-W `docker-compose.yml` dodano `host.docker.internal:host-gateway`, zeby kontener mogl laczyc sie z uslugami na hoscie Linuksa.
-
-Jesli LLM dziala jako drugi kontener w tej samej sieci Compose, ustaw adres na nazwe uslugi, np.:
+Jesli LLM dziala jako drugi kontener w tej samej sieci Compose, uzyj nazwy uslugi, np.:
 
 ```bash
 LLM_API_URL=http://llm:8080/v1/chat/completions
 ```
 
+4. Zbuduj i uruchom aplikacje:
+
+```bash
+docker compose up -d --build
+```
+
+5. Sprawdz status:
+
+```bash
+docker compose ps
+docker compose logs -f app
+curl http://127.0.0.1:40107/healthz
+```
+
+Publicznie aplikacja powinna byc dostepna pod:
+
+```text
+http://srv59.mikr.us:40107
+```
+
 ## Dane trwale
 
-Te katalogi sa montowane jako wolumeny bind:
+Te katalogi sa montowane do kontenera:
 
 - `input/`
 - `output/`
