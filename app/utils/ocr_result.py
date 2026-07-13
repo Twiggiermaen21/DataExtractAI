@@ -6,6 +6,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
+def _preview(text, limit=500):
+    if text is None:
+        return None
+    text = str(text).replace("\r", " ").replace("\n", " ")
+    return text[:limit] + ("..." if len(text) > limit else "")
+
+
 class OCRResult:
 
     def __init__(self, text, input_path):
@@ -13,15 +20,29 @@ class OCRResult:
         self.input_path = input_path
         self.extracted_data = self._parse_json(text)
         self.parsing_res_list = [{"block_content": text}]
+        log.info(
+            "OCRResult created: input=%s text_chars=%s extracted_type=%s extracted_keys=%s",
+            input_path,
+            len(text or ''),
+            type(self.extracted_data).__name__,
+            list(self.extracted_data.keys()) if isinstance(self.extracted_data, dict) else [],
+        )
 
     def _parse_json(self, text):
         try:
-            clean = text.strip()
+            clean = (text or '').strip()
             if clean.startswith("```"):
                 lines = clean.split("\n")
                 clean = "\n".join(lines[1:-1])
-            return json.loads(clean)
+            parsed = json.loads(clean)
+            log.info(
+                "OCRResult JSON parsed: type=%s keys=%s",
+                type(parsed).__name__,
+                list(parsed.keys()) if isinstance(parsed, dict) else None,
+            )
+            return parsed
         except Exception:
+            log.exception("OCRResult JSON parse failed: text_preview=%s", _preview(text, 1000))
             return {}
 
     def save_to_json(self, save_path):
@@ -38,9 +59,16 @@ class OCRResult:
         }
 
         try:
+            os.makedirs(save_path, exist_ok=True)
             with open(full_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
+            log.info(
+                "OCRResult saved JSON: path=%s size=%s extracted_keys=%s",
+                full_path,
+                os.path.getsize(full_path) if os.path.exists(full_path) else None,
+                list(self.extracted_data.keys()) if isinstance(self.extracted_data, dict) else [],
+            )
             return full_path
-        except Exception as e:
-            log.error("Błąd zapisu JSON: %s", e)
+        except Exception:
+            log.exception("OCRResult JSON save failed: path=%s", full_path)
             return None

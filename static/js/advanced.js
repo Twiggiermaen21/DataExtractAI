@@ -4,6 +4,7 @@ const templatePreview = document.getElementById('templatePreview');
 const extractedDataCard = document.getElementById('extractedDataCard');
 const extractedDataContent = document.getElementById('extractedDataContent');
 const advActionsCard = document.getElementById('advActionsCard');
+const advSaveWezwanieSection = advActionsCard;
 
 // Kroki workflow
 const advStepSource = document.getElementById('advStepSource');
