@@ -1,9 +1,11 @@
 import os
 from flask import Flask
+from flask_cors import CORS
 
 
 def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
+    CORS(app, origins=['https://iusfully.tojest.dev'])
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, "input")
