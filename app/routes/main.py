@@ -9,6 +9,11 @@ def index():
     return render_template('index.html')
 
 
+@main_bp.route('/healthz')
+def healthz():
+    return jsonify({'status': 'ok'})
+
+
 @main_bp.route('/api/slownie/<amount>')
 def slownie(amount):
     """Zamienia kwotę na słowa (logika gramatyczna)."""

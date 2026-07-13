@@ -59,7 +59,7 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
         raise Exception(f'Błąd serwera LLM: {response.status_code}')
 
     llm_response = response.json()['choices'][0]['message']['content'].strip()
-    log.info("LLM odpowiedź (%d zn.): %.200s", len(llm_response), llm_response)
+    log.info("LLM odpowiedź (%d zn.): %s", len(llm_response), llm_response)
     return llm_response
 
 

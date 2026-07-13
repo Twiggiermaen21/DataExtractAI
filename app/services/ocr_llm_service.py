@@ -171,7 +171,7 @@ class OCRService:
         )
         if response.status_code == 200:
             output_text = response.json()["choices"][0]["message"]["content"]
-            print(f"[OCR] Odpowiedź LLM (500 zn.): {output_text[:500]}")
+            print(f"[OCR] Odpowiedz LLM (pelna): {output_text}")
             return OCRResult(output_text, result_path)
 
         if "image input is not supported" in response.text.lower():
@@ -201,21 +201,15 @@ class OCRService:
         action = "Przeanalizuj tekst" if is_text else "Przeanalizuj obraz"
 
         if self.fields:
-            fields_list = "\n".join(
-                f'{i+1}. "{f}": {f.replace("_", " ")}' for i, f in enumerate(self.fields)
-            )
             return (
-                f"{action} i wyodrębnij dane. Zwróć TYLKO obiekt JSON (bez markdown).\n\n"
-                f"Pola do ekstrakcji:\n{fields_list}\n\n"
-                "WAŻNE: Dla pól kończących się na \"_procent\" (np. pewnosc_ocr_procent), "
-                "podaj szacunkową pewność odczytu jako tekst z procentem (np. \"95%\").\n"
-                "Dla pola \"komentarz_ocr\", podaj krótki komentarz (max 10 słów) o tym, "
-                "jak dobrze udało się odczytać dane.\n"
-                "Użyj dokładnie takich samych kluczy JSON jak nazwy pól powyżej.\n"
-                "Każda wartość ma być tekstem; jeśli nie znajdziesz danych, wpisz pusty string \"\".\n"
-                "Nie dodawaj żadnych dodatkowych kluczy."
+                f"{action} i wypelnij JSON zgodny ze schema response_format. "
+                "Nazwy pol i wymagany ksztalt odpowiedzi sa podane tylko w response_format. "
+                "Zwracaj TYLKO obiekt JSON (bez markdown). "
+                "Kazda wartosc ma byc tekstem; jesli nie znajdziesz danych, wpisz pusty string. "
+                "Nie dodawaj zadnych dodatkowych kluczy."
             )
+
         return (
-            f"{action} i wyodrębnij wszystkie kluczowe dane z dokumentu. "
-            "Zwróć TYLKO ustrukturyzowany obiekt JSON (bez znaczników markdown)."
+            f"{action} i wyodrebnij wszystkie kluczowe dane z dokumentu. "
+            "Zwroc TYLKO ustrukturyzowany obiekt JSON (bez znacznikow markdown)."
         )
