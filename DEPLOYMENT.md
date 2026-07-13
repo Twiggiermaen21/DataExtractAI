@@ -65,6 +65,22 @@ Te katalogi sa montowane do kontenera:
 
 Dzieki temu pliki uzytkownika i wygenerowane dokumenty zostaja na VPS po restarcie lub przebudowie kontenera.
 
+## Uprawnienia katalogow
+
+Na VPS z bind mountami kontener jest uruchamiany jako `0:0`, zeby aplikacja mogla zapisywac uploady do `input/` oraz wyniki do `output/` i `saved/`.
+
+Bez tego moze pojawic sie blad:
+
+```text
+PermissionError: [Errno 13] Permission denied: '/app/input/...'
+```
+
+Alternatywnie mozna zdjac `user: '0:0'` z `docker-compose.yml` i ustawic prawa katalogow na serwerze recznie:
+
+```bash
+mkdir -p input output saved
+chmod -R 777 input output saved
+```
 ## Aktualizacja
 
 ```bash

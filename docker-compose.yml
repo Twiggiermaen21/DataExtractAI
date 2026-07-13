@@ -5,6 +5,7 @@ services:
     image: dataextractai:latest
     container_name: dataextractai
     restart: unless-stopped
+    user: '0:0'
     env_file:
       - .env
     ports:

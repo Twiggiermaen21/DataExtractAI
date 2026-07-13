@@ -271,7 +271,7 @@ if (btnOcrFill) {
             const data = await response.json().catch(() => ({}));
 
             const responseDetails = Array.isArray(data.errors) && data.errors.length > 0
-                ? data.errors.map(item => `${item.file || 'plik'}: `${item.error || 'brak danych'}).join('\\n')
+                ? data.errors.map(item => (item.file || 'plik') + ': ' + (item.error || 'brak danych')).join('\\n')
                 : '';
 
             if (!response.ok) {
@@ -527,8 +527,8 @@ if (btnOcrFill) {
                         }
 
                         // Pokaż sekcję zapisywania dla wezwania
-                        if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
-                            advSaveWezwanieSection.classList.remove('hidden');
+                        if (advWorkflowType === 'wezwanie' && advActionsCard) {
+                            advActionsCard.classList.remove('hidden');
                         }
                     }
 
@@ -727,8 +727,8 @@ if (btnRunLlm) {
                 }
 
                 // Show save button only for wezwanie
-                if (advWorkflowType === 'wezwanie' && advSaveWezwanieSection) {
-                    advSaveWezwanieSection.classList.remove('hidden');
+                if (advWorkflowType === 'wezwanie' && advActionsCard) {
+                    advActionsCard.classList.remove('hidden');
                 }
 
             } else {
