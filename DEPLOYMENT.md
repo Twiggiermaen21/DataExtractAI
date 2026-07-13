@@ -6,7 +6,7 @@ Aplikacja jest przygotowana pod uruchomienie bezposrednio na porcie VPS:
 http://srv59.mikr.us:40107
 ```
 
-W kontenerze Gunicorn slucha na `0.0.0.0:5000`, a Docker wystawia go na hoscie jako `0.0.0.0:40107`.
+W kontenerze Gunicorn slucha na `0.0.0.0:5000`, a Docker wystawia port hosta `40107` na port kontenera `5000`. Bez podanego host IP Docker moze pokazac bind dla IPv4 i IPv6, np. `0.0.0.0:40107->5000/tcp, [::]:40107->5000/tcp`.
 
 ## Start na VPS
 

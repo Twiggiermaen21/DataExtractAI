@@ -116,13 +116,25 @@ def process_ocr():
 
     unload_pipeline()
 
+    success = len(documents) > 0
+    status_code = 200 if success else 422
+    message = f'Przetworzono {len(processed_files)} plikow'
+    error_details = '; '.join(
+        f"{item.get('file', 'plik')}: {item.get('error', 'brak danych')}"
+        for item in errors
+    )
+    error_message = None if success else (
+        error_details or 'OCR nie zwrocil danych dla zadnego pliku.'
+    )
+
     return jsonify({
-        'success': True,
+        'success': success,
         'processed': processed_files,
         'documents': documents,
         'errors': errors,
-        'message': f'Przetworzono {len(processed_files)} plików',
-    })
+        'message': message,
+        'error': error_message,
+    }), status_code
 
 
 @ocr_bp.route('/api/get_results')

@@ -268,7 +268,15 @@ if (btnOcrFill) {
             });
 
             if (ocrFillProgressFill) ocrFillProgressFill.style.width = '80%';
-            const data = await response.json();
+            const data = await response.json().catch(() => ({}));
+
+            const responseDetails = Array.isArray(data.errors) && data.errors.length > 0
+                ? data.errors.map(item => `${item.file || 'plik'}: `${item.error || 'brak danych'}).join('\\n')
+                : '';
+
+            if (!response.ok) {
+                throw new Error(data.error || responseDetails || data.message || `HTTP ${response.status}`);
+            }
 
             if (data.success && data.documents && data.documents.length > 0) {
 
@@ -540,13 +548,18 @@ if (btnOcrFill) {
                     advUploadedFiles = [];
                     renderAdvFileList();
                 }
-
             } else {
-                console.error('OCR Error:', data.error);
+                const details = Array.isArray(data.errors) && data.errors.length > 0
+                    ? data.errors.map(item => `${item.file || 'plik'}: ${item.error || 'brak danych'}`).join('\\n')
+                    : '';
+                const message = data.error || data.message || details || 'OCR nie zwrocil zadnych danych.';
+                console.error('OCR Error:', message, data);
+                alert(message);
             }
 
         } catch (error) {
             console.error('Fetch Error:', error);
+            alert(error.message || 'Nie udalo sie przetworzyc OCR. Sprawdz logi aplikacji.');
         } finally {
             btnOcrFill.classList.remove('loading');
             if (btnOcrFillIcon) btnOcrFillIcon.textContent = '🚀';
