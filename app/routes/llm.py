@@ -6,11 +6,13 @@ import os
 from flask import Blueprint, request, jsonify, current_app
 
 from app.services.llm_service import extract_invoice_data
+from app.auth import require_auth
 
 llm_bp = Blueprint('llm', __name__)
 
 
 @llm_bp.route('/api/process_llm', methods=['POST'])
+@require_auth
 def process_llm():
     """Przetwarza plik JSON z wynikami OCR przez model LLM."""
     data = request.get_json()
@@ -35,6 +37,7 @@ def process_llm():
 
 
 @llm_bp.route('/api/ocr_results')
+@require_auth
 def get_ocr_results():
     """Zwraca listę plików JSON z wynikami OCR, posortowaną od najnowszego."""
     output_folder = current_app.config['OUTPUT_FOLDER']

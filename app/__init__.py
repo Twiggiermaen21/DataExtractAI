@@ -5,7 +5,8 @@ from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__, template_folder='../templates', static_folder='../static')
-    CORS(app, origins=['https://iusfully.tojest.dev'])
+    CORS(app, origins=['https://iusfully.tojest.dev', 'https://iusfully.tojest.dev/', 'http://localhost:3000', 'http://localhost:5000'])
+
 
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, "input")
@@ -23,6 +24,7 @@ def create_app():
     from app.routes.pozew import pozew_bp
     from app.routes.templates import templates_bp
     from app.routes.invoices import invoices_bp
+    from app.auth import auth_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
@@ -31,5 +33,9 @@ def create_app():
     app.register_blueprint(pozew_bp)
     app.register_blueprint(templates_bp)
     app.register_blueprint(invoices_bp)
+    app.register_blueprint(auth_bp)
+
+    from app.utils.logging_helper import setup_request_logging
+    setup_request_logging(app)
 
     return app

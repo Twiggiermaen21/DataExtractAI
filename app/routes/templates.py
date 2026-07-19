@@ -7,11 +7,13 @@ from flask import Blueprint, request, jsonify, current_app
 
 from app.services.llm_service import extract_template_fields
 from app.utils.ocr_utils import extract_fields_from_template
+from app.auth import require_auth
 
 templates_bp = Blueprint('templates', __name__)
 
 
 @templates_bp.route('/api/templates')
+@require_auth
 def get_templates():
     """Zwraca listę szablonów HTML z folderu templates/documents/."""
     templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
@@ -29,6 +31,7 @@ def get_templates():
 
 
 @templates_bp.route('/api/template/<filename>')
+@require_auth
 def get_template(filename):
     """Zwraca zawartość szablonu HTML oraz listę nazw pól formularza."""
     templates_dir = os.path.join(current_app.root_path, '..', 'templates', 'documents')
@@ -48,6 +51,7 @@ def get_template(filename):
 
 
 @templates_bp.route('/api/process_template', methods=['POST'])
+@require_auth
 def process_template():
     """Przetwarza pliki OCR i wypełnia pola szablonu przez LLM."""
     data = request.get_json()

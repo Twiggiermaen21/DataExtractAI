@@ -10,6 +10,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20260714-ocr-logs">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20260714-ocr-logs">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/advanced.css') }}?v=20260714-ocr-logs">
+  <script>
+    // Auth gate — redirect to /login BEFORE body renders if no token
+    if (!localStorage.getItem('access_token')) {
+      window.location.replace('/login');
+      document.write('<body style="display:none">');
+    }
+  </script>
 </head>
 
 <body>
@@ -27,41 +34,16 @@
         {% include 'components/tab_advanced.html' %}
       </div>
 
-      <div class="dashboard-content content-padded hidden" id="dashboard-library">
-        <div class="card">
-          <div class="card-title">
-            Biblioteka dokumentów
-          </div>
 
-          <!-- Library Tabs -->
-          <div class="library-tabs"
-            style="display: flex; gap: 24px; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; padding-bottom: 8px;">
-            <div class="lib-tab active" data-category="all"
-              style="cursor: pointer; font-weight: 500; font-family: 'Outfit', sans-serif; position: relative; padding: 4px 8px;">
-              Wszystkie</div>
-            <div class="lib-tab" data-category="input"
-              style="cursor: pointer; font-weight: 500; font-family: 'Outfit', sans-serif; position: relative; padding: 4px 8px;">
-              Faktury (Źródła)</div>
-            <div class="lib-tab" data-category="saved"
-              style="cursor: pointer; font-weight: 500; font-family: 'Outfit', sans-serif; position: relative; padding: 4px 8px;">
-              Zapisane dokumenty</div>
-          </div>
-
-          <div id="library-grid" class="library-grid">
-            <!-- Dokumenty będą tu ładowane dynamicznie -->
-            <div style="padding: 40px; text-align: center; color: var(--text-muted);">Ładowanie biblioteki...</div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
+  <script src="{{ url_for('static', filename='js/auth.js') }}?v=20260719-auth"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <script src="{{ url_for('static', filename='js/helpers.js') }}?v=20260714-ocr-logs"></script>
+  <script src="{{ url_for('static', filename='js/helpers.js') }}?v=20260719-auth"></script>
   <script src="{{ url_for('static', filename='js/ocr.js') }}?v=20260714-ocr-logs"></script>
   <script src="{{ url_for('static', filename='js/advanced.js') }}?v=20260714-ocr-logs"></script>
   <script src="{{ url_for('static', filename='js/pozew-process.js') }}?v=20260714-ocr-logs"></script>
-  <script src="{{ url_for('static', filename='js/library.js') }}?v=20260714-ocr-logs"></script>
 
   <!-- Modal Podglądu -->
   <div id="previewModal" class="modal">

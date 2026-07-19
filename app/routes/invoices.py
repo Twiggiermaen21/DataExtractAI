@@ -9,11 +9,13 @@ from flask import Blueprint, request, jsonify, current_app
 
 from app.services.llm_service import extract_template_fields
 from app.utils.helpers import parse_kwota, find_field
+from app.auth import require_auth
 
 invoices_bp = Blueprint('invoices', __name__)
 
 
 @invoices_bp.route('/api/process_multiple_invoices', methods=['POST'])
+@require_auth
 def process_multiple_invoices():
     """Przetwarza wiele plików JSON — każdą fakturę osobno przez LLM."""
     data = request.get_json()

@@ -12,16 +12,19 @@ from app.services.wezwania_service import (
     get_wezwania_by_ids,
     calculate_summary,
 )
+from app.auth import require_auth
 
 wezwania_bp = Blueprint('wezwania', __name__)
 
 
 @wezwania_bp.route('/api/wezwania', methods=['GET'])
+@require_auth
 def list_wezwania():
     return jsonify(get_all_wezwania())
 
 
 @wezwania_bp.route('/api/wezwania/<wezwanie_id>', methods=['GET'])
+@require_auth
 def get_wezwanie_details(wezwanie_id):
     wezwanie = get_wezwanie(wezwanie_id)
     if wezwanie:
@@ -30,6 +33,7 @@ def get_wezwanie_details(wezwanie_id):
 
 
 @wezwania_bp.route('/api/wezwania/save', methods=['POST'])
+@require_auth
 def save_wezwanie_endpoint():
     """Zapisuje wezwanie do zapłaty."""
     data = request.get_json()
@@ -39,6 +43,7 @@ def save_wezwanie_endpoint():
 
 
 @wezwania_bp.route('/api/wezwania/summary', methods=['POST'])
+@require_auth
 def get_wezwania_summary():
     """Oblicza podsumowanie z wybranych wezwań."""
     data = request.get_json()
@@ -57,6 +62,7 @@ def get_wezwania_summary():
 
 
 @wezwania_bp.route('/api/wezwania/save_file', methods=['POST'])
+@require_auth
 def save_file():
     """Zapisuje plik tekstowy do folderu output/pobrane/."""
     data = request.get_json()

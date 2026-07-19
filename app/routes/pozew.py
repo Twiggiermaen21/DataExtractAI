@@ -11,6 +11,7 @@ from flask import Blueprint, request, jsonify, current_app
 
 from app.utils.helpers import parse_kwota, extract_city_from_address, extract_postal_code_city, extract_postal_code
 from app.utils.ocr_utils import get_llm_api_url, llm_post, normalize_llm_api_url
+from app.auth import require_auth
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +128,7 @@ def _find_court(pozwany_kod_miasto: str, kwota_glowna: str) -> dict:
 
 
 @pozew_bp.route('/api/analyze_pozew', methods=['POST'])
+@require_auth
 def analyze_pozew():
     """Analizuje dane z wezwania i KRS, mapuje na pola pozwu."""
     data = request.get_json()
