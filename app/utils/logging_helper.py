@@ -28,7 +28,15 @@ def setup_request_logging(app):
 
         # Headers (selected)
         important_headers = ['Content-Type', 'Content-Length', 'User-Agent', 'Authorization']
-        headers_str = ", ".join(f"{h}: {request.headers.get(h)}" for h in important_headers if request.headers.get(h))
+        header_values = []
+        for header_name in important_headers:
+            header_value = request.headers.get(header_name)
+            if not header_value:
+                continue
+            if header_name == 'Authorization':
+                header_value = '<redacted>'
+            header_values.append(f"{header_name}: {header_value}")
+        headers_str = ", ".join(header_values)
         if headers_str:
             log.info("| Headers: %s", headers_str)
 
@@ -36,22 +44,28 @@ def setup_request_logging(app):
         if request.args:
             log.info("| Query Params: %s", json.dumps(request.args.to_dict(), ensure_ascii=True))
 
-        # Form Data
-        if request.form:
-            log.info("| Form Data: %s", json.dumps(request.form.to_dict(), ensure_ascii=True))
+        # Do not eagerly parse this endpoint's multipart body. The route first
+        # checks Content-Length and then reads the file with a strict byte limit.
+        is_template_analysis = request.path == '/api/iusfully/templates/analyze'
+        if is_template_analysis:
+            log.info("| Request body details omitted")
+        else:
+            # Form Data
+            if request.form:
+                log.info("| Form Data: %s", json.dumps(request.form.to_dict(), ensure_ascii=True))
 
-        # Files
-        if request.files:
-            files_info = []
-            for key, file_list in request.files.lists():
-                for file in file_list:
-                    filename = file.filename or "<empty>"
-                    content_type = file.content_type or "unknown"
-                    files_info.append(f"{key}='{filename}' ({content_type})")
-            log.info("| Files: %s", ", ".join(files_info))
+            # Files
+            if request.files:
+                files_info = []
+                for key, file_list in request.files.lists():
+                    for file in file_list:
+                        filename = file.filename or "<empty>"
+                        content_type = file.content_type or "unknown"
+                        files_info.append(f"{key}='{filename}' ({content_type})")
+                log.info("| Files: %s", ", ".join(files_info))
 
         # JSON Body
-        if request.is_json:
+        if request.is_json and not is_template_analysis:
             try:
                 body = request.get_json(silent=True)
                 if body:
@@ -87,7 +101,12 @@ def setup_request_logging(app):
         log.info("| <<< OUTGOING RESPONSE [%s] -- %s", req_id, status_text)
         log.info("| Duration: %d ms | Size: %s bytes | Type: %s", duration_ms, content_length, mimetype)
 
-        if mimetype == 'application/json':
+        if (
+            request.path == '/api/iusfully/templates/analyze'
+            and mimetype == 'application/json'
+        ):
+            log.info("| Response JSON body omitted")
+        elif mimetype == 'application/json':
             try:
                 resp_data = response.get_data(as_text=True)
                 resp_json = json.loads(resp_data)

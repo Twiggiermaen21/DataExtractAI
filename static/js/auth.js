@@ -52,6 +52,30 @@
     let _isRefreshing = false;
     let _refreshQueue = [];
 
+    function _getSentAccessToken(input, init) {
+        let authorization = null;
+
+        if (init.headers !== undefined) {
+            authorization = new Headers(init.headers).get('Authorization');
+        } else if (input instanceof Request) {
+            authorization = input.headers.get('Authorization');
+        }
+
+        const match = authorization && authorization.match(/^Bearer\s+(.+)$/i);
+        return match ? match[1] : null;
+    }
+
+    function _logSentAccessToken(input, init, url, isRetry = false) {
+        const label = isRetry ? 'Access token wysyłany ponownie' : 'Access token wysyłany';
+        const token = _getSentAccessToken(input, init);
+
+        if (token) {
+            console.log(`[Auth] ${label} do ${url}:`, token);
+        } else {
+            console.warn(`[Auth] Endpoint ${url} wywołany bez access tokenu. Token: <PUSTY>`);
+        }
+    }
+
     async function _tryRefreshToken() {
         const refreshToken = Auth.getRefreshToken();
         if (!refreshToken) {
@@ -113,6 +137,9 @@
         }
 
         // Make the request
+        if (isApiCall && !isAuthEndpoint) {
+            _logSentAccessToken(input, init, url);
+        }
         let response = await _originalFetch(input, init);
 
         // If 401 on an API call, try to refresh the token once
@@ -136,6 +163,7 @@
                         init.headers = init.headers || {};
                         init.headers['Authorization'] = 'Bearer ' + newToken;
                     }
+                    _logSentAccessToken(input, init, url, true);
                     response = await _originalFetch(input, init);
                 }
             } else {
@@ -151,6 +179,7 @@
                         init.headers = init.headers || {};
                         init.headers['Authorization'] = 'Bearer ' + newToken;
                     }
+                    _logSentAccessToken(input, init, url, true);
                     response = await _originalFetch(input, init);
                 }
             }

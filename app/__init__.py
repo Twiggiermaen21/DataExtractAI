@@ -19,6 +19,7 @@ def create_app():
 
     from app.routes.main import main_bp
     from app.routes.ocr import ocr_bp
+    from app.routes.iusfully import iusfully_bp
     from app.routes.llm import llm_bp
     from app.routes.wezwania import wezwania_bp
     from app.routes.pozew import pozew_bp
@@ -28,6 +29,7 @@ def create_app():
 
     app.register_blueprint(main_bp)
     app.register_blueprint(ocr_bp)
+    app.register_blueprint(iusfully_bp)
     app.register_blueprint(llm_bp)
     app.register_blueprint(wezwania_bp)
     app.register_blueprint(pozew_bp)
