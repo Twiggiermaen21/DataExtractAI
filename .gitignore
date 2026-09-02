@@ -24,3 +24,4 @@ models/*
 !models/.gitkeep
 llama.md
 .env.example
+.env.example

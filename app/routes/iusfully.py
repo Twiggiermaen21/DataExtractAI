@@ -51,7 +51,15 @@ _TEMPLATE_ANALYSIS_SLOTS = BoundedSemaphore(
 )
 
 
-def _template_error(message, error_code, status_code):
+def _template_error(message, error_code, status_code, rid=None):
+    prefix = f"[{rid}] " if rid else ""
+    log.warning(
+        "%sIusfully template analysis error (%s - %s): %s",
+        prefix,
+        status_code,
+        error_code,
+        message,
+    )
     return jsonify({
         'success': False,
         'error': message,
@@ -62,15 +70,25 @@ def _template_error(message, error_code, status_code):
 @iusfully_bp.route('/api/iusfully/templates/analyze', methods=['POST'])
 @require_auth
 def analyze_text_template():
-    """Turns one UTF-8 .txt document into a dynamic form template."""
+    """Turns an uploaded document (.txt, .pdf, .docx, .doc, .rtf, .odt) into a dynamic form template."""
+    rid = _request_id()
+    log.info(
+        "[%s] analyze_text_template incoming request: remote=%s content_length=%s mimetype=%s",
+        rid,
+        request.headers.get('X-Forwarded-For', request.remote_addr),
+        request.content_length,
+        request.mimetype,
+    )
+
     try:
         file_parser = UploadedTextFileParser()
     except TemplateAnalysisConfigurationError:
-        log.exception('Invalid Iusfully template upload configuration')
+        log.exception("[%s] Invalid Iusfully template upload configuration", rid)
         return _template_error(
             'Konfiguracja analizy szablonow jest niepoprawna',
             'configuration_error',
             503,
+            rid=rid,
         )
 
     if request.mimetype != 'multipart/form-data':
@@ -78,6 +96,7 @@ def analyze_text_template():
             'Content-Type musi miec wartosc multipart/form-data',
             'unsupported_media_type',
             415,
+            rid=rid,
         )
 
     # Check the whole multipart body before request.files triggers form parsing.
@@ -88,6 +107,7 @@ def analyze_text_template():
             f'Plik przekracza limit {file_parser.max_file_bytes} bajtow',
             'file_too_large',
             413,
+            rid=rid,
         )
 
     try:
@@ -101,21 +121,30 @@ def analyze_text_template():
             f'Plik przekracza limit {file_parser.max_file_bytes} bajtow',
             'file_too_large',
             413,
+            rid=rid,
         )
     if not uploaded_files:
         return _template_error(
             'Brak pliku w polu file',
             'missing_file',
             400,
+            rid=rid,
         )
     if len(uploaded_files) != 1 or uploaded_file_count != 1:
         return _template_error(
             'Nalezy przeslac dokladnie jeden plik',
             'multiple_files',
             400,
+            rid=rid,
         )
 
     uploaded_file = uploaded_files[0]
+    log.info(
+        "[%s] analyze_text_template processing uploaded file: filename='%s', content_type='%s'",
+        rid,
+        uploaded_file.filename,
+        uploaded_file.mimetype,
+    )
 
     analysis_slot_acquired = False
     try:
@@ -129,52 +158,63 @@ def analyze_text_template():
                 'Usluga analizy szablonow jest chwilowo zajeta',
                 'too_many_requests',
                 429,
+                rid=rid,
             )
         analysis_slot_acquired = True
         result = IusfullyTemplateAnalysisService().analyze(analysis_request)
+        log.info(
+            "[%s] analyze_text_template completed successfully: original_filename='%s', form_fields_count=%d",
+            rid,
+            result.original_filename,
+            len(result.form_fields),
+        )
         return jsonify(result.to_dict()), 200
 
     except EmptyTemplateFileError as exc:
-        return _template_error(str(exc), 'empty_file', 400)
+        return _template_error(str(exc), 'empty_file', 400, rid=rid)
     except TemplateFileTooLargeError as exc:
-        return _template_error(str(exc), 'file_too_large', 413)
+        return _template_error(str(exc), 'file_too_large', 413, rid=rid)
     except UnsupportedTemplateFileError as exc:
-        return _template_error(str(exc), 'unsupported_file', 415)
+        return _template_error(str(exc), 'unsupported_file', 415, rid=rid)
     except UnprocessableTemplateFileError as exc:
-        return _template_error(str(exc), 'unprocessable_file', 422)
+        return _template_error(str(exc), 'unprocessable_file', 422, rid=rid)
     except TemplateAnalysisConfigurationError:
-        log.exception('Invalid Iusfully template LLM configuration')
+        log.exception("[%s] Invalid Iusfully template LLM configuration", rid)
         return _template_error(
             'Usluga analizy szablonow nie jest skonfigurowana',
             'service_not_configured',
             503,
+            rid=rid,
         )
     except LLMTimeoutError as exc:
-        log.warning('Iusfully template LLM timeout')
-        return _template_error(str(exc), 'llm_timeout', 504)
+        log.warning("[%s] Iusfully template LLM timeout: %s", rid, exc)
+        return _template_error(str(exc), 'llm_timeout', 504, rid=rid)
     except LLMUnavailableError as exc:
-        log.warning('Iusfully template LLM unavailable')
-        return _template_error(str(exc), 'llm_unavailable', 503)
+        log.warning("[%s] Iusfully template LLM unavailable: %s", rid, exc)
+        return _template_error(str(exc), 'llm_unavailable', 503, rid=rid)
     except LLMUpstreamError:
-        log.warning('Iusfully template LLM rejected the request')
+        log.warning("[%s] Iusfully template LLM rejected the request", rid)
         return _template_error(
             'Zewnetrzna usluga LLM odrzucila zadanie analizy',
             'llm_upstream_error',
             502,
+            rid=rid,
         )
     except InvalidLLMResponseError:
-        log.warning('Iusfully template LLM returned an invalid response')
+        log.warning("[%s] Iusfully template LLM returned an invalid response", rid)
         return _template_error(
             'Nie udalo sie poprawnie przeanalizowac dokumentu',
             'invalid_llm_response',
             502,
+            rid=rid,
         )
-    except Exception:
-        log.exception('Unexpected Iusfully template analysis error')
+    except Exception as exc:
+        log.exception("[%s] Unexpected Iusfully template analysis error: %s", rid, exc)
         return _template_error(
             'Wystapil nieoczekiwany blad analizy dokumentu',
             'internal_error',
             500,
+            rid=rid,
         )
     finally:
         if analysis_slot_acquired:
@@ -252,8 +292,11 @@ def process_ocr_iusfully():
             log.error("[%s] process_ocr_iusfully pipeline unavailable", rid)
             return jsonify({'success': False, 'error': 'Nie mozna polaczyc z LM Studio'}), 500
 
-        # Set custom fields in the pipeline instance
-        pipeline.fields = fields
+        # Set custom fields in the pipeline instance using the new method
+        if hasattr(pipeline, 'set_fields'):
+            pipeline.set_fields(fields)
+        else:
+            pipeline.fields = fields
 
         log.info(
             "[%s] process_ocr_iusfully pipeline ready: class=%s model=%s api_url=%s fields_count=%s",

@@ -76,13 +76,33 @@ class OCRService:
         self.model = model or os.environ.get("LLM_MODEL")
         self.timeout = int(os.environ.get("LLM_TIMEOUT_SECONDS", os.environ.get("OCR_LLM_TIMEOUT", 600)))
         self.fields = []
+        self._fields_source = None  # 'template' or 'custom'
+        self._field_key_map = {}    # key -> original description (tylko dla custom fields)
         log.info("OCRService init: api_url=%s model=%s timeout=%s", self.api_url, self.model, self.timeout)
         check_connection(self.api_url)
 
     def set_template(self, template_path):
         """Pobiera pola z szablonu HTML (atrybuty name z inputow)."""
         self.fields = extract_fields_from_template(template_path)
+        self._fields_source = 'template'
         log.info("OCRService template loaded: path=%s fields_count=%s fields=%s", template_path, len(self.fields), self.fields[:40])
+
+    def set_fields(self, fields):
+        """Ustawia pola bezpośrednio (np. z frontendu) bez parsowania szablonu HTML.
+        
+        Pola z frontendu to ludzkie opisy (np. 'Znajdź datę pozwoleń...').
+        Tworzymy bezpieczne klucze JSON (pole_1, pole_2, ...) i mapujemy je na opisy.
+        """
+        self._fields_source = 'custom'
+        self._field_key_map = {}
+        self.fields = []
+        
+        for i, field_desc in enumerate(fields, start=1):
+            key = f"pole_{i}"
+            self.fields.append(key)
+            self._field_key_map[key] = field_desc
+        
+        log.info("OCRService custom fields set: fields_count=%s keys=%s", len(self.fields), self.fields[:10])
 
     def predict(self, file_path):
         """Wysyla plik do API i zwraca liste OCRResult (po jednym na strone/dokument)."""
@@ -228,7 +248,16 @@ class OCRService:
         if not self.fields:
             return RESPONSE_SCHEMA
 
-        properties = {field: {"type": "string", "description": _field_description(field)} for field in self.fields}
+        if self._fields_source == 'custom' and self._field_key_map:
+            # Custom fields: użyj oryginalnych opisów z frontendu jako description
+            properties = {
+                field: {"type": "string", "description": self._field_key_map.get(field, field)}
+                for field in self.fields
+            }
+        else:
+            # Template fields: użyj _field_description do tłumaczenia nazw pól
+            properties = {field: {"type": "string", "description": _field_description(field)} for field in self.fields}
+        
         return {
             "type": "json_schema",
             "json_schema": {
@@ -280,6 +309,20 @@ class OCRService:
                 log.exception("LLM OCR response parse failed: preview=%s", _preview(response.text, 1000))
                 raise
 
+            # Dla custom fields: zamień klucze pole_X z powrotem na oryginalne opisy z frontendu
+            if self._fields_source == 'custom' and self._field_key_map:
+                try:
+                    parsed = json.loads(output_text)
+                    if isinstance(parsed, dict):
+                        remapped = {}
+                        for key, value in parsed.items():
+                            original_key = self._field_key_map.get(key, key)
+                            remapped[original_key] = value
+                        output_text = json.dumps(remapped, ensure_ascii=False, indent=2)
+                        log.info("LLM OCR keys remapped: %s -> %s keys", len(parsed), len(remapped))
+                except (json.JSONDecodeError, TypeError):
+                    log.warning("LLM OCR key remap skipped: could not parse output as JSON")
+
             result = OCRResult(output_text, result_path)
             log.info(
                 "LLM OCR parsed: source=%s output_chars=%s extracted_keys=%s output_preview=%s",
@@ -320,6 +363,28 @@ class OCRService:
 
     def _build_prompt(self, is_text=False):
         action = "Przeanalizuj tekst" if is_text else "Przeanalizuj obraz"
+
+        if self.fields and self._fields_source == 'custom' and self._field_key_map:
+            # Custom fields z frontendu - ogólny prompt do dokumentu
+            field_lines = "\n".join(
+                f"- {key}: {self._field_key_map[key]}"
+                for key in self.fields
+            )
+            return (
+                f"{action} dokumentu i wypelnij JSON zgodny ze schema response_format.\n"
+                "To jest ekstrakcja danych z dokumentu. "
+                "Nie oceniaj prawnie dokumentu, tylko przepisz widoczne dane.\n\n"
+                "POLA DO WYPELNIENIA (klucz: instrukcja):\n"
+                f"{field_lines}\n\n"
+                "ZASADY:\n"
+                "- Zwracaj TYLKO obiekt JSON zgodny ze schema, bez markdown.\n"
+                "- Nie dodawaj zadnych dodatkowych kluczy.\n"
+                "- Kazde pole ma instrukcje co dokladnie znalezc - postepuj dokladnie wg niej.\n"
+                "- Jesli instrukcja okresla format (np. YYYY-MM-DD), uzyj go.\n"
+                "- Dla NIP usun spacje i myslniki.\n"
+                "- Pusty string wpisuj dopiero wtedy, gdy danych naprawde nie da sie odczytac.\n"
+                "- Nie zostawiaj wszystkich pol pustych, jesli w dokumencie widac jakiekolwiek dane."
+            )
 
         if self.fields:
             return (

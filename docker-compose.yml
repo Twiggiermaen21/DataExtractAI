@@ -16,6 +16,9 @@ services:
       - ./saved:/app/saved
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - iusfully_db
     healthcheck:
       test:
         - CMD
@@ -26,3 +29,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+networks:
+  iusfully_db:
+    external: true
+    name: iusfully_iusfully_net

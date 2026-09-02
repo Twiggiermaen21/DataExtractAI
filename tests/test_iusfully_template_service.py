@@ -89,7 +89,7 @@ class UploadedTextFileParserTests(unittest.TestCase):
 
     def test_rejects_non_txt_extension(self):
         with self.assertRaises(UnsupportedTemplateFileError):
-            self.parser.parse('test.pdf', io.BytesIO(b'text'), 'application/pdf')
+            self.parser.parse('test.exe', io.BytesIO(b'text'), 'application/octet-stream')
 
     def test_rejects_invalid_utf8_and_binary_content(self):
         with self.assertRaises(UnsupportedTemplateFileError):

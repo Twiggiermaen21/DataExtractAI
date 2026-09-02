@@ -257,6 +257,11 @@ if (btnOcrFill) {
         const templateName = templateSelect ? templateSelect.value : '';
         if (templateName) formData.append('template', templateName);
 
+        // Wyślij pola z szablonu do backendu - backend użyje ich zamiast parsować HTML
+        if (currentTemplateFields && currentTemplateFields.length > 0) {
+            formData.append('fields', JSON.stringify(currentTemplateFields));
+        }
+
         const modelSelect = document.getElementById('modelSelect');
         if (modelSelect && modelSelect.value) formData.append('model', modelSelect.value);
 
@@ -1089,6 +1094,11 @@ if (btnPozewOcr) {
         pozewUploadedFiles.forEach(f => formData.append('files', f));
         formData.append('template', 'wezwanie_do_zaplaty.html');
 
+        // Wyślij pola z szablonu do backendu
+        if (currentTemplateFields && currentTemplateFields.length > 0) {
+            formData.append('fields', JSON.stringify(currentTemplateFields));
+        }
+
         const modelSelect = document.getElementById('modelSelect');
         if (modelSelect) formData.append('model', modelSelect.value);
 
@@ -1213,6 +1223,11 @@ if (btnGeneratePozew) {
                 const wezForm = new FormData();
                 pozewUploadedFiles.forEach(f => wezForm.append('files', f));
                 wezForm.append('template', templateSelect.value);
+
+                // Wyślij pola z szablonu do backendu
+                if (currentTemplateFields && currentTemplateFields.length > 0) {
+                    wezForm.append('fields', JSON.stringify(currentTemplateFields));
+                }
 
                 const modelSelect = document.getElementById('modelSelect');
                 if (modelSelect) wezForm.append('model', modelSelect.value);

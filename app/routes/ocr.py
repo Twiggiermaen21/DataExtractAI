@@ -133,22 +133,42 @@ def process_ocr():
         log.warning("[%s] process_ocr rejected: empty files list or empty filename", rid)
         return jsonify({'success': False, 'error': 'Nie wybrano plikow'}), 400
 
+    # Sprawdź czy frontend przesłał własne pola (fields) - mają priorytet nad szablonem
+    custom_fields_raw = request.form.get('fields')
+    custom_fields = None
+    if custom_fields_raw:
+        try:
+            custom_fields = json.loads(custom_fields_raw)
+            if not isinstance(custom_fields, list) or not all(isinstance(f, str) for f in custom_fields):
+                log.warning("[%s] process_ocr invalid fields format, ignoring: type=%s", rid, type(custom_fields).__name__)
+                custom_fields = None
+            else:
+                log.info("[%s] process_ocr custom fields from frontend: count=%s fields=%s", rid, len(custom_fields), custom_fields[:10])
+        except (json.JSONDecodeError, TypeError) as e:
+            log.warning("[%s] process_ocr fields JSON parse error: %s", rid, e)
+            custom_fields = None
+
     template_name = request.form.get('template', 'wezwanie_do_zaplaty.html')
     template_path = os.path.join(current_app.root_path, '..', 'templates', 'documents', template_name)
     template_exists = os.path.exists(template_path)
     model_name = request.form.get('model')
     log.info(
-        "[%s] process_ocr config: template=%s template_exists=%s model=%s upload_folder=%s output_folder=%s",
+        "[%s] process_ocr config: template=%s template_exists=%s custom_fields=%s model=%s upload_folder=%s output_folder=%s",
         rid,
         template_name,
         template_exists,
+        len(custom_fields) if custom_fields else None,
         model_name or '<env/default>',
         current_app.config['UPLOAD_FOLDER'],
         current_app.config['OUTPUT_FOLDER'],
     )
 
     try:
-        pipeline = get_pipeline(template_path if template_exists else None, model=model_name)
+        # Jeśli frontend przesłał custom fields - nie ładuj szablonu, użyj pól z frontu
+        if custom_fields:
+            pipeline = get_pipeline(template_path=None, model=model_name, custom_fields=custom_fields)
+        else:
+            pipeline = get_pipeline(template_path if template_exists else None, model=model_name)
         if pipeline is None:
             log.error("[%s] process_ocr pipeline unavailable", rid)
             return jsonify({'success': False, 'error': 'Nie mozna polaczyc z LM Studio'}), 500

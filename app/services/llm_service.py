@@ -52,7 +52,7 @@ def _call_llm(prompt: str, system_prompt: str = None, model: str = None) -> str:
     response = llm_post(
         api_url,
         json=payload,
-        timeout=120,
+        timeout=int(os.environ.get("LLM_TIMEOUT_SECONDS", 600)),
     )
 
     if response.status_code != 200:

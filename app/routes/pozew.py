@@ -77,7 +77,7 @@ Jeśli nie znalazłeś numeru KRS lub nazwa firmy się nie zgadza, odpowiedz: "B
                 "max_tokens": 50,
                 "temperature": 0.1,
             },
-            timeout=120,
+            timeout=int(os.environ.get("LLM_TIMEOUT_SECONDS", 600)),
         )
 
         if response.status_code == 200:

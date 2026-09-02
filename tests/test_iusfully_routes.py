@@ -100,7 +100,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
         )
         unsupported = self.client.post(
             '/api/iusfully/templates/analyze',
-            data={'file': (io.BytesIO(b'PDF'), 'wzor.pdf', 'application/pdf')},
+            data={'file': (io.BytesIO(b'EXE'), 'wzor.exe', 'application/octet-stream')},
             headers=self.headers,
             content_type='multipart/form-data',
         )
