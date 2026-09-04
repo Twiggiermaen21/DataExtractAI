@@ -1,10 +1,10 @@
-import os
+﻿import os
 import logging
 from threading import BoundedSemaphore
 from flask import jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
 
-from app.api.auth import require_auth
+from app.core.auth import require_auth
 from app.api.endpoints import api_bp
 from app.utils.api_utils import _request_id
 from app.services.template import (

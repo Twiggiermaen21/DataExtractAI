@@ -1,4 +1,4 @@
-import io
+﻿import io
 import os
 import unittest
 from unittest.mock import Mock, patch
@@ -8,7 +8,7 @@ from app.dto.iusfully_template import (
     TemplateAnalysisResponseDTO,
     TemplateFormFieldDTO,
 )
-from app.services.iusfully_template_service import (
+from app.services.template.service import (
     InvalidLLMResponseError,
     LLMUpstreamError,
 )

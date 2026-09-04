@@ -1,11 +1,11 @@
-import os
+﻿import os
 import time
 import json
 import logging
 from flask import current_app, jsonify, request
 from werkzeug.utils import secure_filename
 
-from app.api.auth import require_auth
+from app.core.auth import require_auth
 from app.api.endpoints import api_bp
 from app.utils.api_utils import _request_id, _file_size, _fields_summary
 from app.services.ocr_pipeline import get_pipeline, unload_pipeline

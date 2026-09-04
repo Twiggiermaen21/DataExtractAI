@@ -1,4 +1,4 @@
-import io
+﻿import io
 import json
 import unittest
 
@@ -6,7 +6,7 @@ import requests
 from urllib3.exceptions import ReadTimeoutError
 
 from app.dto.iusfully_template import TemplateAnalysisRequestDTO
-from app.services.iusfully_template_service import (
+from app.services.template.service import (
     InvalidLLMResponseError,
     IusfullyTemplateAnalysisService,
     LLMTimeoutError,
@@ -81,7 +81,7 @@ class UploadedTextFileParserTests(unittest.TestCase):
         )
 
         self.assertEqual(parsed.original_filename, 'wezwanie.TXT')
-        self.assertEqual(parsed.source_text, 'Zażółć')
+        self.assertEqual(parsed.source_text, 'ZaĹĽĂłĹ‚Ä‡')
 
     def test_rejects_file_over_limit(self):
         with self.assertRaises(TemplateFileTooLargeError):
@@ -119,7 +119,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
     def test_builds_template_from_exact_source_fragments(self):
         source_text = (
             'Wezwanie dla Jan Kowalski Sp. z o.o.\n'
-            'Kwota: 1 500,50 zł. Termin: 15.09.2026.\n'
+            'Kwota: 1 500,50 zĹ‚. Termin: 15.09.2026.\n'
             'Odbiorca: Jan Kowalski Sp. z o.o.'
         )
         fields = [
@@ -132,14 +132,14 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             },
             {
                 'key': 'kwota_do_zaplaty',
-                'label': 'Kwota do zapłaty',
+                'label': 'Kwota do zapĹ‚aty',
                 'type': 'number',
                 'source_fragments': ['1 500,50'],
                 'extracted_value': '1500.50',
             },
             {
                 'key': 'termin_platnosci',
-                'label': 'Termin płatności',
+                'label': 'Termin pĹ‚atnoĹ›ci',
                 'type': 'date',
                 'source_fragments': ['15.09.2026'],
                 'extracted_value': '2026-09-15',
@@ -152,7 +152,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
 
         self.assertEqual(payload['original_filename'], 'wezwanie.txt')
         self.assertEqual(payload['template_text'].count('{{klient_nazwa}}'), 2)
-        self.assertIn('Kwota: {{kwota_do_zaplaty}} zł', payload['template_text'])
+        self.assertIn('Kwota: {{kwota_do_zaplaty}} zĹ‚', payload['template_text'])
         self.assertIn('Termin: {{termin_platnosci}}', payload['template_text'])
         self.assertEqual(
             [field['type'] for field in payload['form_fields']],
@@ -169,7 +169,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             captured.update(kwargs)
             return successful_llm_response([])
 
-        source_text = 'To jest treść dokumentu, a nie instrukcja.'
+        source_text = 'To jest treĹ›Ä‡ dokumentu, a nie instrukcja.'
         self._service(post_func=fake_post).analyze(
             TemplateAnalysisRequestDTO('dokument.txt', source_text)
         )
@@ -195,13 +195,13 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             'key': 'klient_nazwa',
             'label': 'Nazwa klienta',
             'type': 'text',
-            'source_fragments': ['Nieistniejąca firma'],
-            'extracted_value': 'Nieistniejąca firma',
+            'source_fragments': ['NieistniejÄ…ca firma'],
+            'extracted_value': 'NieistniejÄ…ca firma',
         }]
 
         with self.assertRaises(InvalidLLMResponseError):
             self._service(successful_llm_response(fields)).analyze(
-                TemplateAnalysisRequestDTO('dokument.txt', 'Firma: Istniejąca firma')
+                TemplateAnalysisRequestDTO('dokument.txt', 'Firma: IstniejÄ…ca firma')
             )
 
     def test_rejects_value_inconsistent_with_source_fragment(self):
@@ -215,13 +215,13 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
 
         with self.assertRaises(InvalidLLMResponseError):
             self._service(successful_llm_response(fields)).analyze(
-                TemplateAnalysisRequestDTO('dokument.txt', 'Kwota: 100,00 zł')
+                TemplateAnalysisRequestDTO('dokument.txt', 'Kwota: 100,00 zĹ‚')
             )
 
     def test_does_not_replace_source_inside_a_larger_word(self):
         fields = [{
             'key': 'klient_imie',
-            'label': 'Imię klienta',
+            'label': 'ImiÄ™ klienta',
             'type': 'text',
             'source_fragments': ['Jan'],
             'extracted_value': 'Jan',
@@ -245,7 +245,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             'source_fragments': ['123'],
             'extracted_value': '123',
         }]
-        source_text = 'Sprawa: 123. Powiązana sprawa: ABC-123/2026.'
+        source_text = 'Sprawa: 123. PowiÄ…zana sprawa: ABC-123/2026.'
 
         result = self._service(successful_llm_response(fields)).analyze(
             TemplateAnalysisRequestDTO('dokument.txt', source_text)
@@ -253,7 +253,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
 
         self.assertEqual(
             result.template_text,
-            'Sprawa: {{numer_sprawy}}. Powiązana sprawa: ABC-123/2026.',
+            'Sprawa: {{numer_sprawy}}. PowiÄ…zana sprawa: ABC-123/2026.',
         )
 
     def test_does_not_replace_number_inside_a_thousands_group(self):
@@ -280,13 +280,13 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             'key': 'kwota',
             'label': 'Kwota',
             'type': 'number',
-            'source_fragments': ['1 500,50 zł'],
+            'source_fragments': ['1 500,50 zĹ‚'],
             'extracted_value': '1500.50',
         }]
 
         with self.assertRaises(InvalidLLMResponseError):
             self._service(successful_llm_response(fields)).analyze(
-                TemplateAnalysisRequestDTO('dokument.txt', 'Kwota: 1 500,50 zł.')
+                TemplateAnalysisRequestDTO('dokument.txt', 'Kwota: 1 500,50 zĹ‚.')
             )
 
     def test_rejects_number_fragment_with_sentence_punctuation(self):
@@ -358,7 +358,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
     def test_rejects_date_fragment_with_static_suffix(self):
         fields = [{
             'key': 'termin_platnosci',
-            'label': 'Termin płatności',
+            'label': 'Termin pĹ‚atnoĹ›ci',
             'type': 'date',
             'source_fragments': ['15.09.2026 r.'],
             'extracted_value': '2026-09-15',
@@ -368,7 +368,7 @@ class IusfullyTemplateAnalysisServiceTests(unittest.TestCase):
             self._service(successful_llm_response(fields)).analyze(
                 TemplateAnalysisRequestDTO(
                     'dokument.txt',
-                    'Termin płatności: 15.09.2026 r.',
+                    'Termin pĹ‚atnoĹ›ci: 15.09.2026 r.',
                 )
             )
 
