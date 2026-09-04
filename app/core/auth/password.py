@@ -53,3 +53,4 @@ def check_django_password(raw_password: str, encoded: str) -> bool:
     except Exception as e:
         log.error("Password verification error: %s", e)
         return False
+

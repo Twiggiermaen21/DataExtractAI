@@ -87,3 +87,4 @@ def find_user_by_email(email: str) -> dict | None:
     except psycopg.Error as e:
         log.error("Database error finding user '%s': %s", email, e)
         return None
+

@@ -35,3 +35,4 @@ __all__ = [
     "decode_jwt",
     "require_auth",
 ]
+

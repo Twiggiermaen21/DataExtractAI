@@ -7,20 +7,17 @@ from urllib3.exceptions import ReadTimeoutError
 
 from app.dto.iusfully_template import TemplateAnalysisRequestDTO
 from app.services.template.service import (
-    InvalidLLMResponseError,
     IusfullyTemplateAnalysisService,
+)
+from app.services.template.exceptions import (
+    InvalidLLMResponseError,
     LLMTimeoutError,
     LLMUnavailableError,
-    TemplateFileTooLargeError,
     UnprocessableTemplateFileError,
+    TemplateFileTooLargeError,
     UnsupportedTemplateFileError,
-    UploadedTextFileParser,
 )
-
-
-class FakeResponse:
-    def __init__(self, status_code=200, payload=None, text=None):
-        self.status_code = status_code
+from app.services.template.parser import UploadedTextFileParser
         self._payload = payload
         self.text = text if text is not None else json.dumps(payload or {})
 

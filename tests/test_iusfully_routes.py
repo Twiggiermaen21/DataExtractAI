@@ -17,10 +17,10 @@ from app.services.template.service import (
 class IusfullyTemplateRouteTests(unittest.TestCase):
     def setUp(self):
         self.auth_decode = patch(
-            'app.auth._decode_jwt',
+            'app.core.auth.decorators.decode_jwt',
             return_value={'user_id': 'test-user'},
         )
-        self.verify_user = patch('app.auth.VERIFY_USER_IN_DB', False)
+        self.verify_user = patch('app.core.auth.decorators.VERIFY_USER_IN_DB', False)
         self.auth_decode.start()
         self.verify_user.start()
         self.addCleanup(self.auth_decode.stop)
@@ -60,7 +60,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
         )
 
         with patch(
-            'app.routes.iusfully.IusfullyTemplateAnalysisService',
+            'app.api.template_routes.IusfullyTemplateAnalysisService',
             return_value=service,
         ):
             response = self.client.post(
@@ -139,7 +139,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
         service.analyze.side_effect = InvalidLLMResponseError('sekret upstreamu')
 
         with patch(
-            'app.routes.iusfully.IusfullyTemplateAnalysisService',
+            'app.api.template_routes.IusfullyTemplateAnalysisService',
             return_value=service,
         ):
             response = self.client.post(
@@ -172,7 +172,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
         slots = Mock()
         slots.acquire.return_value = False
 
-        with patch('app.routes.iusfully._TEMPLATE_ANALYSIS_SLOTS', slots):
+        with patch('app.api.template_routes._TEMPLATE_ANALYSIS_SLOTS', slots):
             response = self.client.post(
                 '/api/iusfully/templates/analyze',
                 data={'file': (io.BytesIO(b'Klient: Jan'), 'wzor.txt')},
@@ -189,7 +189,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
         service.analyze.side_effect = LLMUpstreamError('upstream rejected')
 
         with patch(
-            'app.routes.iusfully.IusfullyTemplateAnalysisService',
+            'app.api.template_routes.IusfullyTemplateAnalysisService',
             return_value=service,
         ):
             response = self.client.post(

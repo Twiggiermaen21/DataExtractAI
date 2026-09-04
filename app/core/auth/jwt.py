@@ -122,3 +122,4 @@ def decode_jwt(token: str) -> dict | None:
     except jwt.InvalidTokenError as e:
         log.warning("Invalid JWT token: %s", e)
         return None
+
