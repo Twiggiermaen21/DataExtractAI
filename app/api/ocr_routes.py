@@ -1,4 +1,5 @@
 ﻿import os
+import tempfile
 import time
 import json
 import logging
@@ -68,13 +69,11 @@ def process_ocr_iusfully():
 
     model_name = request.form.get('model')
     log.info(
-        "[%s] process_ocr_iusfully config: fields_count=%s fields=%s model=%s upload_folder=%s output_folder=%s",
+        "[%s] process_ocr_iusfully config: fields_count=%s fields=%s model=%s",
         rid,
         len(fields),
         fields[:40],
         model_name or '<env/default>',
-        current_app.config['UPLOAD_FOLDER'],
-        current_app.config['OUTPUT_FOLDER'],
     )
 
     try:
@@ -112,10 +111,15 @@ def process_ocr_iusfully():
 
         original_filename = file.filename
         filename = secure_filename(original_filename) or f'upload_{index}'
-        original_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
         file_started_at = time.monotonic()
+        
+        # Tworzymy tymczasowy plik tylko na czas predykcji
+        ext = os.path.splitext(filename)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
+            original_path = tmp.name
+        
         log.info(
-            "[%s] file %s/%s start: original=%s stored=%s content_type=%s path=%s",
+            "[%s] file %s/%s start: original=%s stored=%s content_type=%s temp_path=%s",
             rid,
             index,
             len(files),
@@ -129,7 +133,7 @@ def process_ocr_iusfully():
             save_started_at = time.monotonic()
             file.save(original_path)
             log.info(
-                "[%s] file saved: filename=%s size=%s save_ms=%d",
+                "[%s] file temp saved: filename=%s size=%s save_ms=%d",
                 rid,
                 filename,
                 _file_size(original_path),
@@ -158,13 +162,7 @@ def process_ocr_iusfully():
                     _fields_summary(extracted),
                 )
 
-                saved = res.save_to_json(save_path=current_app.config['OUTPUT_FOLDER'])
-                if saved:
-                    saved_name = os.path.basename(saved)
-                    processed_files.append(saved_name)
-                    log.info("[%s] OCR result saved: filename=%s json=%s size=%s", rid, filename, saved_name, _file_size(saved))
-                else:
-                    log.warning("[%s] OCR result save failed: filename=%s result=%s", rid, filename, result_index)
+                processed_files.append(filename)
 
                 if extracted:
                     documents.append({'filename': filename, 'fields': extracted})
@@ -180,6 +178,12 @@ def process_ocr_iusfully():
         except Exception as e:
             log.exception("[%s] OCR error for %s", rid, filename)
             errors.append({'file': filename, 'error': str(e)})
+        finally:
+            if os.path.exists(original_path):
+                try:
+                    os.remove(original_path)
+                except Exception:
+                    pass
 
     unload_pipeline()
     log.info("[%s] process_ocr_iusfully pipeline unloaded", rid)
