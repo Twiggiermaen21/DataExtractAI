@@ -1,4 +1,4 @@
-﻿import io
+import io
 import json
 import unittest
 
@@ -83,7 +83,7 @@ class UploadedTextFileParserTests(unittest.TestCase):
         )
 
         self.assertEqual(parsed.original_filename, 'wezwanie.TXT')
-        self.assertEqual(parsed.source_text, 'ZaĹĽĂłĹ‚Ä‡')
+        self.assertEqual(parsed.source_text, 'Zażółć')
 
     def test_rejects_file_over_limit(self):
         with self.assertRaises(TemplateFileTooLargeError):

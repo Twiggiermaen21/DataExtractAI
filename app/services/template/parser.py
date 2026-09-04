@@ -54,7 +54,7 @@ def _positive_int_argument(name: str, value: int) -> int:
 def _safe_original_filename(filename: str) -> str:
     if not isinstance(filename, str):
         return ''
-    basename = filename.replace('\\\\', '/').rsplit('/', 1)[-1].strip()
+    basename = filename.replace('\\', '/').rsplit('/', 1)[-1].strip()
     if len(basename) > MAX_ORIGINAL_FILENAME_LENGTH:
         return ''
     if any(unicodedata.category(char) in {'Cc', 'Cf'} for char in basename):
