@@ -1,19 +1,15 @@
-services:
-  app:
+﻿services:
+  iusfully_ai:
     build:
       context: .
-    image: dataextractai:latest
-    container_name: dataextractai
+    image: iusfully_ai:latest
+    container_name: iusfully_ai
     restart: unless-stopped
     user: '0:0'
     env_file:
       - .env
     ports:
       - "40107:5000"
-    volumes:
-      - ./input:/app/input
-      - ./output:/app/output
-      - ./saved:/app/saved
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
