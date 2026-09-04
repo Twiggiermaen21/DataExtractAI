@@ -10,7 +10,7 @@ def get_pipeline(template_path=None, model=None, custom_fields=None):
 
     if _pipeline is None:
         try:
-            from app.services.ocr_llm_service import OCRService
+            from app.services.ocr import OCRService
             _pipeline = OCRService(model=model)
         except Exception as e:
             log.error("Nie udało się utworzyć OCRService: %s", e)

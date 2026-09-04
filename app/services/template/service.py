@@ -5,11 +5,8 @@ import json
 import logging
 import os
 import re
-import tempfile
 import unicodedata
-from datetime import date
-from decimal import Decimal, InvalidOperation
-from typing import Any, BinaryIO, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import requests
 
@@ -22,51 +19,26 @@ from app.dto.iusfully_template import (
 )
 from app.utils.ocr_utils import get_llm_api_url, llm_post, normalize_llm_api_url
 
+from .exceptions import (
+    TemplateAnalysisConfigurationError,
+    LLMUnavailableError,
+    LLMTimeoutError,
+    LLMUpstreamError,
+    InvalidLLMResponseError,
+    UnprocessableTemplateFileError,
+)
+from .normalizers import _normalize_field_value, _source_replacement_expression
+from decimal import InvalidOperation
+from .parser import _positive_int_from_env, _positive_int_argument
 
 log = logging.getLogger(__name__)
 
-DEFAULT_MAX_FILE_BYTES = 20 * 1024 * 1024  # 10 MB
 DEFAULT_LLM_TIMEOUT_SECONDS = 600
 DEFAULT_LLM_MAX_TOKENS = 4000
 DEFAULT_MAX_LLM_RESPONSE_BYTES = 1024 * 1024
 MAX_DETECTED_FIELDS = 50
-MAX_ORIGINAL_FILENAME_LENGTH = 255
-
-ALLOWED_EXTENSIONS = {
-    '.txt', '.pdf', '.docx', '.doc', '.rtf', '.odt',
-}
-
-ALLOWED_MIME_TYPES = {
-    '',
-    'text/plain',
-    'application/octet-stream',
-    'application/x-empty',
-    'application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/msword',
-    'application/rtf',
-    'text/rtf',
-    'application/vnd.oasis.opendocument.text',
-}
 
 PLACEHOLDER_IN_TEXT_PATTERN = re.compile(r'\{\{[a-z][a-z0-9_]{0,63}\}\}')
-
-POLISH_MONTHS = {
-    'stycznia': 1,
-    'lutego': 2,
-    'marca': 3,
-    'kwietnia': 4,
-    'maja': 5,
-    'czerwca': 6,
-    'lipca': 7,
-    'sierpnia': 8,
-    'wrzesnia': 9,
-    'września': 9,
-    'pazdziernika': 10,
-    'października': 10,
-    'listopada': 11,
-    'grudnia': 12,
-}
 
 TEMPLATE_FIELD_RESPONSE_SCHEMA = {
     'type': 'json_schema',
@@ -110,8 +82,7 @@ TEMPLATE_FIELD_RESPONSE_SCHEMA = {
     },
 }
 
-TEMPLATE_ANALYSIS_SYSTEM_PROMPT = """
-Jestes deterministycznym silnikiem zamieniajacym polskie dokumenty tekstowe
+TEMPLATE_ANALYSIS_SYSTEM_PROMPT = """Jestes deterministycznym silnikiem zamieniajacym polskie dokumenty tekstowe
 na liste pol dynamicznego szablonu.
 
 BEZPIECZENSTWO:
@@ -174,491 +145,12 @@ POWTORZENIA:
 
 Zwroc pola w kolejnosci ich pierwszego wystapienia. Jezeli dokument nie zawiera
 wartosci do podmiany, zwroc pusta tablice `fields`. Zwroc wylacznie obiekt JSON
-zgodny ze schema `response_format`.
-""".strip()
-
-
-class TemplateAnalysisError(Exception):
-    """Base class for expected template-analysis failures."""
-
-
-class TemplateAnalysisConfigurationError(TemplateAnalysisError):
-    pass
-
-
-class TemplateFileTooLargeError(TemplateAnalysisError):
-    pass
-
-
-class UnsupportedTemplateFileError(TemplateAnalysisError):
-    pass
-
-
-class EmptyTemplateFileError(TemplateAnalysisError):
-    pass
-
-
-class UnprocessableTemplateFileError(TemplateAnalysisError):
-    pass
-
-
-class LLMUnavailableError(TemplateAnalysisError):
-    pass
-
-
-class LLMTimeoutError(TemplateAnalysisError):
-    pass
-
-
-class LLMUpstreamError(TemplateAnalysisError):
-    pass
-
-
-class InvalidLLMResponseError(TemplateAnalysisError):
-    pass
-
-
-def _positive_int_from_env(name: str, default: int) -> int:
-    raw_value = os.environ.get(name)
-    if raw_value is None or not raw_value.strip():
-        return default
-    try:
-        value = int(raw_value)
-    except ValueError as exc:
-        raise TemplateAnalysisConfigurationError(
-            f'Zmienna {name} musi byc liczba calkowita'
-        ) from exc
-    if value <= 0:
-        raise TemplateAnalysisConfigurationError(f'Zmienna {name} musi byc dodatnia')
-    return value
-
-
-def _positive_int_argument(name: str, value: int) -> int:
-    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-        raise TemplateAnalysisConfigurationError(f'Parametr {name} musi byc dodatnia liczba calkowita')
-    return value
-
-
-def _safe_original_filename(filename: str) -> str:
-    if not isinstance(filename, str):
-        return ''
-    basename = filename.replace('\\', '/').rsplit('/', 1)[-1].strip()
-    if len(basename) > MAX_ORIGINAL_FILENAME_LENGTH:
-        return ''
-    if any(unicodedata.category(char) in {'Cc', 'Cf'} for char in basename):
-        return ''
-    return basename
-
-
-def _looks_like_binary_text(text: str) -> bool:
-    if '\x00' in text:
-        return True
-    if not text:
-        return False
-    disallowed_controls = sum(
-        1
-        for char in text
-        if unicodedata.category(char) == 'Cc' and char not in {'\n', '\r', '\t'}
-    )
-    return disallowed_controls > 0
-
-
-def _extract_text_from_txt(content: bytes) -> str:
-    """Decode a UTF-8 .txt file and return its text."""
-    try:
-        text = content.decode('utf-8-sig', errors='strict')
-    except UnicodeDecodeError as exc:
-        raise UnsupportedTemplateFileError(
-            'Plik musi byc tekstem zakodowanym w UTF-8'
-        ) from exc
-    if _looks_like_binary_text(text):
-        raise UnsupportedTemplateFileError('Plik zawiera dane binarne')
-    return text
-
-
-def _extract_text_from_pdf(content: bytes) -> str:
-    """Extract text from a PDF using PyMuPDF (fitz)."""
-    try:
-        import fitz  # PyMuPDF
-    except ImportError as exc:
-        raise UnsupportedTemplateFileError(
-            'Brak biblioteki PyMuPDF do obslugi plikow PDF'
-        ) from exc
-    try:
-        doc = fitz.open(stream=content, filetype='pdf')
-        pages = []
-        for page in doc:
-            pages.append(page.get_text())
-        doc.close()
-        return '\n'.join(pages)
-    except Exception as exc:
-        raise UnprocessableTemplateFileError(
-            'Nie udalo sie odczytac pliku PDF'
-        ) from exc
-
-
-def _extract_text_from_docx(content: bytes) -> str:
-    """Extract text from a .docx file using python-docx."""
-    try:
-        from docx import Document
-    except ImportError as exc:
-        raise UnsupportedTemplateFileError(
-            'Brak biblioteki python-docx do obslugi plikow DOCX'
-        ) from exc
-    try:
-        doc = Document(io.BytesIO(content))
-        paragraphs = [p.text for p in doc.paragraphs]
-        return '\n'.join(paragraphs)
-    except Exception as exc:
-        raise UnprocessableTemplateFileError(
-            'Nie udalo sie odczytac pliku DOCX'
-        ) from exc
-
-
-def _extract_text_from_doc(content: bytes) -> str:
-    """Extract text from a legacy .doc file.
-
-    Uses pywin32 COM automation on Windows. Falls back to a raw binary text
-    extraction heuristic on non-Windows platforms.
-    """
-    if os.name == 'nt':
-        try:
-            import pythoncom
-            import win32com.client
-        except ImportError as exc:
-            raise UnsupportedTemplateFileError(
-                'Brak biblioteki pywin32 do obslugi plikow DOC'
-            ) from exc
-        tmp_path = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                suffix='.doc', delete=False,
-            ) as tmp:
-                tmp.write(content)
-                tmp_path = tmp.name
-            pythoncom.CoInitialize()
-            try:
-                word = win32com.client.Dispatch('Word.Application')
-                word.Visible = False
-                doc = word.Documents.Open(tmp_path, ReadOnly=True)
-                text = doc.Content.Text
-                doc.Close(False)
-                word.Quit()
-            finally:
-                pythoncom.CoUninitialize()
-            return text
-        except Exception as exc:
-            raise UnprocessableTemplateFileError(
-                'Nie udalo sie odczytac pliku DOC'
-            ) from exc
-        finally:
-            if tmp_path and os.path.exists(tmp_path):
-                try:
-                    os.unlink(tmp_path)
-                except OSError:
-                    pass
-    else:
-        # Fallback: attempt raw text extraction from binary .doc
-        try:
-            text_chunks = []
-            i = 0
-            while i < len(content):
-                if content[i:i+1] == b'\x00':
-                    i += 1
-                    continue
-                if 0x20 <= content[i] <= 0x7e or content[i] in (0x0a, 0x0d, 0x09):
-                    text_chunks.append(chr(content[i]))
-                i += 1
-            text = ''.join(text_chunks)
-            # Filter out junk — keep only runs of 4+ printable chars
-            import re as _re
-            runs = _re.findall(r'[\x20-\x7e\n\r\t]{4,}', text)
-            return '\n'.join(runs)
-        except Exception as exc:
-            raise UnprocessableTemplateFileError(
-                'Nie udalo sie odczytac pliku DOC'
-            ) from exc
-
-
-def _extract_text_from_rtf(content: bytes) -> str:
-    """Extract text from an RTF file using striprtf."""
-    try:
-        from striprtf.striprtf import rtf_to_text
-    except ImportError as exc:
-        raise UnsupportedTemplateFileError(
-            'Brak biblioteki striprtf do obslugi plikow RTF'
-        ) from exc
-    try:
-        rtf_content = content.decode('utf-8', errors='replace')
-        return rtf_to_text(rtf_content)
-    except Exception as exc:
-        raise UnprocessableTemplateFileError(
-            'Nie udalo sie odczytac pliku RTF'
-        ) from exc
-
-
-def _extract_text_from_odt(content: bytes) -> str:
-    """Extract text from an ODT file using odfpy."""
-    try:
-        from odf.opendocument import load as odf_load
-        from odf.text import P as OdfParagraph
-        from odf import teletype
-    except ImportError as exc:
-        raise UnsupportedTemplateFileError(
-            'Brak biblioteki odfpy do obslugi plikow ODT'
-        ) from exc
-    try:
-        doc = odf_load(io.BytesIO(content))
-        paragraphs = doc.getElementsByType(OdfParagraph)
-        return '\n'.join(teletype.extractText(p) for p in paragraphs)
-    except Exception as exc:
-        raise UnprocessableTemplateFileError(
-            'Nie udalo sie odczytac pliku ODT'
-        ) from exc
-
-
-_TEXT_EXTRACTORS: Dict[str, Callable[[bytes], str]] = {
-    '.txt': _extract_text_from_txt,
-    '.pdf': _extract_text_from_pdf,
-    '.docx': _extract_text_from_docx,
-    '.doc': _extract_text_from_doc,
-    '.rtf': _extract_text_from_rtf,
-    '.odt': _extract_text_from_odt,
-}
-
-
-class UploadedTextFileParser:
-    """Validates and extracts text from uploaded document files.
-
-    Supported formats: .txt, .pdf, .docx, .doc, .rtf, .odt
-    """
-
-    def __init__(self, max_file_bytes: Optional[int] = None):
-        if max_file_bytes is None:
-            self.max_file_bytes = _positive_int_from_env(
-                'IUSFULLY_TEMPLATE_MAX_FILE_BYTES',
-                DEFAULT_MAX_FILE_BYTES,
-            )
-        else:
-            self.max_file_bytes = _positive_int_argument(
-                'max_file_bytes',
-                max_file_bytes,
-            )
-
-    def parse(
-        self,
-        filename: str,
-        stream: BinaryIO,
-        mime_type: Optional[str] = None,
-    ) -> TemplateAnalysisRequestDTO:
-        original_filename = _safe_original_filename(filename)
-        if not original_filename:
-            raise EmptyTemplateFileError('Nazwa pliku nie moze byc pusta')
-
-        ext = os.path.splitext(original_filename)[1].lower()
-        if ext not in ALLOWED_EXTENSIONS:
-            raise UnsupportedTemplateFileError(
-                f'Nieobslugiwane rozszerzenie pliku: {ext}. '
-                f'Dozwolone: {', '.join(sorted(ALLOWED_EXTENSIONS))}'
-            )
-
-        normalized_mime = (mime_type or '').split(';', 1)[0].strip().lower()
-        if normalized_mime not in ALLOWED_MIME_TYPES:
-            raise UnsupportedTemplateFileError(
-                f'Nieobslugiwany typ MIME: {normalized_mime}'
-            )
-
-        content = stream.read(self.max_file_bytes + 1)
-        if len(content) > self.max_file_bytes:
-            raise TemplateFileTooLargeError(
-                f'Plik przekracza limit {self.max_file_bytes} bajtow'
-            )
-        if not content:
-            raise EmptyTemplateFileError('Plik jest pusty')
-
-        extractor = _TEXT_EXTRACTORS.get(ext)
-        if extractor is None:
-            raise UnsupportedTemplateFileError(
-                f'Brak obslugi ekstrakcji tekstu dla rozszerzenia {ext}'
-            )
-        text = extractor(content)
-
-        if not text or not text.strip():
-            raise UnprocessableTemplateFileError(
-                'Plik nie zawiera tekstu do analizy'
-            )
-
-        return TemplateAnalysisRequestDTO(
-            original_filename=original_filename,
-            source_text=text,
-        )
-
+zgodny ze schema `response_format`."""
 
 def _strip_json_code_fence(content: str) -> str:
     stripped = content.strip()
     match = re.fullmatch(r'```(?:json)?\s*(.*?)\s*```', stripped, flags=re.DOTALL | re.IGNORECASE)
     return match.group(1).strip() if match else stripped
-
-
-def _collapse_whitespace(value: str) -> str:
-    return ' '.join(unicodedata.normalize('NFKC', value).split())
-
-
-def _normalize_number(value: str) -> str:
-    normalized = unicodedata.normalize('NFKC', value).strip()
-    normalized = normalized.replace('\u00a0', '').replace('\u202f', '')
-    normalized = re.sub(r'[\s\']', '', normalized)
-
-    sign = ''
-    if normalized.startswith(('+', '-')):
-        sign, normalized = normalized[0], normalized[1:]
-
-    if not normalized or not re.fullmatch(r'[0-9.,]+', normalized):
-        raise ValueError('Niepoprawny format liczby')
-    if not normalized[0].isdigit() or not normalized[-1].isdigit():
-        raise ValueError('Liczba musi zaczynac i konczyc sie cyfra')
-
-    if ',' in normalized and '.' in normalized:
-        if normalized.rfind(',') > normalized.rfind('.'):
-            normalized = normalized.replace('.', '').replace(',', '.')
-        else:
-            normalized = normalized.replace(',', '')
-    elif ',' in normalized:
-        normalized = normalized.replace('.', '').replace(',', '.')
-    elif normalized.count('.') > 1:
-        parts = normalized.split('.')
-        if all(len(part) == 3 for part in parts[1:]):
-            normalized = ''.join(parts)
-        else:
-            normalized = ''.join(parts[:-1]) + '.' + parts[-1]
-    elif normalized.count('.') == 1:
-        integer_part, fraction_part = normalized.split('.')
-        if len(fraction_part) == 3 and 1 <= len(integer_part) <= 3:
-            normalized = integer_part + fraction_part
-
-    try:
-        number = Decimal(sign + normalized)
-    except InvalidOperation as exc:
-        raise ValueError('Niepoprawny format liczby') from exc
-    if not number.is_finite():
-        raise ValueError('Liczba musi byc skonczona')
-    return format(number, 'f')
-
-
-def _source_replacement_expression(source: str, field_type: str) -> str:
-    """Build an exact-match expression without replacing inside larger tokens."""
-    escaped_source = re.escape(source)
-
-    if field_type == 'number':
-        prefix = (
-            r'(?<!\d)(?<![+-])(?<!\d[\s.,\'])'
-            if source[0].isdigit()
-            else ''
-        )
-        suffix = (
-            r'(?!\d)(?![.,]\d)(?![\s\']\d{3}(?!\d))'
-            if source[-1].isdigit()
-            else ''
-        )
-        return prefix + escaped_source + suffix
-
-    if field_type == 'date':
-        prefix = r'(?<!\d)' if source[0].isdigit() else ''
-        suffix = r'(?!\d)' if source[-1].isdigit() else ''
-        return prefix + escaped_source + suffix
-
-    prefix = (
-        r"(?<!\w)(?<!\w[-/.'’])"
-        if source[0].isalnum() or source[0] == '_'
-        else ''
-    )
-    suffix = (
-        r"(?!\w)(?![-/.'’]\w)"
-        if source[-1].isalnum() or source[-1] == '_'
-        else ''
-    )
-    return prefix + escaped_source + suffix
-
-
-def _normalize_date(value: str) -> str:
-    normalized = _collapse_whitespace(value)
-
-    iso_match = re.fullmatch(r'(\d{4})[-./](\d{1,2})[-./](\d{1,2})', normalized)
-    if iso_match:
-        year, month, day = map(int, iso_match.groups())
-        return date(year, month, day).isoformat()
-
-    numeric_match = re.fullmatch(r'(\d{1,2})[-./](\d{1,2})[-./](\d{4})', normalized)
-    if numeric_match:
-        day, month, year = map(int, numeric_match.groups())
-        return date(year, month, day).isoformat()
-
-    words_match = re.fullmatch(r'(\d{1,2})\s+([A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]+)\s+(\d{4})', normalized)
-    if words_match:
-        day = int(words_match.group(1))
-        month_name = words_match.group(2).lower()
-        year = int(words_match.group(3))
-        month = POLISH_MONTHS.get(month_name)
-        if month is None:
-            raise ValueError('Nieznana nazwa miesiaca')
-        return date(year, month, day).isoformat()
-
-    raise ValueError('Niepoprawny format daty')
-
-
-def _normalize_text(value: str, field_key: str) -> str:
-    collapsed = _collapse_whitespace(value)
-    identifier_kind = next(
-        (
-            identifier
-            for identifier in ('nip', 'regon', 'krs', 'pesel')
-            if identifier in field_key
-        ),
-        None,
-    )
-    if identifier_kind is not None:
-        if not re.fullmatch(r'\d(?:[\d\s.-]*\d)?', collapsed):
-            raise ValueError('Identyfikator zawiera niedozwolone znaki')
-        digits = re.sub(r'\D', '', collapsed)
-        expected_lengths = {
-            'nip': {10},
-            'regon': {9, 14},
-            'krs': {10},
-            'pesel': {11},
-        }
-        if len(digits) not in expected_lengths[identifier_kind]:
-            raise ValueError('Identyfikator ma niepoprawna dlugosc')
-        return digits
-    bank_account_markers = (
-        'iban',
-        'rachunek_bankowy',
-        'bankowy_rachunek',
-        'konto_bankowe',
-        'bankowe_konto',
-        'konta_bankowego',
-        'rachunku_bankowego',
-        'numer_konta_bankowego',
-        'numer_rachunku_bankowego',
-    )
-    if any(marker in field_key for marker in bank_account_markers):
-        if not re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9\s-]*[A-Za-z0-9])?', collapsed):
-            raise ValueError('Numer rachunku zawiera niedozwolone znaki')
-        account = re.sub(r'[\s-]+', '', collapsed).upper()
-        is_local_account = bool(re.fullmatch(r'\d{16,34}', account))
-        is_iban = bool(re.fullmatch(r'[A-Z]{2}\d{2}[A-Z0-9]{11,30}', account))
-        if not is_local_account and not is_iban:
-            raise ValueError('Numer rachunku ma niepoprawny format')
-        return account
-    return collapsed
-
-
-def _normalize_field_value(value: str, field_type: str, field_key: str) -> str:
-    if field_type == 'number':
-        return _normalize_number(value)
-    if field_type == 'date':
-        return _normalize_date(value)
-    return _normalize_text(value, field_key)
-
 
 def _close_http_response(response: Any) -> None:
     close = getattr(response, 'close', None)
@@ -666,27 +158,19 @@ def _close_http_response(response: Any) -> None:
         try:
             close()
         except Exception:
-            # Cleanup must never replace the domain error raised for the request.
-            # Do not include the exception because transports may embed the URL.
             log.warning('Iusfully template LLM response cleanup failed')
 
-
 def _is_stream_read_timeout(exc: BaseException) -> bool:
-    """Recognize requests' ConnectionError-wrapped urllib3 read timeout."""
-
     pending: List[BaseException] = [exc]
     visited: set[int] = set()
-
     while pending:
         candidate = pending.pop()
         candidate_id = id(candidate)
         if candidate_id in visited:
             continue
         visited.add(candidate_id)
-
         if isinstance(candidate, requests.exceptions.Timeout):
             return True
-
         candidate_type = type(candidate)
         if (
             candidate_type.__name__ == 'ReadTimeoutError'
@@ -696,7 +180,6 @@ def _is_stream_read_timeout(exc: BaseException) -> bool:
             )
         ):
             return True
-
         for nested in (
             getattr(candidate, '__cause__', None),
             getattr(candidate, '__context__', None),
@@ -704,9 +187,7 @@ def _is_stream_read_timeout(exc: BaseException) -> bool:
         ):
             if isinstance(nested, BaseException):
                 pending.append(nested)
-
     return False
-
 
 def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
     headers = getattr(response, 'headers', {}) or {}
@@ -717,7 +198,6 @@ def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
                 raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
         except ValueError:
             pass
-
     if callable(getattr(response, 'iter_content', None)):
         body = bytearray()
         for chunk in response.iter_content(chunk_size=8192):
@@ -727,7 +207,6 @@ def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
             if len(body) > max_bytes:
                 raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
         return bytes(body)
-
     content = getattr(response, 'content', None)
     if content is None:
         content = (getattr(response, 'text', '') or '').encode('utf-8')
@@ -738,7 +217,6 @@ def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
     if len(content) > max_bytes:
         raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
     return content
-
 
 class IusfullyTemplateAnalysisService:
     """Finds dynamic fields with an LLM and renders the template deterministically."""

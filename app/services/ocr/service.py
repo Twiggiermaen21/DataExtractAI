@@ -3,71 +3,20 @@ import json
 import logging
 import os
 import time
+
 from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, llm_post
 from app.utils.ocr_result import OCRResult
 
+from .schemas import RESPONSE_SCHEMA
+from .prompts import _field_description, _field_instructions
+
 log = logging.getLogger(__name__)
-
-# Schema JSON wysylany do LLM (structured output)
-RESPONSE_SCHEMA = {
-    "type": "json_schema",
-    "json_schema": {
-        "name": "ekstrakcja_danych_faktury",
-        "schema": {
-            "type": "object",
-            "properties": {
-                "nabywca":              {"type": "string"},
-                "pewnosc_ocr_procent":  {"type": "integer"},
-                "kwota_do_zaplaty":     {"type": "number"},
-                "komentarz_ocr":       {"type": "string"},
-                "sprzedawca":          {"type": "string"},
-                "numer_faktury":       {"type": "string"},
-            },
-            "required": [
-                "nabywca", "pewnosc_ocr_procent", "kwota_do_zaplaty",
-                "komentarz_ocr", "sprzedawca", "numer_faktury"
-            ],
-            "additionalProperties": False,
-        },
-        "strict": True,
-    },
-}
-
 
 def _preview(text, limit=500):
     if text is None:
         return None
     text = str(text).replace("\r", " ").replace("\n", " ")
     return text[:limit] + ("..." if len(text) > limit else "")
-
-
-def _field_description(field):
-    text = field.replace('_', ' ')
-    replacements = {
-        'Znajdz': 'Znajdz',
-        'fakturze': 'fakturze',
-        'pelna nazwa firmy sprzedawcy czyli wierzyciela wraz z forma prawna np Spolka Akcyjna else nazwa na gorze faktury': 'pelna nazwa sprzedawcy/wierzyciela wraz z forma prawna; zwykle nazwa firmy na gorze faktury',
-        'pelny adres sprzedawcy zawierajacy tylko ulice numer domu kod pocztowy i miasto': 'adres sprzedawcy/wierzyciela: ulica, numer, kod pocztowy, miasto',
-        'pelny adres sprzedawcy wierzyciela zawierajacy ulice numer domu kod pocztowy i miasto': 'pelny adres sprzedawcy/wierzyciela: ulica, numer, kod pocztowy, miasto',
-        'numer NIP sprzedawcy wierzyciela bez myslnikow i spacji': 'NIP sprzedawcy/wierzyciela, tylko cyfry bez myslnikow i spacji',
-        'numer faktury ktorej dotyczy to wezwanie do zaplaty': 'numer faktury',
-        'pelna nazwa firmy nabywcy czyli dluznika ktory ma zaplacic za towar lub usluge': 'pelna nazwa nabywcy/dluznika',
-        'dokladny adres siedziby nabywcy dluznika ulica kod miasto': 'adres nabywcy/dluznika: ulica, numer, kod pocztowy, miasto',
-        'numer NIP nabywcy dluznika jesli jest podany': 'NIP nabywcy/dluznika, jesli widoczny',
-        'date wystawienia dokumentu lub date sprzedazy': 'data wystawienia faktury albo data sprzedazy/uslugi',
-        'koncowa kwote do zaplaty opisana czesto jako Razem lub Do zaplaty brutto wraz z waluta szukaj na koncu faktury': 'koncowa kwota brutto do zaplaty wraz z waluta; szukaj pol Razem, Do zaplaty, Suma brutto na dole faktury',
-        'date terminu platnosci od ktorej beda liczone odsetki': 'termin platnosci faktury; data platnosci',
-        'numer konta bankowego na ktory ma zostac dokonana wplata zazwyczaj na dole faktury': 'numer rachunku bankowego do zaplaty',
-        'nazwe banku wierzyciela jesli jest podana obok numeru konta': 'nazwa banku przy numerze rachunku, jesli jest widoczna',
-    }
-    for source, target in replacements.items():
-        text = text.replace(source, target)
-    return text
-
-
-def _field_instructions(fields):
-    return "\n".join(f"- {field}: {_field_description(field)}" for field in fields)
-
 
 class OCRService:
 

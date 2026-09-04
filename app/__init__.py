@@ -16,13 +16,13 @@ def create_app():
     for folder in [app.config['UPLOAD_FOLDER'], app.config['OUTPUT_FOLDER']]:
         os.makedirs(folder, exist_ok=True)
 
-    from app.routes.iusfully import iusfully_bp
-    from app.auth import auth_bp
+    from app.api.endpoints import api_bp
+    from app.api.auth import auth_bp
 
-    app.register_blueprint(iusfully_bp)
+    app.register_blueprint(api_bp)
     app.register_blueprint(auth_bp)
 
-    from app.utils.logging_helper import setup_request_logging
+    from app.core.logging import setup_request_logging
     setup_request_logging(app)
 
     return app
