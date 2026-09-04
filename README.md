@@ -1,89 +1,45 @@
-# 📄 Smart Document Generator
+﻿# Iusfully AI - DataExtractAI
 
-![Status](https://img.shields.io/badge/Status-Development-indigo?style=for-the-badge)
-![Python](https://img.shields.io/badge/Python-3.8+-yellow?style=for-the-badge&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-Web%20Framework-lightgrey?style=for-the-badge&logo=flask&logoColor=white)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-Dark_Mode-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+Usługa backendowa (Flask) do analizy dokumentów tekstowych oraz ekstrakcji danych z plików i skanów (OCR) przy pomocy modeli LLM.
 
-**Smart Document Generator** to aplikacja webowa automatyzująca proces przenoszenia danych z systemów OCR do profesjonalnych szablonów HTML/PDF.
+## Wymagania
+- Python 3.10+
+- Docker i docker-compose (do uruchomienia bazy Postgres)
+- Klucze API do usługi LLM (skonfigurowane w pliku .env)
 
----
+## Konfiguracja
+Skopiuj plik .env.example (jeśli istnieje) lub upewnij się, że posiadasz plik .env w głównym katalogu, z poprawnymi danymi (LLM_API_URL, LLM_API_KEY, klucze autoryzacyjne bazy danych itp.).
 
-## 💡 Główne Funkcje
+## Uruchamianie (Docker)
+Aplikację można uruchomić kontenerowo używając docker-compose:
+\\\ash
+docker-compose up -d --build
+\\\
+Usługa uruchomi się domyślnie na porcie 40107. Posiada wbudowany healthcheck na endpointcie /healthz.
 
-* **🔍 Inteligentny OCR Matching**
-    Algorytm automatycznie wyszukuje słowa kluczowe (np. `"NIP"`, `"Konto"`) w nieustrukturyzowanych blokach tekstu i przypisuje je do pól formularza.
-* **👁️ Live Preview**
-    Podgląd dokumentu w czasie rzeczywistym podczas edycji danych.
-* **📄 Generowanie PDF**
-    Eksport gotowych umów i faktur z zachowaniem stylów CSS.
-* **🌙 Dark Mode UI**
-    Nowoczesny interfejs oparty na Tailwind CSS.
+## Endpointy
 
----
+### Autoryzacja
+Autoryzacja odbywa się przez tokeny JWT.
+- **POST** /api/auth/login - Zwraca token dostępowy (ccess_token) dla poprawnych danych logowania.
+- **POST** /api/auth/refresh - Odświeża token dostępowy.
+- **GET** /api/auth/me - Zwraca informacje o aktualnie zalogowanym użytkowniku. Wymaga nagłówka Authorization: Bearer <token>.
 
-## 🛠️ Stack Technologiczny
+### Analiza Szablonów (Iusfully)
+- **POST** /api/iusfully/templates/analyze 
+  Zmienia przesłany plik dokumentu w formularz z polami wejściowymi dla platformy Iusfully.
+  - Wymaga nagłówka Authorization: Bearer <token>.
+  - Content-Type: multipart/form-data
+  - Body: Plik przesłany w polu ile (wspierane: .txt, .pdf, .docx, .doc, .rtf, .odt).
+  - Zwraca listę dynamicznie rozpoznanych zmiennych dokumentu w formacie JSON.
 
-| Kategoria | Technologie |
-| :--- | :--- |
-| **Backend** | Python, Flask, Jinja2 |
-| **Frontend** | JavaScript (ES6), Tailwind CSS |
-| **Dane** | JSON (OCR Blocks Output) |
-
----
-
-## 🚀 Jak to działa?
-
-1.  **Wybór Szablonu:** Użytkownik wybiera szablon (np. `Umowa.html`). Szablon zawiera tagi:
-    ```html
-    <span data-keywords="bank, konto">{{ numer_konta }}</span>
-    ```
-2.  **Analiza Danych:** Aplikacja parsuje plik JSON z OCR (`parsing_res_list`).
-3.  **Auto-Uzupełnianie:** System znajduje linię tekstu zawierającą słowo `"konto"` i automatycznie wstawia ją w miejsce `{{ numer_konta }}`.
-4.  **Wydruk:** Gotowy plik jest renderowany i drukowany do PDF.
-
----
-
-## 🐳 Uruchamianie przez Docker (Zalecane)
-
-Aplikację można łatwo uruchomić jako samodzielny kontener Docker, bez używania `docker-compose`.
-
-1.  Upewnij się, że masz zainstalowanego Dockera.
-2.  Zbuduj obraz na podstawie przygotowanego `Dockerfile`:
-
-    ```bash
-    docker build -t ocr_bot .
-    ```
-
-3.  Uruchom kontener w tle (`-d`):
-
-    ```bash
-    docker run -d --name ocr_bot -p 5000:5000 ocr_bot
-    ```
-
-4.  Aplikacja będzie dostępna pod adresem: `http://localhost:5000`
-
-### Praca z kontenerem:
-
-- Podgląd logów aplikacji: `docker logs -f ocr_bot`
-- Zatrzymanie aplikacji: `docker stop ocr_bot`
-- Usunięcie kontenera: `docker rm ocr_bot`
-
----
-
-<div align="center">
-    <sub>Projekt stworzony w celach edukacyjnych.</sub>
-</div>
-
-## llama-server z obsługą obrazów
-
-OCR plików JPG/PNG wymaga modelu vision oraz pasującego pliku `mmproj`.
-Serwer można uruchomić jawnie w następujący sposób:
-
-```powershell
-llama-server.exe --model "Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf" --mmproj "mmproj-BF16-qwen3.6A3E.gguf" --host 0.0.0.0 --port 8080
-```
-
-Po uruchomieniu odpowiedź `GET /v1/models` musi informować o obsłudze
-obrazów. Jeśli serwer zwraca wyłącznie capability `completion`, projektor
-nie został załadowany albo nie pasuje do modelu.
+### Wyodrębnianie Danych (OCR)
+- **POST** /api/process_ocr_iusfully 
+  Wyciąga wartości kluczowych pól z dokumentu (np. faktury), aby automatycznie uzupełnić wezwanie do zapłaty lub inny formularz.
+  - Wymaga nagłówka Authorization: Bearer <token>.
+  - Content-Type: multipart/form-data
+  - Body: Plik przesłany w polu ile, definicje pól w ciele żądania.
+  - Zwraca ustrukturyzowany JSON (zgodny ze zdefiniowanym schematem pól) ze znalezionymi wartościami OCR.
+  
+### Inne
+- **GET** /healthz - Zwraca status 200 OK, używany głównie jako dockerowy healthcheck.

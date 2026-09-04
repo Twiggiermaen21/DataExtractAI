@@ -19,4 +19,8 @@ def create_app():
     from app.core.logging import setup_request_logging
     setup_request_logging(app)
 
+    @app.route('/healthz')
+    def healthz():
+        return 'OK', 200
+
     return app
