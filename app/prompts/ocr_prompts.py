@@ -87,14 +87,18 @@ def build_ocr_prompt(fields, fields_source, field_key_map, is_text=False):
             "POLA DO WYPELNIENIA:\n"
             f"{_field_instructions(fields)}\n\n"
             "ZASADY:\n"
-            "- Zwracaj TYLKO obiekt JSON zgodny ze schema, bez markdown.\n"
-            "- Nie dodawaj zadnych dodatkowych kluczy.\n"
-            "- Jesli widzisz na fakturze odpowiednik pola, wpisz go nawet gdy etykieta ma inna nazwe.\n"
-            "- Dla kwoty wybierz koncowa kwote brutto/do zaplaty, zwykle na dole faktury.\n"
+            "- Bazuj wyłącznie na wgranych plikach źródłowych takich jak faktury, wezwanie do zapłaty czy inne dokumenty.\n"
+            "- Zwracaj wyłącznie poprawny obiekt JSON zgodny z podanym schematem. Nie dodawaj markdown, komentarzy, wyjaśnień ani żadnego tekstu przed lub po obiekcie JSON\n"
+            "- Nie dodawaj żadnych dodatkowych kluczy.\n"
+            "- Jeśli w dokumencie źródłowym znajduje się informacja odpowiadająca znaczeniu danego pola, wpisz jej wartość nawet wtedy, gdy etykieta lub nazwa tej informacji różni się od nazwy pola. Nie zgaduj wartości, jeśli nie da się jej jednoznacznie ustalić z dokumentu źródłowego.\n"
+            "- Dla kwoty wybierz koncową kwotę brutto/do zaplaty, zwykle na dole faktury.\n"
+            "- Weryfikuj, czy kwota do zapłaty na fakturze jest zgodna z kwotą wskazaną w wezwaniu do zapłaty.\n"
             "- Dla NIP usun spacje i myslniki.\n"
             "- Dla dat zachowaj format z faktury albo DD.MM.RRRR, jesli jest oczywisty.\n"
+            "- Tworząc pismo w górym rogu, w którym widnieje data pisma wstawiaj datę tworzenia danego dokumentu, a nie datę z dokumentów źródłowych.\n"
             "- Pusty string wpisuj dopiero wtedy, gdy danych naprawde nie da sie odczytac.\n"
             "- Nie zostawiaj wszystkich pol pustych, jesli na obrazie widac jakiekolwiek dane faktury."
+            "- Obliczając opłatę sądową stosuj przepisy z ustawy o kosztach sądowych w sprawach cywilnych (Dz.U. 2023 poz. 1710) i wpisz kwotę w polu oplata_sadowa, jeśli jest wymagana do zapłaty. "
         )
 
     return (
