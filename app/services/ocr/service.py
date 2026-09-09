@@ -23,6 +23,12 @@ class OCRService:
         self._field_key_map = {}    # key -> original description (tylko dla custom fields)
         log.info("OCRService init: api_url=%s model=%s timeout=%s", self.api_url, self.model, self.timeout)
         check_connection(self.api_url)
+        self._llm_client = OCRLLMClient(self.api_url, self.model, self.timeout)
+
+    def set_model(self, model):
+        """Aktualizuje model serwisu oraz powiązanego klienta LLM."""
+        self.model = model
+        self._llm_client.model = model
 
     def set_template(self, template_path):
         """Pobiera pola z szablonu HTML (atrybuty name z inputow)."""

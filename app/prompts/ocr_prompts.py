@@ -1,3 +1,14 @@
+_ROLE_IDENTIFICATION_RULES = """ROZPOZNAWANIE ROL STRON:
+- Powod / powodka / strona powodowa to podmiot, ktory dochodzi roszczenia. W sprawach o zaplate moze byc opisany jako: wierzyciel, sprzedawca, dostawca, uslugodawca, wykonawca, wystawca faktury, uprawniony, wzywajacy do zaplaty albo dochodzacy roszczenia.
+- Pozwany / pozwana / strona pozwana to podmiot, przeciwko ktoremu kierowane jest roszczenie. W sprawach o zaplate moze byc opisany jako: dluznik, nabywca towaru lub uslugi, kupujacy, odbiorca, uslugobiorca, zamawiajacy, platnik, zobowiazany albo adresat wezwania do zaplaty.
+- Zaleznie od stosunku prawnego powod/wierzyciel moze wystepowac jako cesjonariusz (nabywca wierzytelnosci), wynajmujacy, finansujacy, pozyczkodawca lub kredytodawca, a pozwany/dluznik jako najemca, korzystajacy lub leasingobiorca, pozyczkobiorca albo kredytobiorca.
+- Ustal role na podstawie tresci i kierunku roszczenia: kto zada zaplaty i komu nalezy sie swiadczenie jest strona powodowa; kto ma zaplacic lub wykonac zobowiazanie jest strona pozwana.
+- Uwazaj na wyrazenia zalezne od kontekstu. Nabywca towaru lub uslugi jest zwykle dluznikiem/pozwanym, ale nabywca wierzytelnosci (cesjonariusz) jest wierzycielem i moze byc powodem. Zbywca wierzytelnosci (cedent) nie musi byc aktualnym powodem.
+- Jawne oznaczenie podmiotu jako powod/powodka albo pozwany/pozwana ma pierwszenstwo. Przy analizie wielu dokumentow uznaj podmioty za te sama strone tylko wtedy, gdy potwierdzaja to widoczne dane identyfikacyjne, zwlaszcza nazwa, NIP, adres, numer faktury i opis roszczenia.
+- Okreslenia klient, kontrahent, platnik, adresat, wnioskodawca, uczestnik lub skarzacy nie rozstrzygaja samodzielnie, po ktorej stronie wystepuje podmiot.
+- Nie uznawaj automatycznie za strone sadu, pelnomocnika, kancelarii, przedstawiciela, komornika, banku ani osoby wskazanej tylko do kontaktu. Gdy dokument wyraznie oznacza role inaczej, pierwszenstwo ma jego tresc. Nie zgaduj."""
+
+
 def _field_description(field):
     text = field.replace('_', ' ')
     replacements = {
@@ -67,6 +78,7 @@ def build_ocr_prompt(fields, fields_source, field_key_map, is_text=False):
             f"{action} dokumentu i wypelnij JSON zgodny ze schema response_format.\n"
             "To jest ekstrakcja danych z dokumentu. "
             "Nie oceniaj prawnie dokumentu, tylko przepisz widoczne dane.\n\n"
+            f"{_ROLE_IDENTIFICATION_RULES}\n\n"
             "POLA DO WYPELNIENIA (klucz: instrukcja):\n"
             f"{field_lines}\n\n"
             "ZASADY:\n"
@@ -84,6 +96,7 @@ def build_ocr_prompt(fields, fields_source, field_key_map, is_text=False):
             f"{action} faktury i wypelnij JSON zgodny ze schema response_format.\n"
             "To jest ekstrakcja danych z faktury do wezwania do zaplaty. "
             "Nie oceniaj prawnie dokumentu, tylko przepisz widoczne dane.\n\n"
+            f"{_ROLE_IDENTIFICATION_RULES}\n\n"
             "POLA DO WYPELNIENIA:\n"
             f"{_field_instructions(fields)}\n\n"
             "ZASADY:\n"
@@ -103,5 +116,6 @@ def build_ocr_prompt(fields, fields_source, field_key_map, is_text=False):
 
     return (
         f"{action} i wyodrebnij wszystkie kluczowe dane z dokumentu. "
+        f"{_ROLE_IDENTIFICATION_RULES}\n"
         "Zwroc TYLKO ustrukturyzowany obiekt JSON (bez znacznikow markdown)."
     )
