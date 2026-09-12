@@ -69,7 +69,7 @@ def check_connection(api_url):
 def extract_fields_from_template(template_path):
     """Pobiera pola z szablonu HTML (atrybuty name z inputów)."""
     try:
-        with open(template_path, 'r', encoding='utf-8') as f:
+        with open(template_path, encoding='utf-8') as f:
             content = f.read()
         fields = []
         seen = set()

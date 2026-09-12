@@ -55,12 +55,25 @@ def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
                 raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
         except ValueError:
             pass
-    chunks = []
-    read_bytes = 0
-    for chunk in response.iter_content(chunk_size=8192):
-        if chunk:
-            chunks.append(chunk)
-            read_bytes += len(chunk)
-            if read_bytes > max_bytes:
-                raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
-    return b''.join(chunks)
+    if callable(getattr(response, 'iter_content', None)):
+        chunks = []
+        read_bytes = 0
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                chunks.append(chunk)
+                read_bytes += len(chunk)
+                if read_bytes > max_bytes:
+                    raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
+        return b''.join(chunks)
+
+    content = getattr(response, 'content', None)
+    if content is None:
+        content = (getattr(response, 'text', '') or '').encode('utf-8')
+    elif isinstance(content, str):
+        content = content.encode('utf-8')
+    if not isinstance(content, bytes):
+        raise InvalidLLMResponseError('Odpowiedz LLM ma niepoprawny format binarny')
+    if len(content) > max_bytes:
+        raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
+    return content
+

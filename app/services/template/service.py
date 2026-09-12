@@ -1,12 +1,11 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
-import io
 import json
 import logging
 import os
 import re
-import unicodedata
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Tuple
+from collections.abc import Callable, Mapping, Sequence
 
 import requests
 
@@ -48,46 +47,18 @@ PLACEHOLDER_IN_TEXT_PATTERN = re.compile(r'\{\{[a-z][a-z0-9_]{0,63}\}\}')
 
 
 
-def _read_limited_response_body(response: Any, max_bytes: int) -> bytes:
-    headers = getattr(response, 'headers', {}) or {}
-    declared_length = headers.get('Content-Length')
-    if declared_length:
-        try:
-            if int(declared_length) > max_bytes:
-                raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
-        except ValueError:
-            pass
-    if callable(getattr(response, 'iter_content', None)):
-        body = bytearray()
-        for chunk in response.iter_content(chunk_size=8192):
-            if not chunk:
-                continue
-            body.extend(chunk)
-            if len(body) > max_bytes:
-                raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
-        return bytes(body)
-    content = getattr(response, 'content', None)
-    if content is None:
-        content = (getattr(response, 'text', '') or '').encode('utf-8')
-    elif isinstance(content, str):
-        content = content.encode('utf-8')
-    if not isinstance(content, bytes):
-        raise InvalidLLMResponseError('Odpowiedz LLM ma niepoprawny format binarny')
-    if len(content) > max_bytes:
-        raise InvalidLLMResponseError('Odpowiedz LLM przekracza limit rozmiaru')
-    return content
 
 class IusfullyTemplateAnalysisService:
     """Finds dynamic fields with an LLM and renders the template deterministically."""
 
     def __init__(
         self,
-        api_url: Optional[str] = None,
-        model: Optional[str] = None,
-        timeout_seconds: Optional[int] = None,
-        max_tokens: Optional[int] = None,
-        max_response_bytes: Optional[int] = None,
-        post_func: Optional[Callable[..., Any]] = None,
+        api_url: str | None = None,
+        model: str | None = None,
+        timeout_seconds: int | None = None,
+        max_tokens: int | None = None,
+        max_response_bytes: int | None = None,
+        post_func: Callable[..., Any] | None = None,
     ):
         configured_url = api_url or get_llm_api_url()
         if not isinstance(configured_url, str) or not configured_url.strip():

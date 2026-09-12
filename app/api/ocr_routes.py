@@ -3,7 +3,7 @@ import tempfile
 import time
 import json
 import logging
-from flask import current_app, jsonify, request
+from flask import jsonify, request
 from werkzeug.utils import secure_filename
 
 from app.core.auth import require_auth
@@ -112,12 +112,12 @@ def process_ocr_iusfully():
         original_filename = file.filename
         filename = secure_filename(original_filename) or f'upload_{index}'
         file_started_at = time.monotonic()
-        
+
         # Tworzymy tymczasowy plik tylko na czas predykcji
         ext = os.path.splitext(filename)[1]
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             original_path = tmp.name
-        
+
         log.info(
             "[%s] file %s/%s start: original=%s stored=%s content_type=%s temp_path=%s",
             rid,

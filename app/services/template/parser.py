@@ -1,6 +1,6 @@
 import os
 import unicodedata
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 
 from app.dto.iusfully_template import TemplateAnalysisRequestDTO
 from app.services.template.exceptions import (
@@ -67,7 +67,7 @@ class UploadedTextFileParser:
     Supported formats: .txt, .pdf, .docx, .doc, .rtf, .odt
     """
 
-    def __init__(self, max_file_bytes: Optional[int] = None):
+    def __init__(self, max_file_bytes: int | None = None):
         if max_file_bytes is None:
             self.max_file_bytes = _positive_int_from_env(
                 'IUSFULLY_TEMPLATE_MAX_FILE_BYTES',
@@ -83,7 +83,7 @@ class UploadedTextFileParser:
         self,
         filename: str,
         stream: BinaryIO,
-        mime_type: Optional[str] = None,
+        mime_type: str | None = None,
     ) -> TemplateAnalysisRequestDTO:
         original_filename = _safe_original_filename(filename)
         if not original_filename:

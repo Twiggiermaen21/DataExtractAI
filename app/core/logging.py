@@ -84,13 +84,13 @@ def setup_request_logging(app):
 
         status = response.status_code
         status_text = response.status
-        
+
         # Safe length computation
         try:
             content_length = response.content_length or len(response.get_data())
         except Exception:
             content_length = 0
-            
+
         mimetype = response.mimetype
 
         log.info("+------------------------------------------------------------------------")

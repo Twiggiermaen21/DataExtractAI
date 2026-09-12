@@ -1,7 +1,8 @@
 import io
 import os
 import tempfile
-from typing import Dict, Callable
+from typing import Dict
+from collections.abc import Callable
 
 from app.services.template.exceptions import UnsupportedTemplateFileError, UnprocessableTemplateFileError
 

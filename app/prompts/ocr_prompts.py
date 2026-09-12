@@ -46,7 +46,7 @@ def build_ocr_schema(fields, fields_source, field_key_map):
         }
     else:
         properties = {field: {"type": "string", "description": _field_description(field)} for field in fields}
-    
+
     return {
         "type": "json_schema",
         "json_schema": {

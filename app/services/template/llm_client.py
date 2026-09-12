@@ -1,6 +1,7 @@
 ﻿import json
 import logging
-from typing import Any, Dict, Mapping
+from typing import Any, Dict
+from collections.abc import Mapping
 from app.prompts.template_prompts import TEMPLATE_FIELD_RESPONSE_SCHEMA, TEMPLATE_ANALYSIS_SYSTEM_PROMPT
 from .exceptions import InvalidLLMResponseError
 from .http_utils import _strip_json_code_fence
