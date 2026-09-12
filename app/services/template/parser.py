@@ -93,7 +93,7 @@ class UploadedTextFileParser:
         if ext not in ALLOWED_EXTENSIONS:
             raise UnsupportedTemplateFileError(
                 f'Nieobslugiwane rozszerzenie pliku: {ext}. '
-                f'Dozwolone: {', '.join(sorted(ALLOWED_EXTENSIONS))}'
+                f'Dozwolone: {", ".join(sorted(ALLOWED_EXTENSIONS))}'
             )
 
         normalized_mime = (mime_type or '').split(';', 1)[0].strip().lower()
