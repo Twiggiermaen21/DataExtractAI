@@ -1,12 +1,10 @@
-import json
 import logging
 import os
 import time
 
-from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template, llm_post
-from app.utils.ocr_result import OCRResult, _preview
+from app.utils.ocr_utils import check_connection, get_mime_type, image_to_base64, extract_text_from_docx, extract_text_from_pdf_pages, extract_fields_from_template
+from app.utils.ocr_result import _preview
 
-from .schemas import RESPONSE_SCHEMA
 from app.prompts.ocr_prompts import get_ocr_system_prompt, build_ocr_prompt
 from .llm_client import OCRLLMClient
 
@@ -23,6 +21,12 @@ class OCRService:
         self._field_key_map = {}    # key -> original description (tylko dla custom fields)
         log.info("OCRService init: api_url=%s model=%s timeout=%s", self.api_url, self.model, self.timeout)
         check_connection(self.api_url)
+        self._llm_client = OCRLLMClient(self.api_url, self.model, self.timeout)
+
+    def set_model(self, model):
+        """Aktualizuje model serwisu oraz powiązanego klienta LLM."""
+        self.model = model
+        self._llm_client.model = model
 
     def set_template(self, template_path):
         """Pobiera pola z szablonu HTML (atrybuty name z inputow)."""
@@ -39,12 +43,12 @@ class OCRService:
         self._fields_source = 'custom'
         self._field_key_map = {}
         self.fields = []
-        
+
         for i, field_desc in enumerate(fields, start=1):
             key = f"pole_{i}"
             self.fields.append(key)
             self._field_key_map[key] = field_desc
-        
+
         log.info("OCRService custom fields set: fields_count=%s keys=%s", len(self.fields), self.fields[:10])
 
     def predict(self, file_path):

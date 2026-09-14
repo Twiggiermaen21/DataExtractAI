@@ -1,0 +1,35 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # Pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+]
+ignore = [
+    "E501", # line length handled by formatter
+    "E402", # module level import not at top of file
+    "E731", # lambda assignments in tests
+    "UP006", # legacy typing List/Dict
+    "UP035", # typing.Dict/List/Tuple deprecated
+    "W291", # trailing whitespace
+    "W293", # blank line whitespace
+    "F841", # local variable assigned but unused
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

@@ -67,7 +67,7 @@ class IusfullyTemplateRouteTests(unittest.TestCase):
                 '/api/iusfully/templates/analyze',
                 data={
                     'file': (
-                        io.BytesIO('Klient: Jan Kowalski'.encode('utf-8')),
+                        io.BytesIO(b'Klient: Jan Kowalski'),
                         'wzor.txt',
                         'text/plain',
                     ),

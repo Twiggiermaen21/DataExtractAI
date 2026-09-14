@@ -23,5 +23,5 @@ app/gotowe_dokumenty/*
 models/*
 !models/.gitkeep
 llama.md
-.env.example
-
+.ruff_cache/
+.pytest_cache/

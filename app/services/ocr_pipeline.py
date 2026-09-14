@@ -16,7 +16,7 @@ def get_pipeline(template_path=None, model=None, custom_fields=None):
             log.error("Nie udało się utworzyć OCRService: %s", e)
             return None
     elif model and _pipeline.model != model:
-        _pipeline.model = model
+        _pipeline.set_model(model)
 
     # custom_fields z frontendu mają priorytet nad szablonem
     if custom_fields:

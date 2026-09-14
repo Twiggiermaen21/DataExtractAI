@@ -5,7 +5,8 @@ import unicodedata
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Any, Dict, Literal, Mapping, Tuple
+from typing import Any, Dict, Literal, Tuple
+from collections.abc import Mapping
 
 
 FormFieldType = Literal['text', 'number', 'date']
@@ -57,7 +58,7 @@ class DetectedTemplateFieldDTO:
     extracted_value: str
 
     @classmethod
-    def from_mapping(cls, data: Mapping[str, Any]) -> 'DetectedTemplateFieldDTO':
+    def from_mapping(cls, data: Mapping[str, Any]) -> DetectedTemplateFieldDTO:
         if not isinstance(data, Mapping):
             raise DTOValidationError('Wykryte pole musi byc obiektem JSON')
 
@@ -126,7 +127,7 @@ class DetectedTemplateFieldDTO:
     def placeholder(self) -> str:
         return '{{' + self.key + '}}'
 
-    def to_form_field(self) -> 'TemplateFormFieldDTO':
+    def to_form_field(self) -> TemplateFormFieldDTO:
         return TemplateFormFieldDTO(
             placeholder=self.placeholder,
             label=self.label,

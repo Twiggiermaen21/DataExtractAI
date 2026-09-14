@@ -1,6 +1,4 @@
 import json
-import os
-import time
 import logging
 
 log = logging.getLogger(__name__)

@@ -4,9 +4,9 @@ import logging
 import jwt
 
 from app.core.auth.config import (
-    DJANGO_SECRET_KEY, 
-    JWT_ALGORITHM, 
-    ACCESS_TOKEN_LIFETIME, 
+    DJANGO_SECRET_KEY,
+    JWT_ALGORITHM,
+    ACCESS_TOKEN_LIFETIME,
     REFRESH_TOKEN_LIFETIME
 )
 
