@@ -90,6 +90,7 @@ def build_ocr_prompt(fields, fields_source, field_key_map, is_text=False):
             "- Bazuj wyłącznie na wgranych plikach źródłowych takich jak faktury, wezwanie do zapłaty czy inne dokumenty.\n"
             "- Zwracaj wyłącznie poprawny obiekt JSON zgodny z podanym schematem. Nie dodawaj markdown, komentarzy, wyjaśnień ani żadnego tekstu przed lub po obiekcie JSON\n"
             "- Nie dodawaj żadnych dodatkowych kluczy.\n"
+            "- Powód to wierzyciel lub sprzedawca. Pozwany to nabywca lub dłużnik. Nie zgaduj, jeśli nie da się jednoznacznie ustalić z dokumentu źródłowego.\n"
             "- Jeśli w dokumencie źródłowym znajduje się informacja odpowiadająca znaczeniu danego pola, wpisz jej wartość nawet wtedy, gdy etykieta lub nazwa tej informacji różni się od nazwy pola. Nie zgaduj wartości, jeśli nie da się jej jednoznacznie ustalić z dokumentu źródłowego.\n"
             "- Dla kwoty wybierz koncową kwotę brutto/do zaplaty, zwykle na dole faktury.\n"
             "- Weryfikuj, czy kwota do zapłaty na fakturze jest zgodna z kwotą wskazaną w wezwaniu do zapłaty.\n"
