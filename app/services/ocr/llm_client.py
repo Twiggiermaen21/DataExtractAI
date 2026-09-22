@@ -6,14 +6,17 @@ import logging
 from app.utils.ocr_utils import llm_post
 from app.utils.ocr_result import OCRResult
 from app.prompts.ocr_prompts import build_ocr_schema
+from app.services.ocr.normalizer import normalize_extracted_fields
 
 log = logging.getLogger(__name__)
+
 
 def _preview(text, limit=500):
     if text is None:
         return None
     text = str(text).replace("\r", " ").replace("\n", " ")
     return text[:limit] + ("..." if len(text) > limit else "")
+
 
 class OCRLLMClient:
     def __init__(self, api_url, model, timeout=120):
@@ -46,41 +49,40 @@ class OCRLLMClient:
 
         started_at = time.monotonic()
         response = llm_post(
-            self.api_url, json=payload,
+            self.api_url,
+            json=payload,
             headers={"Content-Type": "application/json"},
             timeout=self.timeout,
         )
-        elapsed_ms = int((time.monotonic() - started_at) * 1000)
         log.info(
             "LLM OCR response: source=%s status=%s elapsed_ms=%s response_chars=%s content_type=%s",
             source_type,
             response.status_code,
-            elapsed_ms,
-            len(response.text or ''),
-            response.headers.get('Content-Type'),
+            int((time.monotonic() - started_at) * 1000),
+            len(response.text or ""),
+            response.headers.get("Content-Type"),
         )
 
         if response.status_code == 200:
             try:
                 response_json = response.json()
                 output_text = response_json["choices"][0]["message"]["content"].strip()
+                parsed = json.loads(output_text)
             except Exception:
                 log.exception("LLM OCR response parse failed: preview=%s", _preview(response.text, 1000))
                 raise
 
-            if fields_source == 'custom' and field_key_map:
-                try:
-                    parsed = json.loads(output_text)
-                    if isinstance(parsed, dict):
-                        remapped = {}
-                        for key, value in parsed.items():
-                            original_key = field_key_map.get(key, key)
-                            remapped[original_key] = value
-                        output_text = json.dumps(remapped, ensure_ascii=False, indent=2)
-                        log.info("LLM OCR keys remapped: %s -> %s keys", len(parsed), len(remapped))
-                except (json.JSONDecodeError, TypeError):
-                    log.warning("LLM OCR key remap skipped: could not parse output as JSON")
+            if not isinstance(parsed, dict):
+                raise ValueError("LLM OCR response must be a JSON object")
 
+            if fields_source == "custom" and field_key_map:
+                parsed = {
+                    field_key_map.get(key, key): value
+                    for key, value in parsed.items()
+                }
+                parsed = normalize_extracted_fields(parsed, field_key_map.values())
+
+            output_text = json.dumps(parsed, ensure_ascii=False, indent=2)
             result = OCRResult(output_text, result_path)
             log.info(
                 "LLM OCR parsed: source=%s output_chars=%s extracted_keys=%s output_preview=%s",
@@ -91,7 +93,11 @@ class OCRLLMClient:
             )
             return result
 
-        log.warning("LLM OCR non-200: status=%s body_preview=%s", response.status_code, _preview(response.text, 1200))
+        log.warning(
+            "LLM OCR non-200: status=%s body_preview=%s",
+            response.status_code,
+            _preview(response.text, 1200),
+        )
         if "image input is not supported" in response.text.lower():
             raise Exception(
                 "Serwer LLM dziala bez obslugi obrazow. Uruchom llama-server ponownie "
